@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// A category of quiz, bundling questions with presentation metadata.
-struct Quiz: Identifiable {
+struct Quiz: Identifiable, Hashable {
     let id = UUID()
 
     /// Display name, e.g. "Science & Nature".
@@ -28,6 +28,11 @@ struct Quiz: Identifiable {
 
     /// Number of questions, surfaced on the category card.
     var questionCount: Int { questions.count }
+
+    // Identity is based on the unique `id`, which is enough for navigation
+    // and avoids requiring every nested type to be Hashable.
+    static func == (lhs: Quiz, rhs: Quiz) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
     /// A two-color gradient used for cards, headers and accents.
     struct Palette: Equatable {
