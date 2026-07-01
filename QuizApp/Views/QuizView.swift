@@ -3,6 +3,7 @@
 //  QuizApp
 //
 //  Plays a single level's questions, themed in the island's colors.
+//  The question, options and a rich explanation scroll so nothing is cut off.
 //
 
 import SwiftUI
@@ -19,7 +20,6 @@ struct QuizView: View {
             _model = StateObject(wrappedValue: QuizViewModel(island: island, level: level))
             valid = true
         } else {
-            // Fallback so the initializer always has a value.
             let island = QuizData.jungleKingdom
             _model = StateObject(wrappedValue: QuizViewModel(island: island,
                                                              level: island.levels[0]))
@@ -62,83 +62,122 @@ struct QuizView: View {
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.isFinished)
     }
 
+    // MARK: - Gameplay
+
     private var gameplay: some View {
-        VStack(spacing: 18) {
-            // Top: level title + progress
-            VStack(spacing: 12) {
-                HStack {
-                    HStack(spacing: 6) {
-                        Text(model.island.emoji)
-                        Text("Level \(model.level.number)")
-                            .font(Theme.bold(16))
+        VStack(spacing: 0) {
+            topBar
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+                .padding(.bottom, 10)
+
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 18) {
+                        Color.clear.frame(height: 1).id("top")
+
+                        questionBubble
+
+                        options
+
+                        if model.hasAnswered {
+                            explanationAndNext
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+
+                        Color.clear.frame(height: 1).id("bottom")
                     }
-                    .foregroundColor(.white)
-                    Spacer()
-                    Text("\(model.currentIndex + 1)/\(model.totalQuestions)")
-                        .font(Theme.bold(15))
-                        .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.85), value: model.hasAnswered)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.currentIndex)
                 }
-                ProgressBar(value: model.progress)
-            }
-            .padding(.top, 4)
-
-            // Question bubble
-            VStack(spacing: 14) {
-                Text(model.island.emoji).font(.system(size: 42))
-                Text(model.currentQuestion.prompt)
-                    .font(Theme.bold(22))
-                    .foregroundColor(Theme.ink)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(22)
-            .bubbleCard()
-            .id(model.currentIndex)
-            .transition(.asymmetric(
-                insertion: .move(edge: .trailing).combined(with: .opacity),
-                removal: .move(edge: .leading).combined(with: .opacity)
-            ))
-
-            // Options
-            VStack(spacing: 12) {
-                ForEach(Array(model.currentQuestion.options.enumerated()), id: \.offset) { pair in
-                    AnswerButton(
-                        text: pair.element,
-                        index: pair.offset,
-                        hasAnswered: model.hasAnswered,
-                        selectedOption: model.selectedOption,
-                        correctIndex: model.currentQuestion.correctIndex
-                    ) {
-                        withAnimation { model.select(pair.offset) }
+                .onChange(of: model.hasAnswered) { answered in
+                    if answered {
+                        withAnimation(.easeOut(duration: 0.45)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
+                .onChange(of: model.currentIndex) { _ in
+                    withAnimation { proxy.scrollTo("top", anchor: .top) }
+                }
             }
-
-            if model.hasAnswered {
-                explanationAndNext
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-
-            Spacer(minLength: 0)
         }
-        .padding(20)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model.hasAnswered)
-        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.currentIndex)
+    }
+
+    private var topBar: some View {
+        VStack(spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Text(model.island.emoji)
+                    Text("Level \(model.level.number)")
+                        .font(Theme.bold(16))
+                }
+                .foregroundColor(.white)
+                Spacer()
+                Text("\(model.currentIndex + 1)/\(model.totalQuestions)")
+                    .font(Theme.bold(15))
+                    .foregroundColor(.white)
+            }
+            ProgressBar(value: model.progress)
+        }
+    }
+
+    private var questionBubble: some View {
+        VStack(spacing: 14) {
+            Text(model.island.emoji).font(.system(size: 42))
+            Text(model.currentQuestion.prompt)
+                .font(Theme.bold(22))
+                .foregroundColor(Theme.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(22)
+        .bubbleCard()
+        .id(model.currentIndex)
+        .transition(.asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        ))
+    }
+
+    private var options: some View {
+        VStack(spacing: 12) {
+            ForEach(Array(model.currentQuestion.options.enumerated()), id: \.offset) { pair in
+                AnswerButton(
+                    text: pair.element,
+                    index: pair.offset,
+                    hasAnswered: model.hasAnswered,
+                    selectedOption: model.selectedOption,
+                    correctIndex: model.currentQuestion.correctIndex
+                ) {
+                    withAnimation { model.select(pair.offset) }
+                }
+            }
+        }
     }
 
     private var explanationAndNext: some View {
         VStack(spacing: 14) {
             if let explanation = model.currentQuestion.explanation {
-                HStack(alignment: .top, spacing: 10) {
-                    Text("💡").font(.system(size: 20))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Text("💡").font(.system(size: 20))
+                        Text("Did you know?")
+                            .font(Theme.bold(16))
+                            .foregroundColor(model.island.palette.end)
+                    }
                     Text(explanation)
                         .font(Theme.medium(15))
                         .foregroundColor(Theme.ink)
+                        .lineSpacing(4)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(16)
-                .bubbleCard(cornerRadius: 18, fill: Color.white.opacity(0.92))
+                .padding(18)
+                .bubbleCard(cornerRadius: 18)
             }
 
             Button {
@@ -163,7 +202,7 @@ struct QuizView: View {
 
 #Preview {
     NavigationStack {
-        QuizView(route: LevelRoute(islandID: 0, levelNumber: 1))
+        QuizView(route: LevelRoute(islandID: 2, levelNumber: 1))
             .environmentObject(GameProgress())
     }
 }
