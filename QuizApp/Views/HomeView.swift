@@ -2,106 +2,249 @@
 //  HomeView.swift
 //  QuizApp
 //
-//  Landing screen: a cheerful welcome plus a colorful grid of adventures.
+//  The Adventure Map — the app's home. Ten islands wind up a dotted trail
+//  over a bright ocean. Tap an unlocked island to dive into its levels.
 //
 
 import SwiftUI
 
 struct HomeView: View {
-    private let quizzes = QuizData.all
+    @EnvironmentObject private var progress: GameProgress
+    private let islands = QuizData.islands
     @State private var appeared = false
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 14),
-        GridItem(.flexible(), spacing: 14)
-    ]
+    private let rowHeight: CGFloat = 150
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.homeBackground
-                    .ignoresSafeArea()
+                MapBackground()
 
-                // Floating decorative bubbles in the background.
-                decorations
+                GeometryReader { geo in
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            mapHeader
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                .padding(.bottom, 4)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        header
-
-                        LazyVGrid(columns: columns, spacing: 14) {
-                            ForEach(Array(quizzes.enumerated()), id: \.element.id) { pair in
-                                let index = pair.offset
-                                let quiz = pair.element
-                                NavigationLink(value: quiz) {
-                                    CategoryCard(quiz: quiz)
-                                }
-                                .buttonStyle(PressableButtonStyle())
-                                .simultaneousGesture(
-                                    TapGesture().onEnded { Haptics.play(.light) }
-                                )
-                                .opacity(appeared ? 1 : 0)
-                                .scaleEffect(appeared ? 1 : 0.8)
-                                .animation(
-                                    .spring(response: 0.5, dampingFraction: 0.7)
-                                        .delay(Double(index) * 0.07),
-                                    value: appeared
-                                )
-                            }
+                            trail(width: geo.size.width)
                         }
                     }
-                    .padding(20)
                 }
             }
-            .navigationDestination(for: Quiz.self) { quiz in
-                QuizView(quiz: quiz)
+            .navigationDestination(for: Island.self) { island in
+                IslandView(island: island)
+            }
+            .navigationDestination(for: LevelRoute.self) { route in
+                QuizView(route: route)
             }
         }
         .onAppear { appeared = true }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text("Hi there!")
-                    .font(Theme.display(34))
-                    .foregroundColor(Theme.ink)
-                Text("👋")
-                    .font(.system(size: 32))
-                    .rotationEffect(.degrees(appeared ? 0 : -20))
-                    .animation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.3), value: appeared)
-            }
+    // MARK: - Header
 
-            Text("Pick a fun adventure and let's play! 🎉")
-                .font(Theme.medium(16))
-                .foregroundColor(Theme.inkSoft)
+    private var mapHeader: some View {
+        VStack(spacing: 6) {
+            Text("🗺️ Adventure Map")
+                .font(Theme.display(30))
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+
+            Text("Pick an island and start your quest!")
+                .font(Theme.medium(15))
+                .foregroundColor(.white.opacity(0.95))
+                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
         }
-        .padding(.top, 8)
+        .frame(maxWidth: .infinity)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : -12)
         .animation(.easeOut(duration: 0.5), value: appeared)
     }
 
-    /// Soft translucent circles that make the background feel playful.
-    private var decorations: some View {
-        ZStack {
-            Circle()
-                .fill(Color.white.opacity(0.35))
-                .frame(width: 140, height: 140)
-                .offset(x: -140, y: -260)
-            Circle()
-                .fill(Color.white.opacity(0.25))
-                .frame(width: 90, height: 90)
-                .offset(x: 150, y: -180)
-            Circle()
-                .fill(Color.white.opacity(0.20))
-                .frame(width: 120, height: 120)
-                .offset(x: 160, y: 320)
+    // MARK: - Winding trail of islands
+
+    private func trail(width: CGFloat) -> some View {
+        let count = islands.count
+        let contentHeight = CGFloat(count) * rowHeight + 40
+
+        return ZStack {
+            // Dashed path connecting the islands.
+            IslandPath(count: count, width: width, rowHeight: rowHeight)
+                .stroke(
+                    Color.white.opacity(0.7),
+                    style: StrokeStyle(lineWidth: 5, lineCap: .round, dash: [2, 16])
+                )
+
+            ForEach(Array(islands.enumerated()), id: \.element.id) { pair in
+                let index = pair.offset
+                let island = pair.element
+                let pos = nodePosition(index: index, width: width)
+                islandNode(island: island, index: index)
+                    .position(x: pos.x, y: pos.y)
+            }
         }
-        .ignoresSafeArea()
+        .frame(width: width, height: contentHeight)
+    }
+
+    private func nodePosition(index: Int, width: CGFloat) -> CGPoint {
+        let x = index.isMultiple(of: 2) ? width * 0.32 : width * 0.68
+        let y = CGFloat(index) * rowHeight + rowHeight / 2
+        return CGPoint(x: x, y: y)
+    }
+
+    @ViewBuilder
+    private func islandNode(island: Island, index: Int) -> some View {
+        let unlocked = progress.isIslandUnlocked(island: island, allIslands: islands)
+        let earned = progress.totalStars(for: island)
+        let maxStars = progress.maxStars(for: island)
+        let complete = progress.isIslandComplete(island)
+
+        Group {
+            if unlocked {
+                NavigationLink(value: island) {
+                    IslandBadge(island: island, number: index + 1,
+                                unlocked: true, complete: complete,
+                                earned: earned, maxStars: maxStars)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
+            } else {
+                IslandBadge(island: island, number: index + 1,
+                            unlocked: false, complete: false,
+                            earned: 0, maxStars: maxStars)
+            }
+        }
+        .opacity(appeared ? 1 : 0)
+        .scaleEffect(appeared ? 1 : 0.7)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(index) * 0.06),
+                   value: appeared)
+    }
+}
+
+// MARK: - Island badge
+
+private struct IslandBadge: View {
+    let island: Island
+    let number: Int
+    let unlocked: Bool
+    let complete: Bool
+    let earned: Int
+    let maxStars: Int
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(unlocked ? AnyShapeStyle(island.palette.gradient)
+                                   : AnyShapeStyle(Color.gray.opacity(0.55)))
+                    .frame(width: 96, height: 96)
+                    .overlay(Circle().stroke(.white, lineWidth: 5))
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
+
+                if unlocked {
+                    Text(island.emoji).font(.system(size: 46))
+                } else {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+
+                // Little number badge.
+                Text("\(number)")
+                    .font(Theme.bold(14))
+                    .foregroundColor(island.palette.end)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(.white))
+                    .overlay(Circle().stroke(island.palette.end.opacity(0.3), lineWidth: 1))
+                    .offset(x: -40, y: -34)
+
+                if complete {
+                    Text("👑")
+                        .font(.system(size: 26))
+                        .offset(y: -52)
+                }
+            }
+
+            VStack(spacing: 4) {
+                Text(island.name)
+                    .font(Theme.bold(16))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+
+                if unlocked {
+                    HStack(spacing: 3) {
+                        Image(systemName: "star.fill").font(.system(size: 11))
+                        Text("\(earned)/\(maxStars)").font(Theme.bold(12))
+                    }
+                    .foregroundColor(Theme.ink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(.white))
+                } else {
+                    Text("Locked")
+                        .font(Theme.bold(12))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.black.opacity(0.25)))
+                }
+            }
+        }
+        .frame(width: 150)
+    }
+}
+
+// MARK: - Connecting path shape
+
+/// A dashed zig-zag path linking the island nodes.
+private struct IslandPath: Shape {
+    let count: Int
+    let width: CGFloat
+    let rowHeight: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        for i in 0..<count {
+            let x = i.isMultiple(of: 2) ? width * 0.32 : width * 0.68
+            let y = CGFloat(i) * rowHeight + rowHeight / 2
+            let pt = CGPoint(x: x, y: y)
+            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+        }
+        return p
+    }
+}
+
+// MARK: - Ocean/adventure background
+
+private struct MapBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.40, green: 0.78, blue: 0.92),
+                    Color(red: 0.30, green: 0.62, blue: 0.85),
+                    Color(red: 0.24, green: 0.52, blue: 0.80)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            // Playful floating decorations.
+            Group {
+                Text("☁️").font(.system(size: 54)).offset(x: -120, y: -320)
+                Text("☁️").font(.system(size: 40)).offset(x: 130, y: -250)
+                Text("🌴").font(.system(size: 44)).offset(x: 140, y: 30)
+                Text("⛵️").font(.system(size: 40)).offset(x: -130, y: 160)
+                Text("🐚").font(.system(size: 30)).offset(x: 120, y: 330)
+                Text("🌊").font(.system(size: 36)).offset(x: -140, y: -60)
+            }
+            .opacity(0.55)
+        }
     }
 }
 
 #Preview {
-    HomeView()
+    HomeView().environmentObject(GameProgress())
 }

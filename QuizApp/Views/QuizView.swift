@@ -2,7 +2,7 @@
 //  QuizView.swift
 //  QuizApp
 //
-//  The active gameplay screen: a colorful, immersive quiz experience.
+//  Plays a single level's questions, themed in the island's colors.
 //
 
 import SwiftUI
@@ -11,15 +11,25 @@ struct QuizView: View {
     @StateObject private var model: QuizViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(quiz: Quiz) {
-        _model = StateObject(wrappedValue: QuizViewModel(quiz: quiz))
+    private let valid: Bool
+
+    init(route: LevelRoute) {
+        if let island = QuizData.island(id: route.islandID),
+           let level = island.level(route.levelNumber) {
+            _model = StateObject(wrappedValue: QuizViewModel(island: island, level: level))
+            valid = true
+        } else {
+            // Fallback so the initializer always has a value.
+            let island = QuizData.jungleKingdom
+            _model = StateObject(wrappedValue: QuizViewModel(island: island,
+                                                             level: island.levels[0]))
+            valid = false
+        }
     }
 
     var body: some View {
         ZStack {
-            // The whole screen glows with the category's colors.
-            model.quiz.palette.gradient
-                .ignoresSafeArea()
+            model.island.palette.gradient.ignoresSafeArea()
 
             if model.isFinished {
                 ResultView(model: model) { dismiss() }
@@ -54,38 +64,27 @@ struct QuizView: View {
 
     private var gameplay: some View {
         VStack(spacing: 18) {
-            // Top bar: category badge, progress + timer
+            // Top: level title + progress
             VStack(spacing: 12) {
                 HStack {
                     HStack(spacing: 6) {
-                        Text(model.quiz.emoji)
-                        Text(model.quiz.title)
-                            .font(Theme.bold(15))
+                        Text(model.island.emoji)
+                        Text("Level \(model.level.number)")
+                            .font(Theme.bold(16))
                     }
                     .foregroundColor(.white)
-
                     Spacer()
-
-                    TimerRing(
-                        timeRemaining: model.timeRemaining,
-                        total: QuizViewModel.secondsPerQuestion
-                    )
-                }
-
-                HStack(spacing: 12) {
-                    ProgressBar(value: model.progress)
                     Text("\(model.currentIndex + 1)/\(model.totalQuestions)")
-                        .font(Theme.bold(14))
+                        .font(Theme.bold(15))
                         .foregroundColor(.white)
                 }
+                ProgressBar(value: model.progress)
             }
             .padding(.top, 4)
 
-            // Question bubble (white card, dark text for easy reading).
+            // Question bubble
             VStack(spacing: 14) {
-                Text(model.quiz.emoji)
-                    .font(.system(size: 46))
-
+                Text(model.island.emoji).font(.system(size: 42))
                 Text(model.currentQuestion.prompt)
                     .font(Theme.bold(22))
                     .foregroundColor(Theme.ink)
@@ -95,7 +94,7 @@ struct QuizView: View {
             .frame(maxWidth: .infinity)
             .padding(22)
             .bubbleCard()
-            .id(model.currentIndex) // re-trigger transition each question
+            .id(model.currentIndex)
             .transition(.asymmetric(
                 insertion: .move(edge: .trailing).combined(with: .opacity),
                 removal: .move(edge: .leading).combined(with: .opacity)
@@ -116,7 +115,6 @@ struct QuizView: View {
                 }
             }
 
-            // Explanation + Next
             if model.hasAnswered {
                 explanationAndNext
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -133,8 +131,7 @@ struct QuizView: View {
         VStack(spacing: 14) {
             if let explanation = model.currentQuestion.explanation {
                 HStack(alignment: .top, spacing: 10) {
-                    Text("💡")
-                        .font(.system(size: 20))
+                    Text("💡").font(.system(size: 20))
                     Text(explanation)
                         .font(Theme.medium(15))
                         .foregroundColor(Theme.ink)
@@ -149,19 +146,15 @@ struct QuizView: View {
                 withAnimation { model.next() }
             } label: {
                 HStack {
-                    Text(model.isLastQuestion ? "See My Score!" : "Next")
+                    Text(model.isLastQuestion ? "See My Stars!" : "Next")
                         .font(Theme.bold(18))
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.title2)
+                    Image(systemName: "arrow.right.circle.fill").font(.title2)
                 }
-                .foregroundColor(model.quiz.palette.end)
+                .foregroundColor(model.island.palette.end)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white)
-                )
-                .shadow(color: Color.black.opacity(0.15), radius: 8, y: 5)
+                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white))
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 5)
             }
             .buttonStyle(PressableButtonStyle())
         }
@@ -170,6 +163,7 @@ struct QuizView: View {
 
 #Preview {
     NavigationStack {
-        QuizView(quiz: QuizData.journeyToSpace)
+        QuizView(route: LevelRoute(islandID: 0, levelNumber: 1))
+            .environmentObject(GameProgress())
     }
 }

@@ -2,39 +2,49 @@
 //  Quiz.swift
 //  QuizApp
 //
-//  A themed collection of questions.
+//  Core models for the Adventure Map: Islands made of Levels made of
+//  Questions. (Kept in this file so the Xcode project needs no changes.)
 //
 
 import SwiftUI
 
-/// A category of quiz, bundling questions with presentation metadata.
-struct Quiz: Identifiable, Hashable {
-    let id = UUID()
+/// One "island" on the adventure map — a themed world of levels.
+struct Island: Identifiable, Hashable {
+    /// Stable 0-based index used for progress keys and lookups.
+    let id: Int
 
-    /// Display name, e.g. "Science & Nature".
-    let title: String
+    /// Display name, e.g. "Jungle Kingdom".
+    let name: String
 
-    /// Short tagline shown on the category card.
-    let subtitle: String
-
-    /// A big, cute emoji mascot for this category (kid-friendly icon).
+    /// A big, cute emoji mascot for the island.
     let emoji: String
 
-    /// SF Symbol name used as a secondary/decorative icon.
-    let symbol: String
+    /// A second decorative emoji shown alongside the first.
+    let accentEmoji: String
 
-    /// The gradient palette used to theme this quiz throughout the app.
+    /// Short, friendly description shown when the island opens.
+    let blurb: String
+
+    /// The gradient palette that themes this island everywhere.
     let palette: Palette
 
-    /// The questions belonging to this quiz.
-    let questions: [Question]
+    /// Authored levels (each with its own questions).
+    let levels: [Level]
 
-    /// Number of questions, surfaced on the category card.
-    var questionCount: Int { questions.count }
+    /// How many level stops the trail shows (the full journey).
+    let totalLevels = 10
 
-    // Identity is based on the unique `id`, which is enough for navigation
-    // and avoids requiring every nested type to be Hashable.
-    static func == (lhs: Quiz, rhs: Quiz) -> Bool { lhs.id == rhs.id }
+    /// How many levels currently have real questions.
+    var authoredLevels: Int { levels.count }
+
+    /// Look up an authored level by its 1-based number.
+    func level(_ number: Int) -> Level? {
+        levels.first { $0.number == number }
+    }
+
+    // Identity by id keeps navigation simple and avoids requiring the
+    // nested types to be Hashable.
+    static func == (lhs: Island, rhs: Island) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
     /// A two-color gradient used for cards, headers and accents.
@@ -50,4 +60,26 @@ struct Quiz: Identifiable, Hashable {
             )
         }
     }
+}
+
+/// A single level within an island — a set of questions to answer.
+struct Level: Identifiable, Hashable {
+    /// 1-based level number (1...10).
+    let number: Int
+
+    /// The questions for this level (about ten).
+    let questions: [Question]
+
+    var id: Int { number }
+    var questionCount: Int { questions.count }
+
+    static func == (lhs: Level, rhs: Level) -> Bool { lhs.number == rhs.number }
+    func hash(into hasher: inout Hasher) { hasher.combine(number) }
+}
+
+/// A lightweight, Hashable route so we can push a specific level onto the
+/// navigation stack and rebuild the view model from it.
+struct LevelRoute: Hashable {
+    let islandID: Int
+    let levelNumber: Int
 }
