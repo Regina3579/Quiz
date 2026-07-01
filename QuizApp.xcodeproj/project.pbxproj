@@ -3,19 +3,50 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 56;
 	objects = {
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		A1000001000000000000002A /* QuizApp */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = QuizApp;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
+/* Begin PBXBuildFile section */
+		AB0000000000000000000002 /* QuizAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000001 /* QuizAppApp.swift */; };
+		AB0000000000000000000004 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000003 /* Question.swift */; };
+		AB0000000000000000000006 /* Quiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000005 /* Quiz.swift */; };
+		AB0000000000000000000008 /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000007 /* QuizViewModel.swift */; };
+		AB000000000000000000000A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000009 /* HomeView.swift */; };
+		AB000000000000000000000C /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000B /* QuizView.swift */; };
+		AB000000000000000000000E /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000D /* ResultView.swift */; };
+		AB0000000000000000000010 /* AnswerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000F /* AnswerButton.swift */; };
+		AB0000000000000000000012 /* CategoryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000011 /* CategoryCard.swift */; };
+		AB0000000000000000000014 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000013 /* ProgressBar.swift */; };
+		AB0000000000000000000016 /* TimerRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000015 /* TimerRing.swift */; };
+		AB0000000000000000000018 /* QuizData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000017 /* QuizData.swift */; };
+		AB000000000000000000001A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000019 /* Theme.swift */; };
+		AB000000000000000000001C /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000001B /* Haptics.swift */; };
+		AB000000000000000000001E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000001D /* Assets.xcassets */; };
+		AB0000000000000000000020 /* Preview Content in Resources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000001F /* Preview Content */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AB000000000000000000002C /* QuizApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuizApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0000000000000000000001 /* QuizAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizAppApp.swift; sourceTree = "<group>"; };
+		AB0000000000000000000003 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
+		AB0000000000000000000005 /* Quiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quiz.swift; sourceTree = "<group>"; };
+		AB0000000000000000000007 /* QuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizViewModel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000009 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		AB000000000000000000000B /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
+		AB000000000000000000000D /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
+		AB000000000000000000000F /* AnswerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerButton.swift; sourceTree = "<group>"; };
+		AB0000000000000000000011 /* CategoryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCard.swift; sourceTree = "<group>"; };
+		AB0000000000000000000013 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
+		AB0000000000000000000015 /* TimerRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerRing.swift; sourceTree = "<group>"; };
+		AB0000000000000000000017 /* QuizData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizData.swift; sourceTree = "<group>"; };
+		AB0000000000000000000019 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		AB000000000000000000001B /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		AB000000000000000000001D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AB000000000000000000001F /* Preview Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Preview Content"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A1000003000000000000002A /* Frameworks */ = {
+		AB000000000000000000002E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -25,18 +56,89 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1000004000000000000002A = {
+		AB0000000000000000000021 = {
 			isa = PBXGroup;
 			children = (
-				A1000001000000000000002A /* QuizApp */,
-				A1000005000000000000002A /* Products */,
+				AB0000000000000000000022 /* QuizApp */,
+				AB000000000000000000002A /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A1000005000000000000002A /* Products */ = {
+		AB0000000000000000000022 /* QuizApp */ = {
 			isa = PBXGroup;
 			children = (
-				A1000006000000000000002A /* QuizApp.app */,
+				AB0000000000000000000001 /* QuizAppApp.swift */,
+				AB0000000000000000000023 /* Models */,
+				AB0000000000000000000024 /* ViewModels */,
+				AB0000000000000000000025 /* Views */,
+				AB0000000000000000000027 /* Data */,
+				AB0000000000000000000028 /* Theme */,
+				AB000000000000000000001D /* Assets.xcassets */,
+				AB000000000000000000001F /* Preview Content */,
+			);
+			path = QuizApp;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000023 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000003 /* Question.swift */,
+				AB0000000000000000000005 /* Quiz.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000024 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000007 /* QuizViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000025 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000009 /* HomeView.swift */,
+				AB000000000000000000000B /* QuizView.swift */,
+				AB000000000000000000000D /* ResultView.swift */,
+				AB0000000000000000000026 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000026 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AB000000000000000000000F /* AnswerButton.swift */,
+				AB0000000000000000000011 /* CategoryCard.swift */,
+				AB0000000000000000000013 /* ProgressBar.swift */,
+				AB0000000000000000000015 /* TimerRing.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000027 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000017 /* QuizData.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		AB0000000000000000000028 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				AB0000000000000000000019 /* Theme.swift */,
+				AB000000000000000000001B /* Haptics.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		AB000000000000000000002A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AB000000000000000000002C /* QuizApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -44,83 +146,94 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1000007000000000000002A /* QuizApp */ = {
+		AB000000000000000000002B /* QuizApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1000008000000000000002A /* Build configuration list for PBXNativeTarget "QuizApp" */;
+			buildConfigurationList = AB0000000000000000000032 /* Build configuration list for PBXNativeTarget "QuizApp" */;
 			buildPhases = (
-				A1000009000000000000002A /* Sources */,
-				A1000003000000000000002A /* Frameworks */,
-				A100000A000000000000002A /* Resources */,
+				AB000000000000000000002D /* Sources */,
+				AB000000000000000000002E /* Frameworks */,
+				AB000000000000000000002F /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				A1000001000000000000002A /* QuizApp */,
-			);
 			name = QuizApp;
 			productName = QuizApp;
-			productReference = A1000006000000000000002A /* QuizApp.app */;
+			productReference = AB000000000000000000002C /* QuizApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		A100000B000000000000002A /* Project object */ = {
+		AB0000000000000000000030 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					A1000007000000000000002A = {
-						CreatedOnToolsVersion = 16.0;
+					AB000000000000000000002B = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
-			buildConfigurationList = A100000C000000000000002A /* Build configuration list for PBXProject "QuizApp" */;
-			compatibilityVersion = "Xcode 15.0";
+			buildConfigurationList = AB0000000000000000000031 /* Build configuration list for PBXProject "QuizApp" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = A1000004000000000000002A;
-			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = A1000005000000000000002A /* Products */;
+			mainGroup = AB0000000000000000000021;
+			productRefGroup = AB000000000000000000002A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A1000007000000000000002A /* QuizApp */,
+				AB000000000000000000002B /* QuizApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A100000A000000000000002A /* Resources */ = {
+		AB000000000000000000002F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0000000000000000000020 /* Preview Content in Resources */,
+				AB000000000000000000001E /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A1000009000000000000002A /* Sources */ = {
+		AB000000000000000000002D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0000000000000000000002 /* QuizAppApp.swift in Sources */,
+				AB0000000000000000000004 /* Question.swift in Sources */,
+				AB0000000000000000000006 /* Quiz.swift in Sources */,
+				AB0000000000000000000008 /* QuizViewModel.swift in Sources */,
+				AB000000000000000000000A /* HomeView.swift in Sources */,
+				AB000000000000000000000C /* QuizView.swift in Sources */,
+				AB000000000000000000000E /* ResultView.swift in Sources */,
+				AB0000000000000000000010 /* AnswerButton.swift in Sources */,
+				AB0000000000000000000012 /* CategoryCard.swift in Sources */,
+				AB0000000000000000000014 /* ProgressBar.swift in Sources */,
+				AB0000000000000000000016 /* TimerRing.swift in Sources */,
+				AB0000000000000000000018 /* QuizData.swift in Sources */,
+				AB000000000000000000001A /* Theme.swift in Sources */,
+				AB000000000000000000001C /* Haptics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		A100000D000000000000002A /* Debug */ = {
+		AB0000000000000000000033 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -172,7 +285,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -183,7 +296,7 @@
 			};
 			name = Debug;
 		};
-		A100000E000000000000002A /* Release */ = {
+		AB0000000000000000000034 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -229,7 +342,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -239,7 +352,7 @@
 			};
 			name = Release;
 		};
-		A100000F000000000000002A /* Debug */ = {
+		AB0000000000000000000035 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -267,7 +380,7 @@
 			};
 			name = Debug;
 		};
-		A1000010000000000000002A /* Release */ = {
+		AB0000000000000000000036 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -298,25 +411,26 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A100000C000000000000002A /* Build configuration list for PBXProject "QuizApp" */ = {
+		AB0000000000000000000031 /* Build configuration list for PBXProject "QuizApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A100000D000000000000002A /* Debug */,
-				A100000E000000000000002A /* Release */,
+				AB0000000000000000000033 /* Debug */,
+				AB0000000000000000000034 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1000008000000000000002A /* Build configuration list for PBXNativeTarget "QuizApp" */ = {
+		AB0000000000000000000032 /* Build configuration list for PBXNativeTarget "QuizApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A100000F000000000000002A /* Debug */,
-				A1000010000000000000002A /* Release */,
+				AB0000000000000000000035 /* Debug */,
+				AB0000000000000000000036 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
 	};
-	rootObject = A100000B000000000000002A /* Project object */;
+	rootObject = AB0000000000000000000030 /* Project object */;
 }

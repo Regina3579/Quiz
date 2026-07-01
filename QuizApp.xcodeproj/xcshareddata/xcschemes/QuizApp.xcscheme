@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1600"
+   LastUpgradeVersion = "1500"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A1000007000000000000002A"
+               BlueprintIdentifier = "AB000000000000000000002B"
                BuildableName = "QuizApp.app"
                BlueprintName = "QuizApp"
                ReferencedContainer = "container:QuizApp.xcodeproj">
@@ -44,7 +44,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A1000007000000000000002A"
+            BlueprintIdentifier = "AB000000000000000000002B"
             BuildableName = "QuizApp.app"
             BlueprintName = "QuizApp"
             ReferencedContainer = "container:QuizApp.xcodeproj">
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A1000007000000000000002A"
+            BlueprintIdentifier = "AB000000000000000000002B"
             BuildableName = "QuizApp.app"
             BlueprintName = "QuizApp"
             ReferencedContainer = "container:QuizApp.xcodeproj">
