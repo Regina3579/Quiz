@@ -17,7 +17,6 @@
 		AB000000000000000000000C /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000B /* QuizView.swift */; };
 		AB000000000000000000000E /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000D /* ResultView.swift */; };
 		AB0000000000000000000010 /* AnswerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000F /* AnswerButton.swift */; };
-		AB0000000000000000000012 /* CategoryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000011 /* CategoryCard.swift */; };
 		AB0000000000000000000014 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000013 /* ProgressBar.swift */; };
 		AB0000000000000000000016 /* TimerRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000015 /* TimerRing.swift */; };
 		AB0000000000000000000038 /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000037 /* ConfettiView.swift */; };
@@ -40,7 +39,6 @@
 		AB000000000000000000000B /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
 		AB000000000000000000000D /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		AB000000000000000000000F /* AnswerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerButton.swift; sourceTree = "<group>"; };
-		AB0000000000000000000011 /* CategoryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryCard.swift; sourceTree = "<group>"; };
 		AB0000000000000000000013 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
 		AB0000000000000000000015 /* TimerRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerRing.swift; sourceTree = "<group>"; };
 		AB0000000000000000000037 /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
@@ -119,7 +117,6 @@
 			isa = PBXGroup;
 			children = (
 				AB000000000000000000000F /* AnswerButton.swift */,
-				AB0000000000000000000011 /* CategoryCard.swift */,
 				AB0000000000000000000037 /* ConfettiView.swift */,
 				AB0000000000000000000013 /* ProgressBar.swift */,
 				AB0000000000000000000015 /* TimerRing.swift */,
@@ -232,7 +229,6 @@
 				AB000000000000000000000C /* QuizView.swift in Sources */,
 				AB000000000000000000000E /* ResultView.swift in Sources */,
 				AB0000000000000000000010 /* AnswerButton.swift in Sources */,
-				AB0000000000000000000012 /* CategoryCard.swift in Sources */,
 				AB0000000000000000000014 /* ProgressBar.swift in Sources */,
 				AB0000000000000000000016 /* TimerRing.swift in Sources */,
 				AB0000000000000000000038 /* ConfettiView.swift in Sources */,
