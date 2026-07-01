@@ -2,7 +2,7 @@
 //  ProgressBar.swift
 //  QuizApp
 //
-//  A smooth, animated progress indicator for quiz advancement.
+//  A chunky, cute progress indicator for quiz advancement.
 //
 
 import SwiftUI
@@ -10,20 +10,19 @@ import SwiftUI
 struct ProgressBar: View {
     /// Progress value from 0…1.
     let value: Double
-    let gradient: LinearGradient
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.12))
+                    .fill(Color.white.opacity(0.30))
 
                 Capsule()
-                    .fill(gradient)
-                    .frame(width: max(0, geo.size.width * value))
+                    .fill(Color.white)
+                    .frame(width: max(12, geo.size.width * value))
                     .animation(.spring(response: 0.5, dampingFraction: 0.8), value: value)
             }
         }
-        .frame(height: 10)
+        .frame(height: 12)
     }
 }

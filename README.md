@@ -1,20 +1,20 @@
-# QuizSpark ✨
+# QuizSpark ✨ — A Fun Quiz Adventure for Kids
 
-A beautiful, animated quiz app for iOS, built entirely in **SwiftUI**.
+A bright, cute and playful quiz app for kids, built entirely in **SwiftUI**.
 
 <p align="center">
-  <em>Pick a category, beat the clock, and see how much you really know.</em>
+  <em>Pick a fun adventure, answer cheerful questions, and earn shiny stars!</em>
 </p>
 
 ## Features
 
-- 🎨 **Polished, modern UI** — frosted-glass cards, vibrant per-category gradients and a deep space-themed background.
-- 🧠 **Four quiz categories** — Science & Nature, World Geography, World History, and Tech & Code.
-- ⏱️ **Per-question timer** — a color-shifting countdown ring keeps the pressure on (auto-locks at 0).
-- ✅ **Instant feedback** — answers animate to green/red with a checkmark or cross, plus a short explanation.
-- 📊 **Animated results screen** — a score ring fills up, a recap grid shows every question, and the headline adapts to your performance.
-- 📳 **Haptic feedback** — success/error taps make every answer feel tactile.
-- 🌀 **Springy animations & transitions** throughout, with staggered entrances.
+- 🎨 **Kid-friendly design** — candy-colored backgrounds, big emoji mascots, rounded bubbly typography and bouncy springy animations.
+- 🗺️ **Eight playful adventures** — 🌍 Explore the World, 🚀 Journey to Space, 🦁 Wild Kingdom, 🦕 Dino Adventure, 🔬 Science Lab, ⏰ Time Machine, 🧠 Brain Challenge and ⭐ Daily Challenge.
+- ⭐ **Star rewards** — kids earn up to 3 stars per quiz, revealed with a fun pop animation.
+- 🎉 **Confetti celebration** — a shower of emoji confetti rains down for great scores.
+- ✅ **Gentle, encouraging feedback** — answers turn green/red with friendly explanations and cheerful messages ("Superstar!", "Great Job!").
+- ⏱️ **Relaxed timer** — a soft 30-second ring so little ones never feel rushed.
+- 📳 **Haptic feedback** and a colorful, immersive per-category theme throughout.
 
 ## Requirements
 
@@ -35,22 +35,23 @@ QuizApp/
 ├─ QuizAppApp.swift          # App entry point
 ├─ Models/
 │  ├─ Question.swift         # A single question + answers
-│  └─ Quiz.swift             # A themed category of questions
+│  └─ Quiz.swift             # A themed adventure (emoji, colors, questions)
 ├─ ViewModels/
 │  └─ QuizViewModel.swift    # Game state machine (timer, score, flow)
 ├─ Views/
-│  ├─ HomeView.swift         # Category list / landing screen
-│  ├─ QuizView.swift         # Active gameplay screen
-│  ├─ ResultView.swift       # End-of-quiz summary
+│  ├─ HomeView.swift         # Cheerful welcome + grid of adventures
+│  ├─ QuizView.swift         # Colorful gameplay screen
+│  ├─ ResultView.swift       # Star rewards + confetti celebration
 │  └─ Components/            # Reusable building blocks
 │     ├─ AnswerButton.swift
 │     ├─ CategoryCard.swift
+│     ├─ ConfettiView.swift
 │     ├─ ProgressBar.swift
 │     └─ TimerRing.swift
 ├─ Data/
-│  └─ QuizData.swift         # Bundled sample questions
+│  └─ QuizData.swift         # The eight kid-friendly adventures
 ├─ Theme/
-│  ├─ Theme.swift            # Colors, gradients, glass-card styling
+│  ├─ Theme.swift            # Bright colors, rounded fonts, bubble cards
 │  └─ Haptics.swift          # Haptic feedback helper
 └─ Assets.xcassets          # App icon & accent color
 ```
@@ -73,16 +74,17 @@ Everything is data-driven. To add a category, append a new `Quiz` to
 
 ```swift
 Quiz(
-    title: "Movies",
-    subtitle: "Lights, camera, action",
-    symbol: "film.fill",                // any SF Symbol
-    palette: .init(start: .pink, end: .purple),
+    title: "Under the Sea",
+    subtitle: "Fish, waves & treasure",
+    emoji: "🐠",                        // big cute mascot
+    symbol: "water.waves",              // any SF Symbol
+    palette: .init(start: .cyan, end: .blue),
     questions: [
         Question(
-            prompt: "Who directed Inception?",
-            options: ["Spielberg", "Nolan", "Cameron", "Scorsese"],
+            prompt: "Which sea animal has eight arms?",
+            options: ["Fish", "Octopus", "Crab", "Whale"],
             correctIndex: 1,
-            explanation: "Christopher Nolan directed Inception (2010)."
+            explanation: "An octopus has eight wiggly arms!"
         )
         // ...more questions
     ]

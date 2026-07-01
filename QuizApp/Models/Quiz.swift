@@ -17,7 +17,10 @@ struct Quiz: Identifiable, Hashable {
     /// Short tagline shown on the category card.
     let subtitle: String
 
-    /// SF Symbol name used as the category icon.
+    /// A big, cute emoji mascot for this category (kid-friendly icon).
+    let emoji: String
+
+    /// SF Symbol name used as a secondary/decorative icon.
     let symbol: String
 
     /// The gradient palette used to theme this quiz throughout the app.

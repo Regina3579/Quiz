@@ -2,7 +2,7 @@
 //  ResultView.swift
 //  QuizApp
 //
-//  End-of-quiz summary with an animated score ring and a recap grid.
+//  A joyful end-of-quiz celebration with stars, confetti and a recap.
 //
 
 import SwiftUI
@@ -12,92 +12,106 @@ struct ResultView: View {
     /// Called when the player chooses to leave back to the home screen.
     let onExit: () -> Void
 
-    @State private var ringProgress: Double = 0
     @State private var showContent = false
+    @State private var starsShown = 0
+    @State private var celebrate = false
 
-    // MARK: - Copy that adapts to performance
+    // MARK: - Rewards
 
-    private var headline: String {
+    /// Stars earned, 0…3, based on how many answers were correct.
+    private var starsEarned: Int {
         switch model.scorePercent {
-        case 100: return "Perfect! 🏆"
-        case 80...: return "Brilliant! 🌟"
-        case 60...: return "Well done! 👏"
-        case 40...: return "Not bad! 💪"
-        default: return "Keep practicing! 📚"
+        case 80...: return 3
+        case 50...: return 2
+        case 1...: return 1
+        default: return 0
         }
     }
 
-    private var subtitle: String {
-        "You scored \(model.score) out of \(model.totalQuestions)"
+    private var heroEmoji: String {
+        switch starsEarned {
+        case 3: return "🏆"
+        case 2: return "🎉"
+        case 1: return "😄"
+        default: return "🌱"
+        }
+    }
+
+    private var headline: String {
+        switch starsEarned {
+        case 3: return "Superstar!"
+        case 2: return "Great Job!"
+        case 1: return "Nice Try!"
+        default: return "Let's Try Again!"
+        }
     }
 
     var body: some View {
-        VStack(spacing: 28) {
-            Spacer(minLength: 0)
+        ZStack {
+            VStack(spacing: 22) {
+                Spacer(minLength: 0)
 
-            Text(headline)
-                .font(.largeTitle.weight(.heavy))
-                .foregroundStyle(Theme.textPrimary)
-                .multilineTextAlignment(.center)
-                .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 12)
+                Text(heroEmoji)
+                    .font(.system(size: 90))
+                    .scaleEffect(showContent ? 1 : 0.3)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.5), value: showContent)
 
-            scoreRing
+                Text(headline)
+                    .font(Theme.display(36))
+                    .foregroundColor(.white)
+                    .opacity(showContent ? 1 : 0)
 
-            Text(subtitle)
-                .font(.title3.weight(.medium))
-                .foregroundStyle(Theme.textSecondary)
-                .opacity(showContent ? 1 : 0)
+                stars
 
-            recapGrid
-                .opacity(showContent ? 1 : 0)
+                Text("You got \(model.score) out of \(model.totalQuestions)!")
+                    .font(Theme.bold(20))
+                    .foregroundColor(Theme.onColorSoft)
+                    .opacity(showContent ? 1 : 0)
 
-            Spacer(minLength: 0)
+                recapRow
+                    .opacity(showContent ? 1 : 0)
 
-            actions
-                .opacity(showContent ? 1 : 0)
+                Spacer(minLength: 0)
+
+                actions
+                    .opacity(showContent ? 1 : 0)
+            }
+            .padding(24)
+
+            // Celebration confetti for 2+ stars.
+            if starsEarned >= 2 {
+                ConfettiView(isActive: celebrate)
+                    .ignoresSafeArea()
+            }
         }
-        .padding(24)
         .onAppear { animateIn() }
     }
 
-    private var scoreRing: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.white.opacity(0.12), lineWidth: 16)
-
-            Circle()
-                .trim(from: 0, to: ringProgress)
-                .stroke(
-                    model.quiz.palette.gradient,
-                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-
-            VStack(spacing: 2) {
-                Text("\(model.scorePercent)%")
-                    .font(.system(size: 44, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Theme.textPrimary)
-                    .contentTransition(.numericText())
-                Text("score")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
+    private var stars: some View {
+        HStack(spacing: 14) {
+            ForEach(0..<3, id: \.self) { i in
+                Image(systemName: i < starsShown ? "star.fill" : "star")
+                    .font(.system(size: 44))
+                    .foregroundColor(i < starsShown ? Theme.star : Color.white.opacity(0.4))
+                    .scaleEffect(i < starsShown ? 1 : 0.7)
+                    .animation(
+                        .spring(response: 0.4, dampingFraction: 0.5)
+                            .delay(Double(i) * 0.2),
+                        value: starsShown
+                    )
             }
         }
-        .frame(width: 200, height: 200)
-        .shadow(color: model.quiz.palette.end.opacity(0.4), radius: 20)
     }
 
-    private var recapGrid: some View {
+    private var recapRow: some View {
         HStack(spacing: 8) {
             ForEach(Array(model.results.enumerated()), id: \.offset) { pair in
                 Image(systemName: pair.element ? "checkmark" : "xmark")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.white)
+                    .font(Theme.bold(13))
+                    .foregroundColor(pair.element ? Theme.correct : Theme.incorrect)
                     .frame(width: 34, height: 34)
-                    .background(
-                        Circle().fill(pair.element ? Theme.correct : Theme.incorrect)
-                    )
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: Color.black.opacity(0.12), radius: 4, y: 2)
             }
         }
     }
@@ -107,21 +121,22 @@ struct ResultView: View {
             Button {
                 Haptics.play(.light)
                 withAnimation {
-                    ringProgress = 0
                     showContent = false
+                    starsShown = 0
+                    celebrate = false
                     model.restart()
                 }
             } label: {
-                Label("Play Again", systemImage: "arrow.clockwise")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(model.quiz.palette.gradient)
-                    )
-                    .shadow(color: model.quiz.palette.end.opacity(0.5), radius: 12, y: 6)
+                HStack {
+                    Image(systemName: "arrow.clockwise")
+                    Text("Play Again")
+                }
+                .font(Theme.bold(19))
+                .foregroundColor(model.quiz.palette.end)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 17)
+                .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
+                .shadow(color: Color.black.opacity(0.15), radius: 8, y: 5)
             }
             .buttonStyle(PressableButtonStyle())
 
@@ -129,12 +144,22 @@ struct ResultView: View {
                 Haptics.play(.light)
                 onExit()
             } label: {
-                Text("Back to Categories")
-                    .font(.headline)
-                    .foregroundStyle(Theme.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .glassCard(cornerRadius: 18)
+                HStack {
+                    Image(systemName: "house.fill")
+                    Text("Back Home")
+                }
+                .font(Theme.bold(18))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.white.opacity(0.22))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.6), lineWidth: 2)
+                )
             }
             .buttonStyle(PressableButtonStyle())
         }
@@ -146,18 +171,20 @@ struct ResultView: View {
         withAnimation(.easeOut(duration: 0.5)) {
             showContent = true
         }
-        withAnimation(.easeOut(duration: 1.0).delay(0.2)) {
-            ringProgress = Double(model.score) / Double(max(1, model.totalQuestions))
+        // Pop the stars in one by one, then fire confetti.
+        withAnimation(.easeOut(duration: 0.4).delay(0.4)) {
+            starsShown = starsEarned
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            celebrate = true
+            if starsEarned >= 2 { Haptics.play(.success) }
         }
     }
 }
 
 #Preview {
     ZStack {
-        Theme.backgroundGradient.ignoresSafeArea()
-        ResultView(model: {
-            let m = QuizViewModel(quiz: QuizData.scienceQuiz)
-            return m
-        }()) {}
+        QuizData.journeyToSpace.palette.gradient.ignoresSafeArea()
+        ResultView(model: QuizViewModel(quiz: QuizData.journeyToSpace)) {}
     }
 }

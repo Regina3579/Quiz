@@ -13,7 +13,8 @@ import SwiftUI
 final class QuizViewModel: ObservableObject {
 
     /// Seconds allowed per question before it auto-locks.
-    static let secondsPerQuestion = 20
+    /// Generous so young kids never feel rushed.
+    static let secondsPerQuestion = 30
 
     let quiz: Quiz
 

@@ -2,7 +2,7 @@
 //  QuizView.swift
 //  QuizApp
 //
-//  The active gameplay screen: question, options, timer and progress.
+//  The active gameplay screen: a colorful, immersive quiz experience.
 //
 
 import SwiftUI
@@ -17,7 +17,8 @@ struct QuizView: View {
 
     var body: some View {
         ZStack {
-            Theme.backgroundGradient
+            // The whole screen glows with the category's colors.
+            model.quiz.palette.gradient
                 .ignoresSafeArea()
 
             if model.isFinished {
@@ -40,8 +41,10 @@ struct QuizView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.headline)
-                            .foregroundStyle(Theme.textPrimary)
+                            .font(Theme.bold(16))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.25)))
                     }
                 }
             }
@@ -50,36 +53,48 @@ struct QuizView: View {
     }
 
     private var gameplay: some View {
-        VStack(spacing: 20) {
-            // Top bar: progress + timer
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Question \(model.currentIndex + 1) of \(model.totalQuestions)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                    ProgressBar(value: model.progress, gradient: model.quiz.palette.gradient)
-                }
-                TimerRing(
-                    timeRemaining: model.timeRemaining,
-                    total: QuizViewModel.secondsPerQuestion
-                )
-            }
-            .padding(.top, 8)
+        VStack(spacing: 18) {
+            // Top bar: category badge, progress + timer
+            VStack(spacing: 12) {
+                HStack {
+                    HStack(spacing: 6) {
+                        Text(model.quiz.emoji)
+                        Text(model.quiz.title)
+                            .font(Theme.bold(15))
+                    }
+                    .foregroundColor(.white)
 
-            // Question card
-            VStack(alignment: .leading, spacing: 12) {
-                Image(systemName: model.quiz.symbol)
-                    .font(.title2)
-                    .foregroundStyle(model.quiz.palette.end)
+                    Spacer()
+
+                    TimerRing(
+                        timeRemaining: model.timeRemaining,
+                        total: QuizViewModel.secondsPerQuestion
+                    )
+                }
+
+                HStack(spacing: 12) {
+                    ProgressBar(value: model.progress)
+                    Text("\(model.currentIndex + 1)/\(model.totalQuestions)")
+                        .font(Theme.bold(14))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(.top, 4)
+
+            // Question bubble (white card, dark text for easy reading).
+            VStack(spacing: 14) {
+                Text(model.quiz.emoji)
+                    .font(.system(size: 46))
 
                 Text(model.currentQuestion.prompt)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
+                    .font(Theme.bold(22))
+                    .foregroundColor(Theme.ink)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Theme.cardPadding)
-            .glassCard()
+            .frame(maxWidth: .infinity)
+            .padding(22)
+            .bubbleCard()
             .id(model.currentIndex) // re-trigger transition each question
             .transition(.asymmetric(
                 insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -118,15 +133,15 @@ struct QuizView: View {
         VStack(spacing: 14) {
             if let explanation = model.currentQuestion.explanation {
                 HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "lightbulb.fill")
-                        .foregroundStyle(.yellow)
+                    Text("💡")
+                        .font(.system(size: 20))
                     Text(explanation)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.textSecondary)
+                        .font(Theme.medium(15))
+                        .foregroundColor(Theme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(14)
-                .glassCard(cornerRadius: 16)
+                .padding(16)
+                .bubbleCard(cornerRadius: 18, fill: Color.white.opacity(0.92))
             }
 
             Button {
@@ -134,19 +149,19 @@ struct QuizView: View {
                 withAnimation { model.next() }
             } label: {
                 HStack {
-                    Text(model.isLastQuestion ? "See Results" : "Next Question")
-                        .font(.headline)
-                    Image(systemName: "arrow.right")
-                        .font(.headline)
+                    Text(model.isLastQuestion ? "See My Score!" : "Next")
+                        .font(Theme.bold(18))
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.title2)
                 }
-                .foregroundStyle(.white)
+                .foregroundColor(model.quiz.palette.end)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(model.quiz.palette.gradient)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white)
                 )
-                .shadow(color: model.quiz.palette.end.opacity(0.5), radius: 12, y: 6)
+                .shadow(color: Color.black.opacity(0.15), radius: 8, y: 5)
             }
             .buttonStyle(PressableButtonStyle())
         }
@@ -155,6 +170,6 @@ struct QuizView: View {
 
 #Preview {
     NavigationStack {
-        QuizView(quiz: QuizData.scienceQuiz)
+        QuizView(quiz: QuizData.journeyToSpace)
     }
 }
