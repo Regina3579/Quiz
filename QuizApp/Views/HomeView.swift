@@ -9,7 +9,6 @@ import SwiftUI
 
 struct HomeView: View {
     private let quizzes = QuizData.all
-    @State private var selectedQuiz: Quiz?
     @State private var appeared = false
 
     var body: some View {
@@ -26,13 +25,15 @@ struct HomeView: View {
                             ForEach(Array(quizzes.enumerated()), id: \.element.id) { pair in
                                 let index = pair.offset
                                 let quiz = pair.element
-                                Button {
-                                    Haptics.play(.light)
-                                    selectedQuiz = quiz
-                                } label: {
+                                // Value-based navigation (iOS 16+): the link
+                                // pushes the matching `navigationDestination`.
+                                NavigationLink(value: quiz) {
                                     CategoryCard(quiz: quiz)
                                 }
                                 .buttonStyle(PressableButtonStyle())
+                                .simultaneousGesture(
+                                    TapGesture().onEnded { Haptics.play(.light) }
+                                )
                                 .opacity(appeared ? 1 : 0)
                                 .offset(y: appeared ? 0 : 20)
                                 .animation(
@@ -46,7 +47,7 @@ struct HomeView: View {
                     .padding(20)
                 }
             }
-            .navigationDestination(item: $selectedQuiz) { quiz in
+            .navigationDestination(for: Quiz.self) { quiz in
                 QuizView(quiz: quiz)
             }
         }
