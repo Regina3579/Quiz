@@ -13,6 +13,11 @@ import SwiftUI
 @MainActor
 final class GameProgress: ObservableObject {
 
+    /// TESTING: when true, every island and every authored level is unlocked
+    /// so the whole game can be explored freely. Set back to false to restore
+    /// the normal "unlock as you go" progression.
+    static let unlockEverything = true
+
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
 
@@ -49,8 +54,10 @@ final class GameProgress: ObservableObject {
     /// Whether a level can be played: it must be authored, its island
     /// unlocked, and the previous level cleared (level 1 is always open).
     func isLevelUnlocked(island: Island, level: Int, allIslands: [Island]) -> Bool {
-        guard isIslandUnlocked(island: island, allIslands: allIslands) else { return false }
+        // Still require the level to actually have questions.
         guard level <= island.authoredLevels else { return false }
+        if Self.unlockEverything { return true }
+        guard isIslandUnlocked(island: island, allIslands: allIslands) else { return false }
         if level <= 1 { return true }
         return isCleared(islandID: island.id, level: level - 1)
     }
@@ -64,6 +71,7 @@ final class GameProgress: ObservableObject {
     /// The first island is always open; later islands open once the
     /// previous island is complete.
     func isIslandUnlocked(island: Island, allIslands: [Island]) -> Bool {
+        if Self.unlockEverything { return true }
         guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return false }
         if index == 0 { return true }
         return isIslandComplete(allIslands[index - 1])
