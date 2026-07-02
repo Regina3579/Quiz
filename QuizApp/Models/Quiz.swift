@@ -24,7 +24,8 @@ struct Island: Identifiable, Hashable {
 
     /// Optional asset-catalog image name for the island's artwork. When set,
     /// it's shown instead of the emoji on the map and island header.
-    let imageName: String? = nil
+    /// (A `var` with a default so the memberwise initializer accepts it.)
+    var imageName: String? = nil
 
     /// Short, friendly description shown when the island opens.
     let blurb: String
