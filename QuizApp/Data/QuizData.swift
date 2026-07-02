@@ -41,6 +41,7 @@ enum QuizData {
         name: "Jungle Kingdom",
         emoji: "🦁",
         accentEmoji: "🌳",
+        imageName: "IslandJungle",
         blurb: "Explore amazing animals and wildlife!",
         palette: .init(
             start: Color(red: 0.36, green: 0.80, blue: 0.44),
@@ -388,6 +389,7 @@ enum QuizData {
         name: "Galaxy Quest",
         emoji: "🚀",
         accentEmoji: "🌌",
+        imageName: "IslandGalaxy",
         blurb: "Journey through planets, stars and space!",
         palette: .init(
             start: Color(red: 0.44, green: 0.36, blue: 0.95),
@@ -733,6 +735,7 @@ enum QuizData {
         name: "Dino Valley",
         emoji: "🦕",
         accentEmoji: "🦖",
+        imageName: "IslandDino",
         blurb: "Travel back to the age of dinosaurs!",
         palette: .init(
             start: Color(red: 0.52, green: 0.78, blue: 0.30),
@@ -1079,6 +1082,7 @@ enum QuizData {
         name: "Ocean Paradise",
         emoji: "🐬",
         accentEmoji: "🌊",
+        imageName: "IslandOcean",
         blurb: "Dive into the amazing underwater world!",
         palette: .init(
             start: Color(red: 0.24, green: 0.74, blue: 0.92),
@@ -1127,6 +1131,7 @@ enum QuizData {
         name: "Explorer's Trail",
         emoji: "🧭",
         accentEmoji: "🌍",
+        imageName: "IslandExplorer",
         blurb: "Discover countries, flags and landmarks!",
         palette: .init(
             start: Color(red: 0.98, green: 0.66, blue: 0.28),

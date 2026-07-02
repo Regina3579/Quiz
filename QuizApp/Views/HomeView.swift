@@ -136,19 +136,34 @@ private struct IslandBadge: View {
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
-                Circle()
-                    .fill(unlocked ? AnyShapeStyle(island.palette.gradient)
-                                   : AnyShapeStyle(Color.gray.opacity(0.55)))
-                    .frame(width: 96, height: 96)
-                    .overlay(Circle().stroke(.white, lineWidth: 5))
-                    .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
-
-                if unlocked {
-                    Text(island.emoji).font(.system(size: 46))
+                // Artwork if the island has it, otherwise a colored emoji disc.
+                if let imageName = island.imageName {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 96, height: 96)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(.white, lineWidth: 5))
+                        .grayscale(unlocked ? 0 : 1)
+                        .opacity(unlocked ? 1 : 0.55)
+                        .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
                 } else {
+                    Circle()
+                        .fill(unlocked ? AnyShapeStyle(island.palette.gradient)
+                                       : AnyShapeStyle(Color.gray.opacity(0.55)))
+                        .frame(width: 96, height: 96)
+                        .overlay(Circle().stroke(.white, lineWidth: 5))
+                        .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
+                    if unlocked {
+                        Text(island.emoji).font(.system(size: 46))
+                    }
+                }
+
+                if !unlocked {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 34, weight: .bold))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.5), radius: 3)
                 }
 
                 // Little number badge.

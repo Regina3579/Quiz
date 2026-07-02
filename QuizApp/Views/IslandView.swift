@@ -55,7 +55,17 @@ struct IslandView: View {
 
     private var header: some View {
         VStack(spacing: 8) {
-            Text(island.emoji).font(.system(size: 60))
+            if let imageName = island.imageName {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 110, height: 110)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(.white, lineWidth: 4))
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+            } else {
+                Text(island.emoji).font(.system(size: 60))
+            }
             Text(island.name)
                 .font(Theme.display(28))
                 .foregroundColor(.white)

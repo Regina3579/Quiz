@@ -66,7 +66,8 @@ final class QuizViewModel: ObservableObject {
         if correct { score += 1 }
         results.append(correct)
 
-        Haptics.play(correct ? .success : .error)
+        // Cheery sound + vibration for correct, buzzer + vibration for wrong.
+        if correct { Sound.correct() } else { Sound.wrong() }
     }
 
     func next() {

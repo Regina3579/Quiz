@@ -22,6 +22,10 @@ struct Island: Identifiable, Hashable {
     /// A second decorative emoji shown alongside the first.
     let accentEmoji: String
 
+    /// Optional asset-catalog image name for the island's artwork. When set,
+    /// it's shown instead of the emoji on the map and island header.
+    let imageName: String? = nil
+
     /// Short, friendly description shown when the island opens.
     let blurb: String
 
