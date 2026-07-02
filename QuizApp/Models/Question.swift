@@ -26,13 +26,9 @@ struct Question: Identifiable, Equatable {
 
     init(prompt: String, options: [String], correctIndex: Int, explanation: String? = nil) {
         self.prompt = prompt
+        self.options = options
+        self.correctIndex = correctIndex
         self.explanation = explanation
-        // Shuffle the options so the correct answer isn't always in the same
-        // spot (kids can't guess by position, and replays stay fresh).
-        let correct = options[correctIndex]
-        let shuffled = options.shuffled()
-        self.options = shuffled
-        self.correctIndex = shuffled.firstIndex(of: correct) ?? correctIndex
     }
 
     /// The text of the correct answer.
