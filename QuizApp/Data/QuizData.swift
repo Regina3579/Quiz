@@ -1180,6 +1180,7 @@ enum QuizData {
         name: "Blossom Garden",
         emoji: "🌺",
         accentEmoji: "🦋",
+        imageName: "IslandBlossom",
         blurb: "Flowers, trees, birds and butterflies!",
         palette: .init(
             start: Color(red: 0.98, green: 0.52, blue: 0.72),
@@ -1228,6 +1229,7 @@ enum QuizData {
         name: "Science Lab",
         emoji: "🔬",
         accentEmoji: "⚗️",
+        imageName: "IslandScience",
         blurb: "Experiments, inventions and robots!",
         palette: .init(
             start: Color(red: 0.30, green: 0.72, blue: 0.98),
@@ -1276,6 +1278,7 @@ enum QuizData {
         name: "Brain Castle",
         emoji: "🧩",
         accentEmoji: "🏰",
+        imageName: "IslandBrain",
         blurb: "Logic puzzles, riddles and memory!",
         palette: .init(
             start: Color(red: 0.66, green: 0.42, blue: 0.98),
@@ -1324,6 +1327,7 @@ enum QuizData {
         name: "Ancient Kingdom",
         emoji: "👑",
         accentEmoji: "🏺",
+        imageName: "IslandAncient",
         blurb: "Egypt, Rome, kings, queens and history!",
         palette: .init(
             start: Color(red: 0.86, green: 0.66, blue: 0.30),
@@ -1372,6 +1376,7 @@ enum QuizData {
         name: "Champion's Summit",
         emoji: "🏆",
         accentEmoji: "🌟",
+        imageName: "IslandChampion",
         blurb: "The ultimate mixed quiz challenge!",
         palette: .init(
             start: Color(red: 1.00, green: 0.72, blue: 0.24),
