@@ -20,6 +20,10 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 4. **Explanations:** every question gets a rich explanation of about
    **4–6 lines (~40–55 words)** written warmly for kids — a mini fun-fact
    paragraph, not a single line. It appears in the "Did you know?" box.
+   **Do NOT restate the answer.** Teach an interesting fact ABOUT the answer.
+   Bad: "The tallest animal is the giraffe." Good: "A giraffe's neck can be
+   2 metres long, yet it has only seven neck bones — the same as you!"
+   Assume the child already knows the correct choice; tell them something new.
 5. **Answer-position mixing (IMPORTANT):** the correct answer must NOT always
    be option A. Spread correct answers roughly equally across A/B/C/D. The
    same position may repeat **twice in a row occasionally**, but **never three
