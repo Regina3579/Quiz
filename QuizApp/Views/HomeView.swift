@@ -231,32 +231,103 @@ private struct IslandPath: Shape {
     }
 }
 
-// MARK: - Ocean/adventure background
+// MARK: - Magical adventure background
 
+/// A dreamy, twinkling night-to-dawn sky with a glowing moon, stars,
+/// sparkles and soft clouds — a magical backdrop for the island trail.
 private struct MapBackground: View {
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.40, green: 0.78, blue: 0.92),
-                    Color(red: 0.30, green: 0.62, blue: 0.85),
-                    Color(red: 0.24, green: 0.52, blue: 0.80)
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
+    @State private var twinkle = false
 
-            // Playful floating decorations.
-            Group {
-                Text("☁️").font(.system(size: 54)).offset(x: -120, y: -320)
-                Text("☁️").font(.system(size: 40)).offset(x: 130, y: -250)
-                Text("🌴").font(.system(size: 44)).offset(x: 140, y: 30)
-                Text("⛵️").font(.system(size: 40)).offset(x: -130, y: 160)
-                Text("🐚").font(.system(size: 30)).offset(x: 120, y: 330)
-                Text("🌊").font(.system(size: 36)).offset(x: -140, y: -60)
+    // Deterministic pseudo-random in 0...1 so layout is stable each launch.
+    private func rnd(_ i: Int, _ salt: Int) -> Double {
+        let x = sin(Double(i) * 12.9898 + Double(salt) * 78.233) * 43758.5453
+        return x - floor(x)
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+
+            ZStack {
+                // Dreamy magical gradient sky.
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.16, green: 0.10, blue: 0.42),
+                        Color(red: 0.26, green: 0.20, blue: 0.60),
+                        Color(red: 0.34, green: 0.40, blue: 0.82),
+                        Color(red: 0.55, green: 0.60, blue: 0.92),
+                        Color(red: 0.98, green: 0.80, blue: 0.90)
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+
+                // Soft glowing moon in the top corner.
+                Circle()
+                    .fill(RadialGradient(
+                        colors: [.white.opacity(0.95), Color(red: 1, green: 0.95, blue: 0.8).opacity(0.4), .clear],
+                        center: .center, startRadius: 4, endRadius: 90))
+                    .frame(width: 180, height: 180)
+                    .position(x: w * 0.80, y: h * 0.10)
+
+                // Twinkling stars.
+                ForEach(0..<44, id: \.self) { i in
+                    let size = 2 + rnd(i, 3) * 4
+                    let baseOpacity = 0.35 + rnd(i, 4) * 0.4
+                    Circle()
+                        .fill(starColor(i))
+                        .frame(width: size, height: size)
+                        .position(x: rnd(i, 1) * w, y: rnd(i, 2) * h)
+                        .opacity(twinkle ? baseOpacity + 0.35 : baseOpacity - 0.2)
+                        .animation(
+                            .easeInOut(duration: 1.2 + rnd(i, 5) * 1.8)
+                                .repeatForever(autoreverses: true)
+                                .delay(rnd(i, 6) * 2),
+                            value: twinkle)
+                }
+
+                // Bigger shimmering sparkles.
+                ForEach(0..<8, id: \.self) { i in
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 14 + CGFloat(rnd(i, 7) * 18)))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .position(x: rnd(i, 8) * w, y: rnd(i, 9) * h)
+                        .opacity(twinkle ? 1 : 0.35)
+                        .scaleEffect(twinkle ? 1 : 0.7)
+                        .animation(
+                            .easeInOut(duration: 1.6 + rnd(i, 10) * 1.2)
+                                .repeatForever(autoreverses: true)
+                                .delay(rnd(i, 11) * 2),
+                            value: twinkle)
+                }
+
+                // Soft dreamy clouds.
+                Group {
+                    cloud(width: 150).position(x: w * 0.24, y: h * 0.16).opacity(0.5)
+                    cloud(width: 110).position(x: w * 0.7, y: h * 0.42).opacity(0.35)
+                    cloud(width: 130).position(x: w * 0.3, y: h * 0.72).opacity(0.4)
+                }
             }
-            .opacity(0.55)
+            .ignoresSafeArea()
+            .onAppear { twinkle = true }
         }
+        .ignoresSafeArea()
+    }
+
+    /// A mostly-white star with an occasional warm or pink tint for magic.
+    private func starColor(_ i: Int) -> Color {
+        switch i % 7 {
+        case 0: return Color(red: 1.0, green: 0.9, blue: 0.6)   // warm gold
+        case 3: return Color(red: 1.0, green: 0.8, blue: 0.9)   // soft pink
+        default: return .white
+        }
+    }
+
+    private func cloud(width: CGFloat) -> some View {
+        Capsule()
+            .fill(.white)
+            .frame(width: width, height: width * 0.42)
+            .blur(radius: 18)
     }
 }
 
