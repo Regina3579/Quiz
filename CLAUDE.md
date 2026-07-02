@@ -12,9 +12,14 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 
 1. **Structure:** every island has 10 levels; every level has exactly 10
    questions with 4 options each.
-2. **Difficulty:** aim for *easy–medium* for a 7+ year old. Not baby-simple,
-   but answerable and educational. Use real, well-researched facts (real
-   names, real numbers). No trick questions.
+2. **Difficulty ladder (per level, ALWAYS):** difficulty ramps up across the
+   10 levels of every island. Base everything on a 7+ year old.
+   - **Levels 1–2 — Normal:** everyday facts, not baby-easy but comfortable.
+   - **Levels 3–5 — Medium-hard:** needs some thinking; less obvious facts.
+   - **Levels 6–8 — Hard:** specific names, numbers, and deeper facts.
+   - **Levels 9–10 — Very hard:** genuinely challenging, precise, expert-for-kids.
+   Use real, well-researched facts (real names, real numbers). No trick
+   questions — hard should mean "more knowledge required," not "confusing."
 3. **Uniqueness:** no duplicate questions within an island. Vary the topics
    across the 10 levels (sub-themes) so it feels like a journey.
 4. **Explanations:** every question gets a rich explanation of about
