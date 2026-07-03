@@ -19,7 +19,7 @@ struct IslandView: View {
 
     var body: some View {
         ZStack {
-            island.palette.gradient.ignoresSafeArea()
+            IslandBackground(island: island)
 
             GeometryReader { geo in
                 ScrollView(showsIndicators: false) {
