@@ -160,6 +160,8 @@ extension Sprite {
     // (The scenic photo already has the animals.)
     static var jungle: [Sprite] {
         var s: [Sprite] = []
+        // A signature creature gliding across in real time.
+        s.append(Sprite(.emoji("🦜"), size: 34, opacity: 0.95, x: 0.0, y: 0.28, speed: 1.1, amp: 24, motion: .driftX))
         let leaves = ["🍃", "🍂", "🍃"]
         // Fluttering, falling leaves scattered across the screen.
         for i in 0..<11 {
@@ -190,6 +192,8 @@ extension Sprite {
     // shooting comet. (The scenic photo already has the planets & rocket.)
     static var galaxy: [Sprite] {
         var s: [Sprite] = []
+        // A UFO zooming across the galaxy in real time.
+        s.append(Sprite(.emoji("🛸"), size: 36, opacity: 0.95, x: 0.0, y: 0.34, speed: 1.4, amp: 20, motion: .driftX))
         // Twinkling star field (white, gold, pink, blue).
         for i in 0..<26 {
             let c: Color = (i % 6 == 0) ? Color(red: 1, green: 0.9, blue: 0.6)
@@ -227,6 +231,8 @@ extension Sprite {
     // 🦖 Dino — falling leaves, glowing embers rising, a few sparkles
     static var dino: [Sprite] {
         var s: [Sprite] = []
+        // A pterodactyl gliding across the sky in real time.
+        s.append(Sprite(.emoji("🦅"), size: 32, opacity: 0.9, x: 0.0, y: 0.16, speed: 1.2, amp: 18, motion: .driftX))
         for i in 0..<7 {
             s.append(Sprite(.emoji(["🍃", "🍂"][i % 2]), size: 18 + CGFloat(i % 3) * 6, opacity: 0.85,
                             x: Double((i * 37) % 100) / 100, y: Double(i) * 0.13,
@@ -248,6 +254,8 @@ extension Sprite {
     // 🐬 Ocean — lots of rising bubbles and gentle light sparkles
     static var ocean: [Sprite] {
         var s: [Sprite] = []
+        // A fish swimming across in real time.
+        s.append(Sprite(.emoji("🐠"), size: 34, opacity: 0.95, x: 0.0, y: 0.42, speed: 1.0, amp: 20, motion: .driftX))
         for i in 0..<14 {
             s.append(Sprite(.dot(Color.white.opacity(0.65)), size: 4 + CGFloat(i % 4) * 3,
                             opacity: 0.55, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.08,
@@ -264,6 +272,8 @@ extension Sprite {
     // 🧭 Explorer — sunlit sparkles drifting across, soft floating light motes
     static var explorer: [Sprite] {
         var s: [Sprite] = []
+        // An aeroplane flying across in real time.
+        s.append(Sprite(.emoji("✈️"), size: 32, opacity: 0.95, x: 0.0, y: 0.18, speed: 1.5, amp: 12, motion: .driftX))
         for i in 0..<5 {
             s.append(Sprite(.symbol("sparkle", .white), size: 13 + CGFloat(i % 3) * 5, opacity: 0.8,
                             x: Double(i) * 0.22, y: 0.15 + Double(i % 3) * 0.18,
@@ -280,6 +290,8 @@ extension Sprite {
     // 🌺 Blossom — falling flower petals and leaves, soft sparkles
     static var blossom: [Sprite] {
         var s: [Sprite] = []
+        // A butterfly flying over the garden in real time.
+        s.append(Sprite(.emoji("🦋"), size: 34, opacity: 0.95, x: 0.0, y: 0.32, speed: 1.1, amp: 30, motion: .driftX))
         let petals = ["🌸", "🌺", "🌼", "🌷", "🍃"]
         for i in 0..<9 {
             s.append(Sprite(.emoji(petals[i % petals.count]), size: 18 + CGFloat(i % 3) * 7, opacity: 0.9,
@@ -297,6 +309,8 @@ extension Sprite {
     // 🔬 Science — rising bubbles, glowing sparks, floating sparkles
     static var science: [Sprite] {
         var s: [Sprite] = []
+        // A friendly robot hovering across in real time.
+        s.append(Sprite(.emoji("🤖"), size: 32, opacity: 0.9, x: 0.0, y: 0.3, speed: 1.0, amp: 22, motion: .driftX))
         for i in 0..<8 {
             s.append(Sprite(.dot(Color.cyan.opacity(0.65)), size: 4 + CGFloat(i % 3) * 3, opacity: 0.6,
                             x: Double((i * 47) % 100) / 100, y: Double(i) * 0.11,
@@ -320,6 +334,8 @@ extension Sprite {
     // 🧩 Brain Castle — magical twinkles and floating sparkles
     static var brain: [Sprite] {
         var s: [Sprite] = []
+        // A wise owl flying across in real time.
+        s.append(Sprite(.emoji("🦉"), size: 32, opacity: 0.9, x: 0.0, y: 0.24, speed: 1.1, amp: 18, motion: .driftX))
         for i in 0..<10 {
             let c: Color = (i % 3 == 0) ? Color(red: 1, green: 0.8, blue: 0.95)
                         : (i % 3 == 1) ? Color(red: 0.75, green: 0.8, blue: 1) : .white
@@ -339,6 +355,8 @@ extension Sprite {
     // 👑 Ancient — falling desert sand and shimmering gold sparkles
     static var ancient: [Sprite] {
         var s: [Sprite] = []
+        // A falcon soaring across in real time.
+        s.append(Sprite(.emoji("🦅"), size: 30, opacity: 0.9, x: 0.0, y: 0.2, speed: 1.2, amp: 18, motion: .driftX))
         for i in 0..<10 {
             s.append(Sprite(.dot(Color(red: 0.95, green: 0.85, blue: 0.6)), size: 3 + CGFloat(i % 3) * 2,
                             opacity: 0.5, x: Double(i) / 10, y: Double(i) * 0.1,
@@ -356,6 +374,8 @@ extension Sprite {
     // 🏆 Champion — celebration confetti, twinkling gold stars, sparkles
     static var champion: [Sprite] {
         var s: [Sprite] = []
+        // A hot-air balloon drifting across in real time.
+        s.append(Sprite(.emoji("🎈"), size: 34, opacity: 0.95, x: 0.0, y: 0.28, speed: 0.9, amp: 22, motion: .driftX))
         let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .pink]
         for i in 0..<16 {
             s.append(Sprite(.dot(colors[i % colors.count]), size: 6 + CGFloat(i % 3) * 3, opacity: 0.9,
