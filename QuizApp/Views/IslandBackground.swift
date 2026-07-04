@@ -224,163 +224,155 @@ extension Sprite {
         return s
     }
 
-    // 🦖 Dino — drifting clouds, falling ash, swaying ferns, a volcano glow
+    // 🦖 Dino — falling leaves, glowing embers rising, a few sparkles
     static var dino: [Sprite] {
         var s: [Sprite] = []
-        s.append(Sprite(.dot(Color.orange.opacity(0.6)), size: 200, opacity: 0.5,
-                        x: 0.15, y: 0.95, speed: 0.6, phase: 0, motion: .twinkle)) // volcano glow
-        s.append(Sprite(.emoji("☁️"), size: 46, opacity: 0.6, x: 0.2, y: 0.2, speed: 0.5, motion: .driftX))
-        s.append(Sprite(.emoji("☁️"), size: 36, opacity: 0.5, x: 0.6, y: 0.35, speed: 0.7, phase: 2, motion: .driftX))
-        for i in 0..<9 {
-            s.append(Sprite(.dot(Color(white: 0.75)), size: 3 + CGFloat(i % 3),
-                            opacity: 0.5, x: Double(i) / 9, y: Double(i) * 0.11,
-                            speed: 0.6 + Double(i % 3) * 0.2, phase: Double(i), amp: 18, motion: .fall))
+        for i in 0..<7 {
+            s.append(Sprite(.emoji(["🍃", "🍂"][i % 2]), size: 18 + CGFloat(i % 3) * 6, opacity: 0.85,
+                            x: Double((i * 37) % 100) / 100, y: Double(i) * 0.13,
+                            speed: 0.6 + Double(i % 3) * 0.25, phase: Double(i), amp: 28, spin: 40, motion: .fall))
         }
-        s.append(Sprite(.emoji("🌿"), size: 40, opacity: 0.8, x: 0.08, y: 0.9, speed: 0.6, motion: .bob))
-        s.append(Sprite(.emoji("🌿"), size: 34, opacity: 0.8, x: 0.9, y: 0.86, speed: 0.8, phase: 2, motion: .bob))
-        s.append(Sprite(.emoji("🦴"), size: 26, opacity: 0.7, x: 0.75, y: 0.55, speed: 0.7, phase: 1, motion: .bob))
+        for i in 0..<7 {
+            s.append(Sprite(.dot(Color(red: 1, green: 0.72, blue: 0.32)), size: 4 + CGFloat(i % 3) * 2,
+                            opacity: 0.7, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.12,
+                            speed: 0.6 + Double(i % 3) * 0.3, phase: Double(i), amp: 14, motion: .rise))
+        }
+        for i in 0..<3 {
+            s.append(Sprite(.symbol("sparkle", .white), size: 13, opacity: 0.7,
+                            x: 0.25 + Double(i) * 0.28, y: 0.2 + Double(i) * 0.2,
+                            speed: 1 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+        }
         return s
     }
 
-    // 🐬 Ocean — rising bubbles, drifting fish, swaying seaweed, a jellyfish
+    // 🐬 Ocean — lots of rising bubbles and gentle light sparkles
     static var ocean: [Sprite] {
         var s: [Sprite] = []
-        for i in 0..<11 {
-            s.append(Sprite(.dot(Color.white.opacity(0.6)), size: 4 + CGFloat(i % 4) * 3,
-                            opacity: 0.55, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.09,
-                            speed: 0.7 + Double(i % 3) * 0.3, phase: Double(i), amp: 14, motion: .rise))
+        for i in 0..<14 {
+            s.append(Sprite(.dot(Color.white.opacity(0.65)), size: 4 + CGFloat(i % 4) * 3,
+                            opacity: 0.55, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.08,
+                            speed: 0.7 + Double(i % 3) * 0.3, phase: Double(i), amp: 16, motion: .rise))
         }
-        s.append(Sprite(.emoji("🐠"), size: 34, x: 0.2, y: 0.3, speed: 1.0, motion: .driftX))
-        s.append(Sprite(.emoji("🐟"), size: 30, x: 0.6, y: 0.55, speed: 1.3, phase: 2, motion: .driftX))
-        s.append(Sprite(.emoji("🐡"), size: 30, x: 0.4, y: 0.75, speed: 0.8, phase: 4, motion: .driftX))
-        s.append(Sprite(.emoji("🐙"), size: 34, opacity: 0.9, x: 0.82, y: 0.4, speed: 0.7, motion: .bob))
-        s.append(Sprite(.emoji("🌿"), size: 42, opacity: 0.8, x: 0.1, y: 0.92, speed: 0.7, motion: .bob))
-        s.append(Sprite(.emoji("🌿"), size: 36, opacity: 0.8, x: 0.9, y: 0.9, speed: 0.9, phase: 2, motion: .bob))
+        for i in 0..<5 {
+            s.append(Sprite(.symbol("sparkle", .white), size: 12 + CGFloat(i % 3) * 5, opacity: 0.7,
+                            x: 0.15 + Double(i) * 0.18, y: 0.18 + Double(i % 3) * 0.2,
+                            speed: 0.9 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+        }
         return s
     }
 
-    // 🧭 Explorer — drifting clouds, flying birds, sun glow, sparkles
+    // 🧭 Explorer — sunlit sparkles drifting across, soft floating light motes
     static var explorer: [Sprite] {
         var s: [Sprite] = []
-        s.append(Sprite(.dot(Color(red: 1, green: 0.95, blue: 0.7)), size: 150, opacity: 0.5,
-                        x: 0.85, y: 0.12, speed: 0.5, motion: .twinkle)) // sun glow
-        s.append(Sprite(.emoji("☁️"), size: 48, opacity: 0.7, x: 0.2, y: 0.18, speed: 0.5, motion: .driftX))
-        s.append(Sprite(.emoji("☁️"), size: 38, opacity: 0.6, x: 0.6, y: 0.3, speed: 0.7, phase: 2, motion: .driftX))
-        s.append(Sprite(.emoji("☁️"), size: 42, opacity: 0.6, x: 0.4, y: 0.5, speed: 0.6, phase: 4, motion: .driftX))
-        s.append(Sprite(.emoji("🕊️"), size: 26, x: 0.1, y: 0.35, speed: 1.2, motion: .driftX))
-        s.append(Sprite(.emoji("🕊️"), size: 22, x: 0.5, y: 0.6, speed: 1.5, phase: 2, motion: .driftX))
-        for i in 0..<3 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 14, opacity: 0.85,
-                            x: 0.25 + Double(i) * 0.3, y: 0.7 + Double(i % 2) * 0.12,
-                            speed: 1 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+        for i in 0..<5 {
+            s.append(Sprite(.symbol("sparkle", .white), size: 13 + CGFloat(i % 3) * 5, opacity: 0.8,
+                            x: Double(i) * 0.22, y: 0.15 + Double(i % 3) * 0.18,
+                            speed: 0.9 + Double(i) * 0.3, phase: Double(i) * 2, amp: 20, motion: .driftX))
+        }
+        for i in 0..<6 {
+            s.append(Sprite(.dot(Color(red: 1, green: 0.98, blue: 0.8)), size: 4 + CGFloat(i % 3) * 2,
+                            opacity: 0.6, x: Double((i * 61) % 100) / 100, y: Double((i * 37) % 100) / 100,
+                            speed: 0.8 + Double(i % 3) * 0.3, phase: Double(i), motion: .twinkle))
         }
         return s
     }
 
-    // 🌺 Blossom — falling petals, butterflies, bees, sparkles
+    // 🌺 Blossom — falling flower petals and leaves, soft sparkles
     static var blossom: [Sprite] {
         var s: [Sprite] = []
-        let petals = ["🌸", "🌺", "🌼", "🌷"]
-        for i in 0..<7 {
-            s.append(Sprite(.emoji(petals[i % petals.count]), size: 22 + CGFloat(i % 3) * 6,
-                            opacity: 0.9, x: Double(i) / 7, y: Double(i) * 0.14,
-                            speed: 0.7 + Double(i % 3) * 0.2, phase: Double(i), amp: 28, spin: 50, motion: .fall))
+        let petals = ["🌸", "🌺", "🌼", "🌷", "🍃"]
+        for i in 0..<9 {
+            s.append(Sprite(.emoji(petals[i % petals.count]), size: 18 + CGFloat(i % 3) * 7, opacity: 0.9,
+                            x: Double((i * 37) % 100) / 100, y: Double(i) * 0.11,
+                            speed: 0.6 + Double(i % 3) * 0.25, phase: Double(i), amp: 30, spin: 50, motion: .fall))
         }
-        s.append(Sprite(.emoji("🦋"), size: 30, x: 0.2, y: 0.3, speed: 1.1, motion: .driftX))
-        s.append(Sprite(.emoji("🦋"), size: 26, x: 0.6, y: 0.6, speed: 1.4, phase: 2, motion: .driftX))
-        s.append(Sprite(.emoji("🐝"), size: 24, x: 0.4, y: 0.45, speed: 1.6, phase: 1, motion: .driftX))
-        for i in 0..<3 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 13, opacity: 0.8,
-                            x: 0.3 + Double(i) * 0.25, y: 0.2 + Double(i) * 0.25,
+        for i in 0..<4 {
+            s.append(Sprite(.symbol("sparkle", .white), size: 12, opacity: 0.75,
+                            x: 0.2 + Double(i) * 0.2, y: 0.2 + Double(i) * 0.18,
                             speed: 1 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
         }
         return s
     }
 
-    // 🔬 Science — orbiting atoms, rising bubbles, sparks, floating gear/flask
+    // 🔬 Science — rising bubbles, glowing sparks, floating sparkles
     static var science: [Sprite] {
         var s: [Sprite] = []
-        s.append(Sprite(.emoji("⚛️"), size: 40, opacity: 0.9, speed: 1.2, phase: 0,
-                        motion: .orbit(cx: 0.3, cy: 0.35, rx: 0.18, ry: 0.14)))
-        s.append(Sprite(.emoji("⚛️"), size: 32, opacity: 0.85, speed: 1.6, phase: 3,
-                        motion: .orbit(cx: 0.72, cy: 0.6, rx: 0.16, ry: 0.12)))
-        for i in 0..<7 {
-            s.append(Sprite(.dot(Color.cyan.opacity(0.6)), size: 4 + CGFloat(i % 3) * 2,
-                            opacity: 0.6, x: Double((i * 47) % 100) / 100, y: Double(i) * 0.14,
+        for i in 0..<8 {
+            s.append(Sprite(.dot(Color.cyan.opacity(0.65)), size: 4 + CGFloat(i % 3) * 3, opacity: 0.6,
+                            x: Double((i * 47) % 100) / 100, y: Double(i) * 0.11,
                             speed: 0.8 + Double(i % 3) * 0.3, phase: Double(i), amp: 12, motion: .rise))
         }
-        s.append(Sprite(.emoji("🧪"), size: 30, opacity: 0.85, x: 0.15, y: 0.75, speed: 0.7, motion: .bob))
-        s.append(Sprite(.emoji("💡"), size: 28, opacity: 0.85, x: 0.85, y: 0.25, speed: 0.9, phase: 2, motion: .bob))
-        for i in 0..<4 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 12, opacity: 0.8,
-                            x: 0.2 + Double(i) * 0.2, y: 0.5 + Double(i % 2) * 0.2,
-                            speed: 1.2 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+        for i in 0..<8 {
+            let c: Color = (i % 3 == 0) ? Color(red: 0.6, green: 1, blue: 0.9)
+                        : (i % 3 == 1) ? Color(red: 0.8, green: 0.7, blue: 1) : .white
+            s.append(Sprite(.dot(c), size: 3 + CGFloat(i % 3) * 2, opacity: 0.85,
+                            x: Double((i * 61) % 100) / 100, y: Double((i * 29) % 100) / 100,
+                            speed: 0.9 + Double(i % 3) * 0.4, phase: Double(i), motion: .twinkle))
+        }
+        for i in 0..<3 {
+            s.append(Sprite(.symbol("sparkles", .white), size: 16, opacity: 0.75,
+                            x: 0.25 + Double(i) * 0.25, y: 0.3 + Double(i % 2) * 0.2,
+                            speed: 1 + Double(i) * 0.3, phase: Double(i), amp: 22, motion: .bob))
         }
         return s
     }
 
-    // 🧩 Brain Castle — floating puzzle pieces, question marks, bulbs, gears
+    // 🧩 Brain Castle — magical twinkles and floating sparkles
     static var brain: [Sprite] {
         var s: [Sprite] = []
-        for i in 0..<3 {
-            s.append(Sprite(.emoji("🧩"), size: 30 + CGFloat(i) * 4, opacity: 0.85,
-                            x: 0.2 + Double(i) * 0.28, y: 0.25 + Double(i) * 0.2,
-                            speed: 0.8 + Double(i) * 0.2, phase: Double(i), amp: 22, motion: .bob))
+        for i in 0..<10 {
+            let c: Color = (i % 3 == 0) ? Color(red: 1, green: 0.8, blue: 0.95)
+                        : (i % 3 == 1) ? Color(red: 0.75, green: 0.8, blue: 1) : .white
+            s.append(Sprite(.dot(c), size: 3 + CGFloat(i % 3) * 2, opacity: 0.9,
+                            x: Double((i * 61) % 100) / 100, y: Double((i * 37) % 100) / 100,
+                            speed: 0.8 + Double(i % 4) * 0.35, phase: Double(i), motion: .twinkle))
         }
-        for i in 0..<3 {
-            s.append(Sprite(.emoji("❓"), size: 26 + CGFloat(i) * 4, opacity: 0.8,
-                            x: 0.7 - Double(i) * 0.25, y: 0.35 + Double(i) * 0.2,
-                            speed: 0.9 + Double(i) * 0.2, phase: Double(i) + 1, amp: 20, motion: .bob))
-        }
-        s.append(Sprite(.emoji("💡"), size: 30, opacity: 0.85, x: 0.15, y: 0.7, speed: 0.8, motion: .bob))
-        s.append(Sprite(.emoji("⚙️"), size: 28, opacity: 0.7, x: 0.85, y: 0.7, speed: 0.8, phase: 2, spin: 60, motion: .bob))
         for i in 0..<4 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 13, opacity: 0.8,
-                            x: 0.3 + Double(i) * 0.2, y: 0.15 + Double(i % 2) * 0.15,
-                            speed: 1 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+            s.append(Sprite(.symbol("sparkles", Color(red: 1, green: 0.95, blue: 0.7)),
+                            size: 15 + CGFloat(i % 2) * 7, opacity: 0.8,
+                            x: 0.2 + Double(i) * 0.2, y: 0.25 + Double(i % 3) * 0.2,
+                            speed: 0.8 + Double(i) * 0.3, phase: Double(i), amp: 26, motion: .bob))
         }
         return s
     }
 
-    // 👑 Ancient — falling sand, scarabs, floating pot/scroll, sun glow, gold sparkles
+    // 👑 Ancient — falling desert sand and shimmering gold sparkles
     static var ancient: [Sprite] {
         var s: [Sprite] = []
-        s.append(Sprite(.dot(Color(red: 1, green: 0.9, blue: 0.6)), size: 150, opacity: 0.4,
-                        x: 0.8, y: 0.14, speed: 0.5, motion: .twinkle)) // desert sun
-        for i in 0..<9 {
-            s.append(Sprite(.dot(Color(red: 0.9, green: 0.8, blue: 0.55)), size: 3 + CGFloat(i % 3),
-                            opacity: 0.5, x: Double(i) / 9, y: Double(i) * 0.11,
-                            speed: 0.6 + Double(i % 3) * 0.2, phase: Double(i), amp: 22, motion: .fall))
+        for i in 0..<10 {
+            s.append(Sprite(.dot(Color(red: 0.95, green: 0.85, blue: 0.6)), size: 3 + CGFloat(i % 3) * 2,
+                            opacity: 0.5, x: Double(i) / 10, y: Double(i) * 0.1,
+                            speed: 0.6 + Double(i % 3) * 0.25, phase: Double(i), amp: 24, motion: .fall))
         }
-        s.append(Sprite(.emoji("🪲"), size: 24, opacity: 0.85, x: 0.2, y: 0.55, speed: 0.9, motion: .driftX))
-        s.append(Sprite(.emoji("📜"), size: 30, opacity: 0.8, x: 0.85, y: 0.6, speed: 0.7, motion: .bob))
-        s.append(Sprite(.emoji("🏺"), size: 30, opacity: 0.8, x: 0.12, y: 0.85, speed: 0.8, phase: 2, motion: .bob))
-        for i in 0..<4 {
-            s.append(Sprite(.symbol("sparkle", Color(red: 1, green: 0.85, blue: 0.4)), size: 13,
-                            opacity: 0.85, x: 0.35 + Double(i) * 0.2, y: 0.3 + Double(i % 2) * 0.2,
-                            speed: 1 + Double(i) * 0.3, phase: Double(i), motion: .twinkle))
+        for i in 0..<6 {
+            s.append(Sprite(.symbol(i % 2 == 0 ? "sparkle" : "sparkles", Color(red: 1, green: 0.85, blue: 0.4)),
+                            size: 13 + CGFloat(i % 3) * 4, opacity: 0.85,
+                            x: Double((i * 53) % 100) / 100, y: Double((i * 29) % 100) / 100,
+                            speed: 0.9 + Double(i % 3) * 0.3, phase: Double(i), motion: .twinkle))
         }
         return s
     }
 
-    // 🏆 Champion — falling confetti, twinkling stars, drifting party poppers, a trophy
+    // 🏆 Champion — celebration confetti, twinkling gold stars, sparkles
     static var champion: [Sprite] {
         var s: [Sprite] = []
         let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .pink]
-        for i in 0..<15 {
-            s.append(Sprite(.dot(colors[i % colors.count]), size: 6 + CGFloat(i % 3) * 3,
-                            opacity: 0.9, x: Double((i * 43) % 100) / 100, y: Double(i) * 0.08,
+        for i in 0..<16 {
+            s.append(Sprite(.dot(colors[i % colors.count]), size: 6 + CGFloat(i % 3) * 3, opacity: 0.9,
+                            x: Double((i * 43) % 100) / 100, y: Double(i) * 0.07,
                             speed: 0.9 + Double(i % 4) * 0.25, phase: Double(i), amp: 24, spin: 90, motion: .fall))
         }
-        for i in 0..<6 {
+        for i in 0..<7 {
             s.append(Sprite(.symbol("star.fill", Color(red: 1, green: 0.85, blue: 0.3)),
                             size: 12 + CGFloat(i % 3) * 4, opacity: 0.9,
                             x: Double((i * 67) % 100) / 100, y: Double((i * 29) % 100) / 100,
                             speed: 0.8 + Double(i % 3) * 0.3, phase: Double(i), motion: .twinkle))
         }
-        s.append(Sprite(.emoji("🎉"), size: 34, x: 0.15, y: 0.3, speed: 1.0, motion: .driftX))
-        s.append(Sprite(.emoji("🎊"), size: 30, x: 0.6, y: 0.6, speed: 1.3, phase: 2, motion: .driftX))
-        s.append(Sprite(.emoji("🏆"), size: 34, opacity: 0.9, x: 0.85, y: 0.4, speed: 0.7, motion: .bob))
+        for i in 0..<3 {
+            s.append(Sprite(.symbol("sparkles", .white), size: 16, opacity: 0.8,
+                            x: 0.25 + Double(i) * 0.25, y: 0.2 + Double(i % 2) * 0.2,
+                            speed: 1 + Double(i) * 0.3, phase: Double(i), amp: 22, motion: .bob))
+        }
         return s
     }
 }

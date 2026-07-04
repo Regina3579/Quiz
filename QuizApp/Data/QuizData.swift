@@ -738,6 +738,7 @@ enum QuizData {
         emoji: "🦕",
         accentEmoji: "🦖",
         imageName: "IslandDino",
+        backgroundImageName: "BgDino",
         blurb: "Travel back to the age of dinosaurs!",
         palette: .init(
             start: Color(red: 0.52, green: 0.78, blue: 0.30),
@@ -1085,6 +1086,7 @@ enum QuizData {
         emoji: "🐬",
         accentEmoji: "🌊",
         imageName: "IslandOcean",
+        backgroundImageName: "BgOcean",
         blurb: "Dive into the amazing underwater world!",
         palette: .init(
             start: Color(red: 0.24, green: 0.74, blue: 0.92),
@@ -1134,6 +1136,7 @@ enum QuizData {
         emoji: "🧭",
         accentEmoji: "🌍",
         imageName: "IslandExplorer",
+        backgroundImageName: "BgExplorer",
         blurb: "Discover countries, flags and landmarks!",
         palette: .init(
             start: Color(red: 0.98, green: 0.66, blue: 0.28),
@@ -1183,6 +1186,7 @@ enum QuizData {
         emoji: "🌺",
         accentEmoji: "🦋",
         imageName: "IslandBlossom",
+        backgroundImageName: "BgBlossom",
         blurb: "Flowers, trees, birds and butterflies!",
         palette: .init(
             start: Color(red: 0.98, green: 0.52, blue: 0.72),
@@ -1232,6 +1236,7 @@ enum QuizData {
         emoji: "🔬",
         accentEmoji: "⚗️",
         imageName: "IslandScience",
+        backgroundImageName: "BgScience",
         blurb: "Experiments, inventions and robots!",
         palette: .init(
             start: Color(red: 0.30, green: 0.72, blue: 0.98),
@@ -1281,6 +1286,7 @@ enum QuizData {
         emoji: "🧩",
         accentEmoji: "🏰",
         imageName: "IslandBrain",
+        backgroundImageName: "BgBrain",
         blurb: "Logic puzzles, riddles and memory!",
         palette: .init(
             start: Color(red: 0.66, green: 0.42, blue: 0.98),
@@ -1330,6 +1336,7 @@ enum QuizData {
         emoji: "👑",
         accentEmoji: "🏺",
         imageName: "IslandAncient",
+        backgroundImageName: "BgAncient",
         blurb: "Egypt, Rome, kings, queens and history!",
         palette: .init(
             start: Color(red: 0.86, green: 0.66, blue: 0.30),
@@ -1379,6 +1386,7 @@ enum QuizData {
         emoji: "🏆",
         accentEmoji: "🌟",
         imageName: "IslandChampion",
+        backgroundImageName: "BgChampion",
         blurb: "The ultimate mixed quiz challenge!",
         palette: .init(
             start: Color(red: 1.00, green: 0.72, blue: 0.24),
