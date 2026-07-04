@@ -233,10 +233,12 @@ private struct IslandPath: Shape {
 
 // MARK: - Magical adventure background
 
-/// A dreamy, twinkling night-to-dawn sky with a glowing moon, stars,
-/// sparkles and soft clouds — a magical backdrop for the island trail.
+/// A dreamy twilight "floating islands" sky: a purple-to-blue gradient over
+/// water, a warm sunset glow, a glowing moon, drifting planets, twinkling
+/// stars, sparkles, soft clouds and faint scenery (volcano, lighthouse, ship).
 private struct MapBackground: View {
     @State private var twinkle = false
+    @State private var drift = false
 
     // Deterministic pseudo-random in 0...1 so layout is stable each launch.
     private func rnd(_ i: Int, _ salt: Int) -> Double {
@@ -250,25 +252,36 @@ private struct MapBackground: View {
             let h = geo.size.height
 
             ZStack {
-                // Dreamy magical gradient sky.
+                // Twilight sky fading down into water.
                 LinearGradient(
                     colors: [
-                        Color(red: 0.16, green: 0.10, blue: 0.42),
-                        Color(red: 0.26, green: 0.20, blue: 0.60),
-                        Color(red: 0.34, green: 0.40, blue: 0.82),
-                        Color(red: 0.55, green: 0.60, blue: 0.92),
-                        Color(red: 0.98, green: 0.80, blue: 0.90)
+                        Color(red: 0.24, green: 0.14, blue: 0.46),
+                        Color(red: 0.38, green: 0.24, blue: 0.58),
+                        Color(red: 0.46, green: 0.34, blue: 0.66),
+                        Color(red: 0.32, green: 0.40, blue: 0.72),
+                        Color(red: 0.18, green: 0.42, blue: 0.70)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
 
-                // Soft glowing moon in the top corner.
+                // Warm sunset glow low on the left.
+                RadialGradient(
+                    colors: [Color(red: 1.0, green: 0.6, blue: 0.5).opacity(0.5), .clear],
+                    center: UnitPoint(x: 0.2, y: 0.34), startRadius: 2, endRadius: w * 0.75)
+
+                // Soft glowing moon top-right.
                 Circle()
                     .fill(RadialGradient(
-                        colors: [.white.opacity(0.95), Color(red: 1, green: 0.95, blue: 0.8).opacity(0.4), .clear],
-                        center: .center, startRadius: 4, endRadius: 90))
-                    .frame(width: 180, height: 180)
-                    .position(x: w * 0.80, y: h * 0.10)
+                        colors: [.white.opacity(0.95), Color(red: 1, green: 0.95, blue: 0.85).opacity(0.35), .clear],
+                        center: .center, startRadius: 4, endRadius: 80))
+                    .frame(width: 160, height: 160)
+                    .position(x: w * 0.82, y: h * 0.08)
+
+                // Drifting planets in the sky.
+                Text("🪐").font(.system(size: 64)).opacity(0.85)
+                    .position(x: w * 0.70, y: h * 0.30).offset(y: drift ? -12 : 12)
+                Text("🌍").font(.system(size: 42)).opacity(0.8)
+                    .position(x: w * 0.90, y: h * 0.22).offset(y: drift ? 10 : -10)
 
                 // Twinkling stars.
                 ForEach(0..<44, id: \.self) { i in
@@ -301,15 +314,27 @@ private struct MapBackground: View {
                             value: twinkle)
                 }
 
-                // Soft dreamy clouds.
+                // Faint landscape scenery near the edges (kept clear of the trail).
                 Group {
-                    cloud(width: 150).position(x: w * 0.24, y: h * 0.16).opacity(0.5)
-                    cloud(width: 110).position(x: w * 0.7, y: h * 0.42).opacity(0.35)
-                    cloud(width: 130).position(x: w * 0.3, y: h * 0.72).opacity(0.4)
+                    Text("🌋").font(.system(size: 66)).opacity(0.6).position(x: w * 0.11, y: h * 0.58)
+                    Text("🗼").font(.system(size: 62)).opacity(0.55).position(x: w * 0.92, y: h * 0.60)
+                    Text("⛵️").font(.system(size: 44)).opacity(0.65).position(x: w * 0.10, y: h * 0.82)
+                    Text("🌴").font(.system(size: 48)).opacity(0.6).position(x: w * 0.93, y: h * 0.86)
+                    Text("🏝️").font(.system(size: 44)).opacity(0.5).position(x: w * 0.5, y: h * 0.96)
                 }
+
+                // Drifting dreamy clouds.
+                cloud(width: 150).position(x: (drift ? 0.28 : 0.34) * w, y: h * 0.15).opacity(0.4)
+                cloud(width: 110).position(x: (drift ? 0.74 : 0.68) * w, y: h * 0.44).opacity(0.3)
+                cloud(width: 130).position(x: (drift ? 0.34 : 0.28) * w, y: h * 0.72).opacity(0.35)
             }
             .ignoresSafeArea()
-            .onAppear { twinkle = true }
+            .onAppear {
+                twinkle = true
+                withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                    drift = true
+                }
+            }
         }
         .ignoresSafeArea()
     }
