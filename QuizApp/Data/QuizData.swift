@@ -391,6 +391,7 @@ enum QuizData {
         emoji: "🚀",
         accentEmoji: "🌌",
         imageName: "IslandGalaxy",
+        backgroundImageName: "BgGalaxy",
         blurb: "Journey through planets, stars and space!",
         palette: .init(
             start: Color(red: 0.44, green: 0.36, blue: 0.95),

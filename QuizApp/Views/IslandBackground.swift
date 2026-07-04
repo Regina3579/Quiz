@@ -186,28 +186,41 @@ extension Sprite {
         return s
     }
 
-    // 🚀 Galaxy — twinkling stars, orbiting planets, a shooting comet
+    // 🚀 Galaxy — lots of twinkling stars plus sparkles flying around and a
+    // shooting comet. (The scenic photo already has the planets & rocket.)
     static var galaxy: [Sprite] {
         var s: [Sprite] = []
-        for i in 0..<16 {
+        // Twinkling star field (white, gold, pink, blue).
+        for i in 0..<26 {
             let c: Color = (i % 6 == 0) ? Color(red: 1, green: 0.9, blue: 0.6)
-                        : (i % 6 == 3) ? Color(red: 1, green: 0.8, blue: 0.95) : .white
-            s.append(Sprite(.dot(c), size: 3 + CGFloat(i % 3) * 2, opacity: 0.9,
+                        : (i % 6 == 2) ? Color(red: 1, green: 0.8, blue: 0.95)
+                        : (i % 6 == 4) ? Color(red: 0.7, green: 0.85, blue: 1) : .white
+            s.append(Sprite(.dot(c), size: 2 + CGFloat(i % 4) * 2, opacity: 0.95,
                             x: Double((i * 61) % 100) / 100, y: Double((i * 37) % 100) / 100,
-                            speed: 0.6 + Double(i % 4) * 0.3, phase: Double(i), motion: .twinkle))
+                            speed: 0.7 + Double(i % 4) * 0.4, phase: Double(i), motion: .twinkle))
         }
-        s.append(Sprite(.emoji("🪐"), size: 46, opacity: 0.95, speed: 1.0, phase: 0,
-                        motion: .orbit(cx: 0.5, cy: 0.35, rx: 0.34, ry: 0.16)))
-        s.append(Sprite(.emoji("🌍"), size: 34, opacity: 0.95, speed: 1.6, phase: 2,
-                        motion: .orbit(cx: 0.5, cy: 0.5, rx: 0.28, ry: 0.22)))
-        s.append(Sprite(.emoji("🌙"), size: 30, opacity: 0.95, speed: 0.8, phase: 4,
-                        motion: .orbit(cx: 0.5, cy: 0.6, rx: 0.4, ry: 0.14)))
-        s.append(Sprite(.emoji("☄️"), size: 30, opacity: 0.9, x: 0.0, y: 0.2, speed: 3.0, phase: 0, amp: 60, motion: .driftX))
-        for i in 0..<3 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 16, opacity: 0.9,
-                            x: 0.2 + Double(i) * 0.3, y: 0.15 + Double(i) * 0.25,
-                            speed: 1 + Double(i) * 0.4, phase: Double(i), motion: .twinkle))
+        // Sparkles flying across on the cosmic breeze.
+        for i in 0..<4 {
+            s.append(Sprite(.symbol("sparkle", .white), size: 14 + CGFloat(i % 3) * 6, opacity: 0.9,
+                            x: Double(i) * 0.25, y: 0.15 + Double(i) * 0.2,
+                            speed: 1.0 + Double(i) * 0.4, phase: Double(i) * 2, amp: 24, spin: 40,
+                            motion: .driftX))
         }
+        // Sparkles floating and drifting around in place.
+        for i in 0..<4 {
+            s.append(Sprite(.symbol("sparkles", Color(red: 1, green: 0.95, blue: 0.7)),
+                            size: 16 + CGFloat(i % 2) * 8, opacity: 0.85,
+                            x: 0.2 + Double(i) * 0.2, y: 0.3 + Double(i % 3) * 0.2,
+                            speed: 0.8 + Double(i) * 0.3, phase: Double(i), amp: 28, motion: .bob))
+        }
+        // A couple of little stars drifting by.
+        s.append(Sprite(.symbol("star.fill", Color(red: 1, green: 0.85, blue: 0.3)),
+                        size: 18, opacity: 0.9, x: 0.1, y: 0.45, speed: 0.7, phase: 1, amp: 30, motion: .bob))
+        s.append(Sprite(.symbol("star.fill", Color(red: 1, green: 0.85, blue: 0.3)),
+                        size: 14, opacity: 0.85, x: 0.8, y: 0.7, speed: 0.9, phase: 3, amp: 26, motion: .bob))
+        // Shooting comets streaking across.
+        s.append(Sprite(.emoji("☄️"), size: 28, opacity: 0.9, x: 0.0, y: 0.18, speed: 3.0, phase: 0, amp: 50, motion: .driftX))
+        s.append(Sprite(.emoji("☄️"), size: 22, opacity: 0.85, x: 0.0, y: 0.55, speed: 2.4, phase: 3, amp: 40, motion: .driftX))
         return s
     }
 
