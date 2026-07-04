@@ -27,6 +27,10 @@ struct Island: Identifiable, Hashable {
     /// (A `var` with a default so the memberwise initializer accepts it.)
     var imageName: String? = nil
 
+    /// Optional full-screen scenic background image for the island's level
+    /// screen. When set, it replaces the plain gradient behind the trail.
+    var backgroundImageName: String? = nil
+
     /// Short, friendly description shown when the island opens.
     let blurb: String
 

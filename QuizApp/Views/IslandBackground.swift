@@ -17,7 +17,23 @@ struct IslandBackground: View {
 
     var body: some View {
         ZStack {
-            island.palette.gradient.ignoresSafeArea()
+            // Base: a full-screen scenic photo when the island has one,
+            // otherwise the island's colour gradient.
+            if let bg = island.backgroundImageName {
+                Image(bg)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                // Gentle scrim so the header text and level nodes stay readable.
+                LinearGradient(
+                    colors: [.black.opacity(0.38), .black.opacity(0.10),
+                             .black.opacity(0.12), .black.opacity(0.42)],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            } else {
+                island.palette.gradient.ignoresSafeArea()
+            }
 
             GeometryReader { geo in
                 TimelineView(.animation) { timeline in
@@ -140,23 +156,33 @@ extension Sprite {
 
     private static let firefly = Color(red: 1.0, green: 0.95, blue: 0.5)
 
-    // 🦁 Jungle — drifting leaves, butterflies, fireflies, a swinging monkey & parrot
+    // 🦁 Jungle — lots of leaves flying/fluttering down, plus soft fireflies.
+    // (The scenic photo already has the animals.)
     static var jungle: [Sprite] {
         var s: [Sprite] = []
-        for i in 0..<5 {
-            s.append(Sprite(.emoji("🍃"), size: 22 + CGFloat(i % 3) * 6, opacity: 0.85,
-                            x: Double(i) / 5, y: Double(i) * 0.17, speed: 0.8 + Double(i) * 0.2,
-                            phase: Double(i), amp: 26, spin: 40, motion: .fall))
+        let leaves = ["🍃", "🍂", "🍃"]
+        // Fluttering, falling leaves scattered across the screen.
+        for i in 0..<11 {
+            s.append(Sprite(.emoji(leaves[i % leaves.count]),
+                            size: 18 + CGFloat(i % 4) * 7, opacity: 0.9,
+                            x: Double((i * 37) % 100) / 100, y: Double(i) * 0.12,
+                            speed: 0.6 + Double(i % 4) * 0.25, phase: Double(i),
+                            amp: 30 + Double(i % 3) * 12, spin: 30 + Double(i % 4) * 20,
+                            motion: .fall))
         }
+        // A few leaves flying across on the breeze.
+        for i in 0..<3 {
+            s.append(Sprite(.emoji("🍃"), size: 22 + CGFloat(i) * 5, opacity: 0.85,
+                            x: Double(i) * 0.3, y: 0.25 + Double(i) * 0.25,
+                            speed: 1.1 + Double(i) * 0.4, phase: Double(i) * 2,
+                            amp: 22, spin: 50, motion: .driftX))
+        }
+        // Soft glowing fireflies.
         for i in 0..<6 {
             s.append(Sprite(.dot(firefly), size: 5 + CGFloat(i % 3) * 2, opacity: 0.9,
-                            x: 0.1 + Double(i) * 0.15, y: 0.2 + Double(i % 4) * 0.2,
+                            x: 0.1 + Double(i) * 0.15, y: 0.25 + Double(i % 4) * 0.18,
                             speed: 0.8 + Double(i) * 0.2, phase: Double(i) * 1.3, motion: .twinkle))
         }
-        s.append(Sprite(.emoji("🦋"), size: 30, x: 0.2, y: 0.3, speed: 1.0, phase: 0, motion: .driftX))
-        s.append(Sprite(.emoji("🦋"), size: 24, x: 0.6, y: 0.6, speed: 1.4, phase: 2, motion: .driftX))
-        s.append(Sprite(.emoji("🐒"), size: 34, opacity: 0.9, x: 0.1, y: 0.12, speed: 0.5, phase: 1, motion: .driftX))
-        s.append(Sprite(.emoji("🦜"), size: 30, opacity: 0.9, x: 0.5, y: 0.8, speed: 0.9, phase: 3, motion: .driftX))
         return s
     }
 

@@ -42,6 +42,7 @@ enum QuizData {
         emoji: "🦁",
         accentEmoji: "🌳",
         imageName: "IslandJungle",
+        backgroundImageName: "BgJungle",
         blurb: "Explore amazing animals and wildlife!",
         palette: .init(
             start: Color(red: 0.36, green: 0.80, blue: 0.44),
