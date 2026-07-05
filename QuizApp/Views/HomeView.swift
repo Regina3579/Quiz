@@ -103,10 +103,12 @@ struct HomeView: View {
         VStack {
             HStack {
                 HStack(spacing: 6) {
-                    Text("💎").font(.system(size: 18))
+                    Image(systemName: "diamond.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Theme.jewelRainbow)
                     Text("\(progress.jewels)")
                         .font(Theme.bold(17))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.jewelRainbow)
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.jewels)
                 }
