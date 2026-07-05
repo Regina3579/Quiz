@@ -13,6 +13,10 @@ struct QuizView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var explanationExpanded = false
     @State private var celebrateTrigger = 0
+    /// Live centre of the correct answer button (global coords).
+    @State private var correctCenter: CGPoint = .zero
+    /// Snapshot of where the burst should start, taken when answered.
+    @State private var burstOrigin: CGPoint = .zero
 
     private let valid: Bool
 
@@ -44,9 +48,10 @@ struct QuizView: View {
                     .transition(.opacity)
             }
 
-            // Gold stars, sparkles and confetti when the answer is correct.
-            CorrectBurst(trigger: celebrateTrigger)
+            // Gold stars bursting from the tapped answer when it's correct.
+            CorrectBurst(trigger: celebrateTrigger, origin: burstOrigin)
         }
+        .onPreferenceChange(CorrectButtonCenterKey.self) { correctCenter = $0 }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -100,6 +105,7 @@ struct QuizView: View {
                 .onChange(of: model.hasAnswered) { answered in
                     if answered {
                         if model.selectedOption == model.currentQuestion.correctIndex {
+                            burstOrigin = correctCenter
                             celebrateTrigger += 1
                         }
                         withAnimation(.easeOut(duration: 0.45)) {
@@ -163,6 +169,20 @@ struct QuizView: View {
                 ) {
                     withAnimation { model.select(pair.offset) }
                 }
+                .background(
+                    // Report the correct answer's centre so the star burst can
+                    // erupt from the button the child tapped.
+                    Group {
+                        if pair.offset == model.currentQuestion.correctIndex {
+                            GeometryReader { g in
+                                Color.clear.preference(
+                                    key: CorrectButtonCenterKey.self,
+                                    value: CGPoint(x: g.frame(in: .global).midX,
+                                                   y: g.frame(in: .global).midY))
+                            }
+                        }
+                    }
+                )
             }
         }
     }
@@ -223,6 +243,16 @@ struct QuizView: View {
             }
             .buttonStyle(PressableButtonStyle())
         }
+    }
+}
+
+/// Carries the correct answer button's centre (global coords) up to QuizView
+/// so the celebration burst can start from there.
+private struct CorrectButtonCenterKey: PreferenceKey {
+    static var defaultValue: CGPoint = .zero
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+        let next = nextValue()
+        if next != .zero { value = next }
     }
 }
 

@@ -84,17 +84,23 @@ private struct ConfettiPiece: View {
 // MARK: - Correct-answer celebration
 
 /// A gentle one-shot celebration played when a child answers correctly: a
-/// simple ring of gold stars floats slowly outward from the centre and softly
-/// fades. Bump `trigger` (e.g. increment an Int) to replay it.
+/// simple ring of gold stars floats slowly outward from the tapped answer and
+/// softly fades. Bump `trigger` (e.g. increment an Int) to replay it, and pass
+/// the `origin` (in global coordinates) of the correct answer button.
 struct CorrectBurst: View {
     /// Increment this to fire a fresh celebration.
     let trigger: Int
+    /// Where the stars burst from, in global screen coordinates.
+    let origin: CGPoint
 
     private let stars = ["⭐️", "🌟"]
 
     var body: some View {
         GeometryReader { geo in
-            let center = CGPoint(x: geo.size.width / 2, y: geo.size.height * 0.42)
+            // Convert the global origin into this view's local space.
+            let localOrigin = geo.frame(in: .global).origin
+            let center = CGPoint(x: origin.x - localOrigin.x,
+                                 y: origin.y - localOrigin.y)
             ZStack {
                 if trigger > 0 {
                     // A simple, even ring of gold stars drifting slowly outward.
