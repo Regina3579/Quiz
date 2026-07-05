@@ -233,12 +233,12 @@ private struct IslandPath: Shape {
 
 // MARK: - Magical adventure background
 
-/// A dreamy twilight "floating islands" sky: a purple-to-blue gradient over
-/// water, a warm sunset glow, a glowing moon, drifting planets, twinkling
-/// stars, sparkles, soft clouds and faint scenery (volcano, lighthouse, ship).
+/// The hand-painted "floating islands" scene fills the screen, with a light
+/// layer of twinkling stars and shimmering sparkles drifting over the sky so
+/// the map still feels alive. The painted planets, clouds and scenery are part
+/// of the artwork, so nothing is duplicated on top of them.
 private struct MapBackground: View {
     @State private var twinkle = false
-    @State private var drift = false
 
     // Deterministic pseudo-random in 0...1 so layout is stable each launch.
     private func rnd(_ i: Int, _ salt: Int) -> Double {
@@ -252,46 +252,29 @@ private struct MapBackground: View {
             let h = geo.size.height
 
             ZStack {
-                // Twilight sky fading down into water.
+                // The painted adventure-map scene, filling the screen.
+                Image("BgAdventureMap")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: w, height: h)
+                    .clipped()
+
+                // Gentle darkening at the very top so the white title stays readable.
                 LinearGradient(
-                    colors: [
-                        Color(red: 0.24, green: 0.14, blue: 0.46),
-                        Color(red: 0.38, green: 0.24, blue: 0.58),
-                        Color(red: 0.46, green: 0.34, blue: 0.66),
-                        Color(red: 0.32, green: 0.40, blue: 0.72),
-                        Color(red: 0.18, green: 0.42, blue: 0.70)
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
+                    colors: [Color.black.opacity(0.28), .clear],
+                    startPoint: .top, endPoint: .center)
+                    .frame(height: h * 0.5)
+                    .frame(maxHeight: .infinity, alignment: .top)
 
-                // Warm sunset glow low on the left.
-                RadialGradient(
-                    colors: [Color(red: 1.0, green: 0.6, blue: 0.5).opacity(0.5), .clear],
-                    center: UnitPoint(x: 0.2, y: 0.34), startRadius: 2, endRadius: w * 0.75)
-
-                // Soft glowing moon top-right.
-                Circle()
-                    .fill(RadialGradient(
-                        colors: [.white.opacity(0.95), Color(red: 1, green: 0.95, blue: 0.85).opacity(0.35), .clear],
-                        center: .center, startRadius: 4, endRadius: 80))
-                    .frame(width: 160, height: 160)
-                    .position(x: w * 0.82, y: h * 0.08)
-
-                // Drifting planets in the sky.
-                Text("🪐").font(.system(size: 64)).opacity(0.85)
-                    .position(x: w * 0.70, y: h * 0.30).offset(y: drift ? -12 : 12)
-                Text("🌍").font(.system(size: 42)).opacity(0.8)
-                    .position(x: w * 0.90, y: h * 0.22).offset(y: drift ? 10 : -10)
-
-                // Twinkling stars.
-                ForEach(0..<44, id: \.self) { i in
-                    let size = 2 + rnd(i, 3) * 4
-                    let baseOpacity = 0.35 + rnd(i, 4) * 0.4
+                // Twinkling stars sprinkled across the upper sky.
+                ForEach(0..<30, id: \.self) { i in
+                    let size = 1.5 + rnd(i, 3) * 3
+                    let baseOpacity = 0.25 + rnd(i, 4) * 0.4
                     Circle()
                         .fill(starColor(i))
                         .frame(width: size, height: size)
-                        .position(x: rnd(i, 1) * w, y: rnd(i, 2) * h)
-                        .opacity(twinkle ? baseOpacity + 0.35 : baseOpacity - 0.2)
+                        .position(x: rnd(i, 1) * w, y: rnd(i, 2) * h * 0.42)
+                        .opacity(twinkle ? baseOpacity + 0.4 : baseOpacity - 0.15)
                         .animation(
                             .easeInOut(duration: 1.2 + rnd(i, 5) * 1.8)
                                 .repeatForever(autoreverses: true)
@@ -299,13 +282,13 @@ private struct MapBackground: View {
                             value: twinkle)
                 }
 
-                // Bigger shimmering sparkles.
-                ForEach(0..<8, id: \.self) { i in
+                // A few larger shimmering sparkles high in the sky.
+                ForEach(0..<6, id: \.self) { i in
                     Image(systemName: "sparkle")
-                        .font(.system(size: 14 + CGFloat(rnd(i, 7) * 18)))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .position(x: rnd(i, 8) * w, y: rnd(i, 9) * h)
-                        .opacity(twinkle ? 1 : 0.35)
+                        .font(.system(size: 12 + CGFloat(rnd(i, 7) * 16)))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .position(x: rnd(i, 8) * w, y: rnd(i, 9) * h * 0.38)
+                        .opacity(twinkle ? 1 : 0.3)
                         .scaleEffect(twinkle ? 1 : 0.7)
                         .animation(
                             .easeInOut(duration: 1.6 + rnd(i, 10) * 1.2)
@@ -313,28 +296,9 @@ private struct MapBackground: View {
                                 .delay(rnd(i, 11) * 2),
                             value: twinkle)
                 }
-
-                // Faint landscape scenery near the edges (kept clear of the trail).
-                Group {
-                    Text("🌋").font(.system(size: 66)).opacity(0.6).position(x: w * 0.11, y: h * 0.58)
-                    Text("🗼").font(.system(size: 62)).opacity(0.55).position(x: w * 0.92, y: h * 0.60)
-                    Text("⛵️").font(.system(size: 44)).opacity(0.65).position(x: w * 0.10, y: h * 0.82)
-                    Text("🌴").font(.system(size: 48)).opacity(0.6).position(x: w * 0.93, y: h * 0.86)
-                    Text("🏝️").font(.system(size: 44)).opacity(0.5).position(x: w * 0.5, y: h * 0.96)
-                }
-
-                // Drifting dreamy clouds.
-                cloud(width: 150).position(x: (drift ? 0.28 : 0.34) * w, y: h * 0.15).opacity(0.4)
-                cloud(width: 110).position(x: (drift ? 0.74 : 0.68) * w, y: h * 0.44).opacity(0.3)
-                cloud(width: 130).position(x: (drift ? 0.34 : 0.28) * w, y: h * 0.72).opacity(0.35)
             }
             .ignoresSafeArea()
-            .onAppear {
-                twinkle = true
-                withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
-                    drift = true
-                }
-            }
+            .onAppear { twinkle = true }
         }
         .ignoresSafeArea()
     }
@@ -346,13 +310,6 @@ private struct MapBackground: View {
         case 3: return Color(red: 1.0, green: 0.8, blue: 0.9)   // soft pink
         default: return .white
         }
-    }
-
-    private func cloud(width: CGFloat) -> some View {
-        Capsule()
-            .fill(.white)
-            .frame(width: width, height: width * 0.42)
-            .blur(radius: 18)
     }
 }
 
