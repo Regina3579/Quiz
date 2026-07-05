@@ -185,15 +185,14 @@ struct QuizView: View {
                     }
                     .buttonStyle(.plain)
 
-                    if explanationExpanded {
-                        Text(explanation)
-                            .font(Theme.medium(15))
-                            .foregroundColor(Theme.ink)
-                            .lineSpacing(4)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
+                    Text(explanation)
+                        .font(Theme.medium(15))
+                        .foregroundColor(Theme.ink)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(explanationExpanded ? nil : 1)
+                        .truncationMode(.tail)
+                        .fixedSize(horizontal: false, vertical: explanationExpanded)
                 }
                 .padding(18)
                 .bubbleCard(cornerRadius: 18)
