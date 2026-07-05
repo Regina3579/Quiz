@@ -36,26 +36,44 @@ struct PlacedSticker: Identifiable, Codable, Hashable {
     var rotation: Double = 0
 }
 
-/// The stickers available in the shop, split into two collections.
-/// Every 50 jewels buys one sticker: the Cute collection is 50 jewels each
-/// and the fancier Epic collection is 100 jewels each.
+/// A themed group of stickers in the shop (e.g. "Animal Kingdom"). Each
+/// category has a Cute tier (50 jewels) and an Epic tier (100 jewels).
+struct StickerCategory: Identifiable {
+    let id: String
+    let name: String
+    let emoji: String
+    let cute: [Sticker]
+    let epic: [Sticker]
+
+    var count: Int { cute.count + epic.count }
+}
+
+/// The stickers available in the shop, organised into themed categories.
+/// Every 50 jewels buys one sticker: the Cute tier is 50 jewels each and the
+/// fancier Epic tier is 100 jewels each.
 enum StickerCatalog {
     static let cuteCost = 50
     static let epicCost = 100
 
-    /// The friendly, free-to-reach Cute collection (50 jewels each).
-    static let cute: [Sticker] = (1...20).map { n in
-        Sticker(id: "cute\(n)", emoji: "🐾", cost: cuteCost,
-                imageName: String(format: "StickerC%02d", n))
-    }
+    /// 🦁 Animal Kingdom — cute animals (Cute tier) and fancy animals (Epic).
+    static let animalKingdom = StickerCategory(
+        id: "animals",
+        name: "Animal Kingdom",
+        emoji: "🦁",
+        cute: (1...20).map { n in
+            Sticker(id: "animal_c\(n)", emoji: "🐾", cost: cuteCost,
+                    imageName: String(format: "StickerC%02d", n))
+        },
+        epic: (1...20).map { n in
+            Sticker(id: "animal_e\(n)", emoji: "👑", cost: epicCost,
+                    imageName: String(format: "StickerE%02d", n))
+        }
+    )
 
-    /// The premium Epic collection (100 jewels each).
-    static let epic: [Sticker] = (1...20).map { n in
-        Sticker(id: "epic\(n)", emoji: "👑", cost: epicCost,
-                imageName: String(format: "StickerE%02d", n))
-    }
+    /// All categories shown in the shop (more will be added over time).
+    static let categories: [StickerCategory] = [animalKingdom]
 
-    static let all: [Sticker] = cute + epic
+    static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
 
     static let byID: [String: Sticker] = Dictionary(
         uniqueKeysWithValues: all.map { ($0.id, $0) })
@@ -452,30 +470,116 @@ struct StickerShopSheet: View {
     /// Called when the child taps an owned sticker to place it in the book.
     let onPlace: (Sticker) -> Void
 
+    /// The category being browsed, or nil while choosing a category.
+    @State private var selected: StickerCategory?
+
     private let columns = [GridItem(.adaptive(minimum: 96), spacing: 14)]
 
     var body: some View {
         VStack(spacing: 12) {
-            HStack {
-                Text("Sticker Shop")
-                    .font(Theme.display(22))
-                    .foregroundColor(Theme.ink)
-                Spacer()
-                HStack(spacing: 5) {
-                    Image(systemName: "diamond.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.jewelPink)
-                    Text("\(progress.jewels)")
-                        .font(Theme.bold(15))
-                        .foregroundStyle(Theme.jewelPink)
-                }
-                .padding(.horizontal, 12)
-                .frame(height: 36)
-                .background(Capsule().fill(Color.black.opacity(0.06)))
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 18)
+            topBar
 
+            if let category = selected {
+                stickerList(category)
+            } else {
+                categoryList
+            }
+        }
+        .background(Theme.homeBackground.ignoresSafeArea())
+    }
+
+    private var topBar: some View {
+        HStack(spacing: 10) {
+            if selected != nil {
+                Button {
+                    Haptics.play(.light)
+                    withAnimation(.easeInOut(duration: 0.2)) { selected = nil }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(Theme.bold(16))
+                        .foregroundColor(Theme.ink)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(Color.black.opacity(0.06)))
+                }
+            }
+
+            Text(selected?.name ?? "Sticker Shop")
+                .font(Theme.display(22))
+                .foregroundColor(Theme.ink)
+
+            Spacer()
+
+            HStack(spacing: 5) {
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.jewelPink)
+                Text("\(progress.jewels)")
+                    .font(Theme.bold(15))
+                    .foregroundStyle(Theme.jewelPink)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 36)
+            .background(Capsule().fill(Color.black.opacity(0.06)))
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 18)
+    }
+
+    private var categoryList: some View {
+        VStack(spacing: 14) {
+            Text("Pick a collection to explore!")
+                .font(Theme.medium(13))
+                .foregroundColor(Theme.inkSoft)
+
+            ScrollView {
+                VStack(spacing: 14) {
+                    ForEach(StickerCatalog.categories) { category in
+                        categoryCard(category)
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 24)
+            }
+        }
+    }
+
+    private func categoryCard(_ category: StickerCategory) -> some View {
+        Button {
+            Haptics.play(.light)
+            withAnimation(.easeInOut(duration: 0.2)) { selected = category }
+        } label: {
+            HStack(spacing: 14) {
+                Text(category.emoji).font(.system(size: 44))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(category.name)
+                        .font(Theme.display(20))
+                        .foregroundColor(Theme.ink)
+                    Text("\(category.count) stickers")
+                        .font(Theme.medium(13))
+                        .foregroundColor(Theme.inkSoft)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(Theme.bold(16))
+                    .foregroundColor(Theme.inkSoft)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(.white.opacity(0.8))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(.white, lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
+    private func stickerList(_ category: StickerCategory) -> some View {
+        VStack(spacing: 8) {
             Text("Buy stickers with your jewels, then tap one to stick it in your book!")
                 .font(Theme.medium(13))
                 .foregroundColor(Theme.inkSoft)
@@ -485,15 +589,14 @@ struct StickerShopSheet: View {
             ScrollView {
                 section(title: "🌸 Cute Collection",
                         subtitle: "50 jewels each",
-                        stickers: StickerCatalog.cute)
+                        stickers: category.cute)
 
                 section(title: "✨ Epic Collection",
                         subtitle: "100 jewels each",
-                        stickers: StickerCatalog.epic)
+                        stickers: category.epic)
                     .padding(.top, 4)
             }
         }
-        .background(Theme.homeBackground.ignoresSafeArea())
     }
 
     private func section(title: String, subtitle: String, stickers: [Sticker]) -> some View {
