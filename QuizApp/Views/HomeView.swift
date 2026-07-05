@@ -127,10 +127,10 @@ struct HomeView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "diamond.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(Theme.jewelRainbow)
+                        .foregroundStyle(Theme.jewelPink)
                     Text("\(progress.jewels)")
                         .font(Theme.bold(17))
-                        .foregroundStyle(Theme.jewelRainbow)
+                        .foregroundStyle(Theme.jewelPink)
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.jewels)
                 }

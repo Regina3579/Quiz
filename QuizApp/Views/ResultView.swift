@@ -124,10 +124,10 @@ struct ResultView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "diamond.fill")
                             .font(.system(size: 26))
-                            .foregroundStyle(Theme.jewelRainbow)
+                            .foregroundStyle(Theme.jewelPink)
                         Text("+\(jewelsShown)")
                             .font(Theme.display(36))
-                            .foregroundStyle(Theme.jewelRainbow)
+                            .foregroundStyle(Theme.jewelPink)
                         Text("Jewels")
                             .font(Theme.bold(17))
                             .foregroundColor(.white.opacity(0.9))

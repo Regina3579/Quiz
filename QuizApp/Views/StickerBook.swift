@@ -159,10 +159,10 @@ struct StickerBookView: View {
             HStack(spacing: 5) {
                 Image(systemName: "diamond.fill")
                     .font(.system(size: 14))
-                    .foregroundStyle(Theme.jewelRainbow)
+                    .foregroundStyle(Theme.jewelPink)
                 Text("\(progress.jewels)")
                     .font(Theme.bold(15))
-                    .foregroundStyle(Theme.jewelRainbow)
+                    .foregroundStyle(Theme.jewelPink)
             }
             .padding(.horizontal, 12)
             .frame(height: 40)
@@ -332,10 +332,10 @@ struct StickerShopSheet: View {
                 HStack(spacing: 5) {
                     Image(systemName: "diamond.fill")
                         .font(.system(size: 14))
-                        .foregroundStyle(Theme.jewelRainbow)
+                        .foregroundStyle(Theme.jewelPink)
                     Text("\(progress.jewels)")
                         .font(Theme.bold(15))
-                        .foregroundStyle(Theme.jewelRainbow)
+                        .foregroundStyle(Theme.jewelPink)
                 }
                 .padding(.horizontal, 12)
                 .frame(height: 36)
@@ -405,7 +405,7 @@ struct StickerShopSheet: View {
                     Image(systemName: "diamond.fill").font(.system(size: 11))
                     Text("\(sticker.cost)").font(Theme.bold(13))
                 }
-                .foregroundStyle(affordable ? AnyShapeStyle(Theme.jewelRainbow)
+                .foregroundStyle(affordable ? AnyShapeStyle(Theme.jewelPink)
                                             : AnyShapeStyle(Theme.inkSoft))
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(Capsule().fill(Color.white.opacity(0.85)))

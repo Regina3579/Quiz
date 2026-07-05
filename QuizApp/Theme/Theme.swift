@@ -50,19 +50,8 @@ enum Theme {
     /// Soft cream fill for the "Did you know?" box. (#FFF8D6)
     static let didYouKnow = Color(red: 1.00, green: 0.973, blue: 0.839)
 
-    /// A bright rainbow used for the jewel gem and jewel counts.
-    static let jewelRainbow = LinearGradient(
-        colors: [
-            Color(red: 1.00, green: 0.28, blue: 0.34),
-            Color(red: 1.00, green: 0.60, blue: 0.20),
-            Color(red: 1.00, green: 0.85, blue: 0.25),
-            Color(red: 0.35, green: 0.82, blue: 0.45),
-            Color(red: 0.30, green: 0.68, blue: 1.00),
-            Color(red: 0.66, green: 0.42, blue: 1.00)
-        ],
-        startPoint: .leading,
-        endPoint: .trailing
-    )
+    /// A bright pink used for the jewel gem and jewel counts. (#FF459E)
+    static let jewelPink = Color(red: 1.00, green: 0.27, blue: 0.62)
 
     /// Purple gradient for the primary "Next" button. (#8B5CF6 → #A855F7)
     static let nextButton = LinearGradient(
