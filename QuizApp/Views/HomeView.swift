@@ -12,6 +12,7 @@ struct HomeView: View {
     @EnvironmentObject private var progress: GameProgress
     private let islands = QuizData.islands
     @State private var appeared = false
+    @State private var showStickerBook = false
     @AppStorage(Sound.muteKey) private var isMuted = false
 
     private let rowHeight: CGFloat = 150
@@ -47,6 +48,9 @@ struct HomeView: View {
                 QuizView(route: route)
             }
         }
+        .fullScreenCover(isPresented: $showStickerBook) {
+            StickerBookView().environmentObject(progress)
+        }
         .onAppear { appeared = true }
     }
 
@@ -63,6 +67,24 @@ struct HomeView: View {
                 .font(Theme.medium(15))
                 .foregroundColor(mapInk.opacity(0.85))
                 .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
+
+            Button {
+                Haptics.play(.light)
+                showStickerBook = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text("📖")
+                    Text("My Sticker Book").font(Theme.bold(14))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(Theme.nextButton))
+                .overlay(Capsule().stroke(.white.opacity(0.6), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
         .opacity(appeared ? 1 : 0)

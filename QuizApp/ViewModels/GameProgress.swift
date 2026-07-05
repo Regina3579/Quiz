@@ -25,8 +25,16 @@ final class GameProgress: ObservableObject {
     /// perfect rounds and first-time level clears.
     @Published private(set) var jewels: Int = 0
 
+    /// IDs of stickers the child has bought from the sticker shop.
+    @Published private(set) var ownedStickers: Set<String> = []
+
+    /// Stickers the child has placed in their sticker book (page + position).
+    @Published private(set) var placedStickers: [PlacedSticker] = []
+
     private let defaultsKey = "quizspark.progress.v1"
     private let jewelsKey = "quizspark.jewels.v1"
+    private let ownedStickersKey = "quizspark.stickers.owned.v1"
+    private let placedStickersKey = "quizspark.stickers.placed.v1"
 
     // Jewel reward amounts.
     static let jewelsPerCorrect = 5
@@ -122,12 +130,67 @@ final class GameProgress: ObservableObject {
         return reward
     }
 
+    // MARK: - Sticker book
+
+    /// Whether the child already owns a sticker.
+    func owns(_ sticker: Sticker) -> Bool { ownedStickers.contains(sticker.id) }
+
+    /// Whether the child can afford a sticker they don't already own.
+    func canBuy(_ sticker: Sticker) -> Bool {
+        !owns(sticker) && jewels >= sticker.cost
+    }
+
+    /// Buys a sticker, spending jewels. Returns true on success.
+    @discardableResult
+    func buySticker(_ sticker: Sticker) -> Bool {
+        guard !owns(sticker) else { return true }
+        guard jewels >= sticker.cost else { return false }
+        jewels -= sticker.cost
+        ownedStickers.insert(sticker.id)
+        saveJewels()
+        saveStickers()
+        return true
+    }
+
+    /// Places a copy of an owned sticker on a page and returns its id.
+    @discardableResult
+    func placeSticker(_ stickerID: String, page: Int, x: Double, y: Double) -> UUID {
+        let placed = PlacedSticker(stickerID: stickerID, page: page, x: x, y: y)
+        placedStickers.append(placed)
+        saveStickers()
+        return placed.id
+    }
+
+    /// Updates the position, scale and rotation of a placed sticker.
+    func updatePlaced(_ id: UUID, x: Double, y: Double, scale: Double, rotation: Double) {
+        guard let i = placedStickers.firstIndex(where: { $0.id == id }) else { return }
+        placedStickers[i].x = x
+        placedStickers[i].y = y
+        placedStickers[i].scale = scale
+        placedStickers[i].rotation = rotation
+        saveStickers()
+    }
+
+    /// Removes a placed sticker from the book (the sticker stays owned).
+    func removePlaced(_ id: UUID) {
+        placedStickers.removeAll { $0.id == id }
+        saveStickers()
+    }
+
+    /// All stickers placed on a given page.
+    func stickers(onPage page: Int) -> [PlacedSticker] {
+        placedStickers.filter { $0.page == page }
+    }
+
     /// Wipes all saved progress (handy for testing / a "reset" button).
     func resetAll() {
         stars = [:]
         jewels = 0
+        ownedStickers = []
+        placedStickers = []
         save()
         saveJewels()
+        saveStickers()
     }
 
     // MARK: - Persistence
@@ -138,6 +201,14 @@ final class GameProgress: ObservableObject {
             stars = decoded
         }
         jewels = UserDefaults.standard.integer(forKey: jewelsKey)
+        if let data = UserDefaults.standard.data(forKey: ownedStickersKey),
+           let decoded = try? JSONDecoder().decode(Set<String>.self, from: data) {
+            ownedStickers = decoded
+        }
+        if let data = UserDefaults.standard.data(forKey: placedStickersKey),
+           let decoded = try? JSONDecoder().decode([PlacedSticker].self, from: data) {
+            placedStickers = decoded
+        }
     }
 
     private func save() {
@@ -148,6 +219,15 @@ final class GameProgress: ObservableObject {
 
     private func saveJewels() {
         UserDefaults.standard.set(jewels, forKey: jewelsKey)
+    }
+
+    private func saveStickers() {
+        if let data = try? JSONEncoder().encode(ownedStickers) {
+            UserDefaults.standard.set(data, forKey: ownedStickersKey)
+        }
+        if let data = try? JSONEncoder().encode(placedStickers) {
+            UserDefaults.standard.set(data, forKey: placedStickersKey)
+        }
     }
 }
 
