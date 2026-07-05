@@ -35,6 +35,13 @@ enum Sound {
     private static var players: [String: AVAudioPlayer] = [:]
     private static var sessionReady = false
 
+    /// Shared key for the in-app mute toggle. When true, no sound effects play.
+    static let muteKey = "quizspark.muted"
+
+    static var isMuted: Bool {
+        UserDefaults.standard.bool(forKey: muteKey)
+    }
+
     /// Correct answer: happy chime + a success vibration.
     static func correct() {
         Haptics.play(.success)
@@ -48,6 +55,8 @@ enum Sound {
     }
 
     static func play(_ name: String) {
+        // Respect the in-app mute button — skip all sound when muted.
+        guard !isMuted else { return }
         prepareSession()
         if let existing = players[name] {
             existing.currentTime = 0

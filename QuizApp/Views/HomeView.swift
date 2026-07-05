@@ -12,6 +12,7 @@ struct HomeView: View {
     @EnvironmentObject private var progress: GameProgress
     private let islands = QuizData.islands
     @State private var appeared = false
+    @AppStorage(Sound.muteKey) private var isMuted = false
 
     private let rowHeight: CGFloat = 150
 
@@ -32,6 +33,8 @@ struct HomeView: View {
                         }
                     }
                 }
+
+                muteButton
             }
             .navigationDestination(for: Island.self) { island in
                 IslandView(island: island)
@@ -61,6 +64,33 @@ struct HomeView: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : -12)
         .animation(.easeOut(duration: 0.5), value: appeared)
+    }
+
+    // MARK: - Mute button (top-right corner)
+
+    private var muteButton: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button {
+                    Haptics.play(.light)
+                    isMuted.toggle()
+                } label: {
+                    Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .font(Theme.bold(18))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(Color.black.opacity(0.28)))
+                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1.5))
+                        .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
     }
 
     // MARK: - Winding trail of islands

@@ -220,40 +220,29 @@ extension Sprite {
         return s
     }
 
-    // 🚀 Galaxy — lots of twinkling stars plus sparkles flying around and a
-    // shooting comet. (The scenic photo already has the planets & rocket.)
+    // 🚀 Galaxy — a sky full of floating golden stars and a shooting comet.
+    // (The scenic photo already has the planets & rocket.)
     static var galaxy: [Sprite] {
         var s: [Sprite] = []
         // A UFO zooming across the galaxy in real time.
         s.append(Sprite(.emoji("🛸"), size: 36, opacity: 0.95, x: 0.0, y: 0.34, speed: 1.4, amp: 20, motion: .driftX))
-        // Twinkling star field (white, gold, pink, blue).
-        for i in 0..<26 {
-            let c: Color = (i % 6 == 0) ? Color(red: 1, green: 0.9, blue: 0.6)
-                        : (i % 6 == 2) ? Color(red: 1, green: 0.8, blue: 0.95)
-                        : (i % 6 == 4) ? Color(red: 0.7, green: 0.85, blue: 1) : .white
+        // Warm golden-yellow shades for the whole star field.
+        let gold = Color(red: 1.0, green: 0.85, blue: 0.30)
+        let paleGold = Color(red: 1.0, green: 0.92, blue: 0.55)
+        // Lots of twinkling golden stars.
+        for i in 0..<38 {
+            let c = (i % 3 == 0) ? paleGold : gold
             s.append(Sprite(.dot(c), size: 2 + CGFloat(i % 4) * 2, opacity: 0.95,
                             x: Double((i * 61) % 100) / 100, y: Double((i * 37) % 100) / 100,
                             speed: 0.7 + Double(i % 4) * 0.4, phase: Double(i), motion: .twinkle))
         }
-        // Sparkles flying across on the cosmic breeze.
-        for i in 0..<4 {
-            s.append(Sprite(.symbol("sparkle", .white), size: 14 + CGFloat(i % 3) * 6, opacity: 0.9,
-                            x: Double(i) * 0.25, y: 0.15 + Double(i) * 0.2,
-                            speed: 1.0 + Double(i) * 0.4, phase: Double(i) * 2, amp: 24, spin: 40,
-                            motion: .driftX))
+        // A few larger golden stars gently floating around.
+        for i in 0..<6 {
+            s.append(Sprite(.symbol("star.fill", gold),
+                            size: 13 + CGFloat(i % 3) * 5, opacity: 0.9,
+                            x: 0.12 + Double(i) * 0.15, y: 0.25 + Double(i % 3) * 0.2,
+                            speed: 0.7 + Double(i) * 0.2, phase: Double(i), amp: 28, motion: .bob))
         }
-        // Sparkles floating and drifting around in place.
-        for i in 0..<4 {
-            s.append(Sprite(.symbol("sparkles", Color(red: 1, green: 0.95, blue: 0.7)),
-                            size: 16 + CGFloat(i % 2) * 8, opacity: 0.85,
-                            x: 0.2 + Double(i) * 0.2, y: 0.3 + Double(i % 3) * 0.2,
-                            speed: 0.8 + Double(i) * 0.3, phase: Double(i), amp: 28, motion: .bob))
-        }
-        // A couple of little stars drifting by.
-        s.append(Sprite(.symbol("star.fill", Color(red: 1, green: 0.85, blue: 0.3)),
-                        size: 18, opacity: 0.9, x: 0.1, y: 0.45, speed: 0.7, phase: 1, amp: 30, motion: .bob))
-        s.append(Sprite(.symbol("star.fill", Color(red: 1, green: 0.85, blue: 0.3)),
-                        size: 14, opacity: 0.85, x: 0.8, y: 0.7, speed: 0.9, phase: 3, amp: 26, motion: .bob))
         // Shooting comets streaking across.
         s.append(Sprite(.emoji("☄️"), size: 28, opacity: 0.9, x: 0.0, y: 0.18, speed: 3.0, phase: 0, amp: 50, motion: .driftX))
         s.append(Sprite(.emoji("☄️"), size: 22, opacity: 0.85, x: 0.0, y: 0.55, speed: 2.4, phase: 3, amp: 40, motion: .driftX))
@@ -263,8 +252,6 @@ extension Sprite {
     // 🦖 Dino — falling leaves, glowing embers rising, a few sparkles
     static var dino: [Sprite] {
         var s: [Sprite] = []
-        // A pterodactyl gliding across the sky in real time.
-        s.append(Sprite(.emoji("🦅"), size: 32, opacity: 0.9, x: 0.0, y: 0.16, speed: 1.2, amp: 18, motion: .driftX))
         for i in 0..<7 {
             s.append(Sprite(.emoji(["🍃", "🍂"][i % 2]), size: 18 + CGFloat(i % 3) * 6, opacity: 0.85,
                             x: Double((i * 37) % 100) / 100, y: Double(i) * 0.13,
@@ -283,15 +270,22 @@ extension Sprite {
         return s
     }
 
-    // 🐬 Ocean — lots of rising bubbles and gentle light sparkles
+    // 🐬 Ocean — lots of cute rising bubbles and gentle light sparkles
     static var ocean: [Sprite] {
         var s: [Sprite] = []
         // A fish swimming across in real time.
         s.append(Sprite(.emoji("🐠"), size: 34, opacity: 0.95, x: 0.0, y: 0.42, speed: 1.0, amp: 20, motion: .driftX))
-        for i in 0..<14 {
-            s.append(Sprite(.dot(Color.white.opacity(0.65)), size: 4 + CGFloat(i % 4) * 3,
-                            opacity: 0.55, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.08,
-                            speed: 0.7 + Double(i % 3) * 0.3, phase: Double(i), amp: 16, motion: .rise))
+        // Cute round bubbles rising all across the water.
+        for i in 0..<22 {
+            s.append(Sprite(.dot(Color.white.opacity(0.7)), size: 5 + CGFloat(i % 5) * 4,
+                            opacity: 0.6, x: Double((i * 53) % 100) / 100, y: Double(i) * 0.06,
+                            speed: 0.6 + Double(i % 4) * 0.3, phase: Double(i), amp: 18, motion: .rise))
+        }
+        // A few bigger, extra-cute bubble emojis drifting up too.
+        for i in 0..<7 {
+            s.append(Sprite(.emoji("🫧"), size: 22 + CGFloat(i % 3) * 10, opacity: 0.85,
+                            x: Double((i * 37) % 100) / 100, y: Double(i) * 0.14,
+                            speed: 0.5 + Double(i % 3) * 0.3, phase: Double(i), amp: 22, motion: .rise))
         }
         for i in 0..<5 {
             s.append(Sprite(.symbol("sparkle", .white), size: 12 + CGFloat(i % 3) * 5, opacity: 0.7,

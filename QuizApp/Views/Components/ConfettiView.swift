@@ -83,41 +83,35 @@ private struct ConfettiPiece: View {
 
 // MARK: - Correct-answer celebration
 
-/// A joyful one-shot burst played when a child answers correctly: gold stars
-/// and sparkles shoot outward from the middle of the screen while a little
-/// confetti flutters down. Bump `trigger` (e.g. increment an Int) to replay it.
+/// A gentle one-shot celebration played when a child answers correctly: a
+/// simple ring of gold stars floats slowly outward from the centre and softly
+/// fades. Bump `trigger` (e.g. increment an Int) to replay it.
 struct CorrectBurst: View {
     /// Increment this to fire a fresh celebration.
     let trigger: Int
 
-    private let sparkles = ["⭐️", "🌟", "✨", "💫", "⭐️", "🌟", "✨"]
-    private let confetti = ["🎉", "⭐️", "✨", "🌟", "🎊", "💫"]
+    private let stars = ["⭐️", "🌟"]
 
     var body: some View {
         GeometryReader { geo in
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height * 0.42)
             ZStack {
                 if trigger > 0 {
-                    // Stars & sparkles bursting outward from the centre.
-                    ForEach(0..<18, id: \.self) { i in
-                        BurstStar(emoji: sparkles[i % sparkles.count],
-                                  index: i, total: 18, center: center)
-                    }
-                    // A little confetti fluttering down from the top.
-                    ForEach(0..<12, id: \.self) { i in
-                        BurstConfetti(emoji: confetti[i % confetti.count],
-                                      index: i, size: geo.size)
+                    // A simple, even ring of gold stars drifting slowly outward.
+                    ForEach(0..<10, id: \.self) { i in
+                        BurstStar(emoji: stars[i % stars.count],
+                                  index: i, total: 10, center: center)
                     }
                 }
             }
-            // Recreating the subtree on each trigger restarts the animations.
+            // Recreating the subtree on each trigger restarts the animation.
             .id(trigger)
         }
         .allowsHitTesting(false)
     }
 }
 
-/// One star/sparkle that flies out from the centre, grows and fades.
+/// One gold star that drifts gently outward from the centre and softly fades.
 private struct BurstStar: View {
     let emoji: String
     let index: Int
@@ -126,19 +120,12 @@ private struct BurstStar: View {
 
     @State private var out = false
 
+    /// Evenly spaced around a circle for a clean, simple burst.
     private var angle: Double {
-        let base = Double(index) / Double(total) * 2 * .pi
-        let jitter = (Double((index * 37) % 100) / 100.0 - 0.5) * 0.35
-        return base + jitter
+        Double(index) / Double(total) * 2 * .pi - .pi / 2
     }
-    private var distance: CGFloat {
-        let r = Double((index * 9301 + 49297) % 233280) / 233280.0
-        return 110 + CGFloat(r) * 130
-    }
-    private var size: CGFloat {
-        let r = Double((index * 4213 + 1301) % 100) / 100.0
-        return 20 + CGFloat(r) * 22
-    }
+    private var distance: CGFloat { 130 }
+    private var size: CGFloat { 30 }
 
     var body: some View {
         Text(emoji)
@@ -147,37 +134,11 @@ private struct BurstStar: View {
                 x: center.x + (out ? CGFloat(cos(angle)) * distance : 0),
                 y: center.y + (out ? CGFloat(sin(angle)) * distance : 0)
             )
-            .scaleEffect(out ? 1.1 : 0.3)
+            .scaleEffect(out ? 1.0 : 0.4)
             .opacity(out ? 0 : 1)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.85)) { out = true }
-            }
-    }
-}
-
-/// A single confetti piece fluttering down from the top.
-private struct BurstConfetti: View {
-    let emoji: String
-    let index: Int
-    let size: CGSize
-
-    @State private var fell = false
-
-    private var startX: CGFloat {
-        let r = Double((index * 9301 + 49297) % 233280) / 233280.0
-        return CGFloat(r) * size.width
-    }
-    private var pieceSize: CGFloat { 14 + CGFloat((index * 13) % 14) }
-    private var delay: Double { Double((index * 29) % 100) / 100.0 * 0.3 }
-
-    var body: some View {
-        Text(emoji)
-            .font(.system(size: pieceSize))
-            .position(x: startX, y: fell ? size.height * 0.62 : -30)
-            .rotationEffect(.degrees(fell ? Double(index % 2 == 0 ? 240 : -240) : 0))
-            .opacity(fell ? 0 : 1)
-            .onAppear {
-                withAnimation(.easeIn(duration: 1.1).delay(delay)) { fell = true }
+                // Slow and beautiful: a gentle, unhurried drift.
+                withAnimation(.easeOut(duration: 1.8)) { out = true }
             }
     }
 }
