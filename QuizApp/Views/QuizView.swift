@@ -11,6 +11,7 @@ import SwiftUI
 struct QuizView: View {
     @StateObject private var model: QuizViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var explanationExpanded = false
 
     private let valid: Bool
 
@@ -163,18 +164,36 @@ struct QuizView: View {
         VStack(spacing: 14) {
             if let explanation = model.currentQuestion.explanation {
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Text("💡").font(.system(size: 20))
-                        Text("Did you know?")
-                            .font(Theme.bold(16))
-                            .foregroundColor(model.island.palette.end)
+                    Button {
+                        Haptics.play(.light)
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            explanationExpanded.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text("💡").font(.system(size: 20))
+                            Text("Did you know?")
+                                .font(Theme.bold(16))
+                                .foregroundColor(model.island.palette.end)
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(Theme.bold(14))
+                                .foregroundColor(model.island.palette.end)
+                                .rotationEffect(.degrees(explanationExpanded ? 180 : 0))
+                        }
+                        .contentShape(Rectangle())
                     }
-                    Text(explanation)
-                        .font(Theme.medium(15))
-                        .foregroundColor(Theme.ink)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
+                    .buttonStyle(.plain)
+
+                    if explanationExpanded {
+                        Text(explanation)
+                            .font(Theme.medium(15))
+                            .foregroundColor(Theme.ink)
+                            .lineSpacing(4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
                 .padding(18)
                 .bubbleCard(cornerRadius: 18)
@@ -182,6 +201,7 @@ struct QuizView: View {
 
             Button {
                 Haptics.play(.light)
+                explanationExpanded = false
                 withAnimation { model.next() }
             } label: {
                 HStack {
