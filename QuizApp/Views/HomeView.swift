@@ -58,7 +58,7 @@ struct HomeView: View {
                 .foregroundColor(mapInk)
                 .shadow(color: .white.opacity(0.5), radius: 3, y: 1)
 
-            Text("Pick an island and start your quest!")
+            Text("Explore every island on your adventure!")
                 .font(Theme.medium(15))
                 .foregroundColor(mapInk.opacity(0.85))
                 .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
