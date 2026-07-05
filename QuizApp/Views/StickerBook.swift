@@ -36,44 +36,26 @@ struct PlacedSticker: Identifiable, Codable, Hashable {
     var rotation: Double = 0
 }
 
-/// The full set of stickers available in the shop, cheapest first.
+/// The stickers available in the shop, split into two collections.
+/// Every 50 jewels buys one sticker: the Cute collection is 50 jewels each
+/// and the fancier Epic collection is 100 jewels each.
 enum StickerCatalog {
-    static let all: [Sticker] = [
-        // Common — 15 jewels
-        Sticker(id: "star", emoji: "⭐️", cost: 15),
-        Sticker(id: "heart", emoji: "❤️", cost: 15),
-        Sticker(id: "rainbow", emoji: "🌈", cost: 15),
-        Sticker(id: "flower", emoji: "🌸", cost: 15),
-        Sticker(id: "sun", emoji: "☀️", cost: 15),
-        Sticker(id: "moon", emoji: "🌙", cost: 15),
-        Sticker(id: "clover", emoji: "🍀", cost: 15),
-        Sticker(id: "shell", emoji: "🐚", cost: 15),
-        Sticker(id: "fish", emoji: "🐟", cost: 15),
-        Sticker(id: "balloon", emoji: "🎈", cost: 15),
-        // Rare — 40 jewels
-        Sticker(id: "butterfly", emoji: "🦋", cost: 40),
-        Sticker(id: "dolphin", emoji: "🐬", cost: 40),
-        Sticker(id: "octopus", emoji: "🐙", cost: 40),
-        Sticker(id: "parrot", emoji: "🦜", cost: 40),
-        Sticker(id: "rocket", emoji: "🚀", cost: 40),
-        Sticker(id: "lollipop", emoji: "🍭", cost: 40),
-        Sticker(id: "cake", emoji: "🍰", cost: 40),
-        Sticker(id: "rose", emoji: "🌹", cost: 40),
-        // Epic — 90 jewels
-        Sticker(id: "unicorn", emoji: "🦄", cost: 90),
-        Sticker(id: "dragon", emoji: "🐉", cost: 90),
-        Sticker(id: "dino", emoji: "🦕", cost: 90),
-        Sticker(id: "trex", emoji: "🦖", cost: 90),
-        Sticker(id: "penguin", emoji: "🐧", cost: 90),
-        Sticker(id: "owl", emoji: "🦉", cost: 90),
-        // Legendary — 175 jewels
-        Sticker(id: "crown", emoji: "👑", cost: 175),
-        Sticker(id: "trophy", emoji: "🏆", cost: 175),
-        Sticker(id: "earth", emoji: "🌍", cost: 175),
-        Sticker(id: "planet", emoji: "🪐", cost: 175),
-        Sticker(id: "whale", emoji: "🐳", cost: 175),
-        Sticker(id: "shark", emoji: "🦈", cost: 175)
-    ]
+    static let cuteCost = 50
+    static let epicCost = 100
+
+    /// The friendly, free-to-reach Cute collection (50 jewels each).
+    static let cute: [Sticker] = (1...20).map { n in
+        Sticker(id: "cute\(n)", emoji: "🐾", cost: cuteCost,
+                imageName: String(format: "StickerC%02d", n))
+    }
+
+    /// The premium Epic collection (100 jewels each).
+    static let epic: [Sticker] = (1...20).map { n in
+        Sticker(id: "epic\(n)", emoji: "👑", cost: epicCost,
+                imageName: String(format: "StickerE%02d", n))
+    }
+
+    static let all: [Sticker] = cute + epic
 
     static let byID: [String: Sticker] = Dictionary(
         uniqueKeysWithValues: all.map { ($0.id, $0) })
@@ -369,16 +351,38 @@ struct StickerShopSheet: View {
                 .padding(.horizontal, 20)
 
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 14) {
-                    ForEach(StickerCatalog.all) { sticker in
-                        shopCell(sticker)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+                section(title: "🌸 Cute Collection",
+                        subtitle: "50 jewels each",
+                        stickers: StickerCatalog.cute)
+
+                section(title: "✨ Epic Collection",
+                        subtitle: "100 jewels each",
+                        stickers: StickerCatalog.epic)
+                    .padding(.top, 4)
             }
         }
         .background(Theme.homeBackground.ignoresSafeArea())
+    }
+
+    private func section(title: String, subtitle: String, stickers: [Sticker]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(title).font(Theme.display(18)).foregroundColor(Theme.ink)
+                Text(subtitle)
+                    .font(Theme.bold(12))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 3)
+                    .background(Capsule().fill(Theme.inkSoft.opacity(0.8)))
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+
+            LazyVGrid(columns: columns, spacing: 14) {
+                ForEach(stickers) { shopCell($0) }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 18)
+        }
     }
 
     private func shopCell(_ sticker: Sticker) -> some View {
@@ -386,7 +390,7 @@ struct StickerShopSheet: View {
         let affordable = progress.jewels >= sticker.cost
 
         return VStack(spacing: 8) {
-            StickerGlyph(sticker: sticker, size: 46)
+            StickerGlyph(sticker: sticker, size: 58)
                 .opacity(owned || affordable ? 1 : 0.5)
                 .grayscale(owned || affordable ? 0 : 0.6)
 
