@@ -16,6 +16,9 @@ struct HomeView: View {
 
     private let rowHeight: CGFloat = 150
 
+    /// Dark sepia ink that reads clearly on the aged-paper map.
+    private let mapInk = Color(red: 0.30, green: 0.17, blue: 0.05)
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -52,13 +55,13 @@ struct HomeView: View {
         VStack(spacing: 6) {
             Text("🗺️ Adventure Map")
                 .font(Theme.display(30))
-                .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+                .foregroundColor(mapInk)
+                .shadow(color: .white.opacity(0.5), radius: 3, y: 1)
 
             Text("Pick an island and start your quest!")
                 .font(Theme.medium(15))
-                .foregroundColor(.white.opacity(0.95))
-                .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
+                .foregroundColor(mapInk.opacity(0.85))
+                .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
         }
         .frame(maxWidth: .infinity)
         .opacity(appeared ? 1 : 0)
@@ -103,7 +106,7 @@ struct HomeView: View {
             // Dashed path connecting the islands.
             IslandPath(count: count, width: width, rowHeight: rowHeight)
                 .stroke(
-                    Color.white.opacity(0.7),
+                    mapInk.opacity(0.55),
                     style: StrokeStyle(lineWidth: 5, lineCap: .round, dash: [2, 16])
                 )
 
@@ -215,8 +218,9 @@ private struct IslandBadge: View {
             VStack(spacing: 4) {
                 Text(island.name)
                     .font(Theme.bold(16))
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+                    .foregroundColor(Color(red: 0.28, green: 0.15, blue: 0.04))
+                    .shadow(color: .white.opacity(0.8), radius: 3)
+                    .shadow(color: .white.opacity(0.6), radius: 1)
 
                 if unlocked {
                     HStack(spacing: 3) {
@@ -261,85 +265,36 @@ private struct IslandPath: Shape {
     }
 }
 
-// MARK: - Magical adventure background
+// MARK: - Adventure map background
 
-/// The hand-painted "floating islands" scene fills the screen, with a light
-/// layer of twinkling stars and shimmering sparkles drifting over the sky so
-/// the map still feels alive. The painted planets, clouds and scenery are part
-/// of the artwork, so nothing is duplicated on top of them.
+/// The vintage treasure-map parchment fills the whole screen. A soft warm
+/// vignette around the edges adds depth and gently frames the island trail,
+/// while the aged-paper artwork carries the "adventure" feeling on its own.
 private struct MapBackground: View {
-    @State private var twinkle = false
-
-    // Deterministic pseudo-random in 0...1 so layout is stable each launch.
-    private func rnd(_ i: Int, _ salt: Int) -> Double {
-        let x = sin(Double(i) * 12.9898 + Double(salt) * 78.233) * 43758.5453
-        return x - floor(x)
-    }
-
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
 
             ZStack {
-                // The painted adventure-map scene, filling the screen.
+                // Warm paper tone behind, in case the image doesn't fully cover.
+                Color(red: 0.80, green: 0.68, blue: 0.44)
+
+                // The treasure-map parchment, filling the screen.
                 Image("BgAdventureMap")
                     .resizable()
                     .scaledToFill()
                     .frame(width: w, height: h)
                     .clipped()
 
-                // Gentle darkening at the very top so the white title stays readable.
-                LinearGradient(
-                    colors: [Color.black.opacity(0.28), .clear],
-                    startPoint: .top, endPoint: .center)
-                    .frame(height: h * 0.5)
-                    .frame(maxHeight: .infinity, alignment: .top)
-
-                // Twinkling stars sprinkled across the upper sky.
-                ForEach(0..<30, id: \.self) { i in
-                    let size = 1.5 + rnd(i, 3) * 3
-                    let baseOpacity = 0.25 + rnd(i, 4) * 0.4
-                    Circle()
-                        .fill(starColor(i))
-                        .frame(width: size, height: size)
-                        .position(x: rnd(i, 1) * w, y: rnd(i, 2) * h * 0.42)
-                        .opacity(twinkle ? baseOpacity + 0.4 : baseOpacity - 0.15)
-                        .animation(
-                            .easeInOut(duration: 1.2 + rnd(i, 5) * 1.8)
-                                .repeatForever(autoreverses: true)
-                                .delay(rnd(i, 6) * 2),
-                            value: twinkle)
-                }
-
-                // A few larger shimmering sparkles high in the sky.
-                ForEach(0..<6, id: \.self) { i in
-                    Image(systemName: "sparkle")
-                        .font(.system(size: 12 + CGFloat(rnd(i, 7) * 16)))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .position(x: rnd(i, 8) * w, y: rnd(i, 9) * h * 0.38)
-                        .opacity(twinkle ? 1 : 0.3)
-                        .scaleEffect(twinkle ? 1 : 0.7)
-                        .animation(
-                            .easeInOut(duration: 1.6 + rnd(i, 10) * 1.2)
-                                .repeatForever(autoreverses: true)
-                                .delay(rnd(i, 11) * 2),
-                            value: twinkle)
-                }
+                // Soft warm vignette to add depth around the edges.
+                RadialGradient(
+                    colors: [.clear, Color(red: 0.28, green: 0.16, blue: 0.05).opacity(0.28)],
+                    center: .center, startRadius: h * 0.28, endRadius: h * 0.62)
             }
             .ignoresSafeArea()
-            .onAppear { twinkle = true }
         }
         .ignoresSafeArea()
-    }
-
-    /// A mostly-white star with an occasional warm or pink tint for magic.
-    private func starColor(_ i: Int) -> Color {
-        switch i % 7 {
-        case 0: return Color(red: 1.0, green: 0.9, blue: 0.6)   // warm gold
-        case 3: return Color(red: 1.0, green: 0.8, blue: 0.9)   // soft pink
-        default: return .white
-        }
     }
 }
 
