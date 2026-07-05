@@ -55,7 +55,7 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 2. 🚀 Galaxy Quest — ✅ 10 levels
 3. 🦖 Dino Valley — ✅ 10 levels (rich explanations)
 4. 🐬 Ocean Paradise — ✅ 10 levels (rich explanations)
-5. 🧭 Explorer's Trail — 1 level so far
+5. 🧭 Explorer's Trail — ✅ 10 levels (rich explanations)
 6. 🌺 Blossom Garden — 1 level so far
 7. 🔬 Science Lab — 1 level so far
 8. 🏰 Brain Castle — 1 level so far
