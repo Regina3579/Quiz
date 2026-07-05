@@ -37,6 +37,7 @@ struct HomeView: View {
                     }
                 }
 
+                jewelBalance
                 muteButton
             }
             .navigationDestination(for: Island.self) { island in
@@ -94,6 +95,33 @@ struct HomeView: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 6)
+    }
+
+    // MARK: - Jewel balance (top-left corner)
+
+    private var jewelBalance: some View {
+        VStack {
+            HStack {
+                HStack(spacing: 6) {
+                    Text("💎").font(.system(size: 18))
+                    Text("\(progress.jewels)")
+                        .font(Theme.bold(17))
+                        .foregroundColor(.white)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.jewels)
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .background(Capsule().fill(Color.black.opacity(0.28)))
+                .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                Spacer()
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .accessibilityLabel("\(progress.jewels) jewels")
     }
 
     // MARK: - Winding trail of islands

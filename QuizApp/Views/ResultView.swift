@@ -19,6 +19,8 @@ struct ResultView: View {
     @State private var starsShown = 0
     @State private var celebrate = false
     @State private var recorded = false
+    @State private var reward: JewelReward?
+    @State private var jewelsShown = 0
 
     private var earned: Int { model.starsEarned }
 
@@ -73,6 +75,8 @@ struct ResultView: View {
 
                 recapRow.opacity(showContent ? 1 : 0)
 
+                jewelReward.opacity(showContent ? 1 : 0)
+
                 Spacer(minLength: 0)
 
                 actions.opacity(showContent ? 1 : 0)
@@ -109,6 +113,59 @@ struct ResultView: View {
                     .background(Circle().fill(.white))
                     .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
             }
+        }
+    }
+
+    private var jewelReward: some View {
+        Group {
+            if let reward = reward, reward.total > 0 {
+                VStack(spacing: 10) {
+                    // The big jewel total, counting up.
+                    HStack(spacing: 8) {
+                        Text("💎").font(.system(size: 28))
+                        Text("+\(jewelsShown)")
+                            .font(Theme.display(36))
+                            .foregroundColor(Theme.star)
+                        Text("Jewels")
+                            .font(Theme.bold(17))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+
+                    // What made up the reward.
+                    VStack(spacing: 6) {
+                        rewardLine("⭐️", "\(reward.correctCount) correct × 5", reward.perCorrect)
+                        if reward.isPerfect {
+                            rewardLine("🎁", "Perfect round bonus", reward.perfectBonus)
+                        }
+                        if reward.isFirstClear {
+                            rewardLine("💎", "First clear bonus", reward.firstClearBonus)
+                        }
+                    }
+                }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white.opacity(0.16))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(.white.opacity(0.35), lineWidth: 1)
+                )
+            }
+        }
+    }
+
+    private func rewardLine(_ icon: String, _ label: String, _ amount: Int) -> some View {
+        HStack(spacing: 8) {
+            Text(icon).font(.system(size: 15))
+            Text(label)
+                .font(Theme.medium(14))
+                .foregroundColor(.white.opacity(0.9))
+            Spacer(minLength: 12)
+            Text("+\(amount)")
+                .font(Theme.bold(15))
+                .foregroundColor(Theme.star)
         }
     }
 
@@ -161,11 +218,13 @@ struct ResultView: View {
     // MARK: - Animation & saving
 
     private func animateIn() {
-        // Save the result once (keeps the player's best score).
+        // Save the result once (keeps the player's best score) and award jewels.
         if !recorded {
-            progress.record(islandID: model.island.id,
-                            level: model.level.number,
-                            earned: earned)
+            reward = progress.completeLevel(islandID: model.island.id,
+                                            level: model.level.number,
+                                            correct: model.score,
+                                            total: model.totalQuestions,
+                                            earned: earned)
             recorded = true
         }
 
@@ -174,6 +233,24 @@ struct ResultView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             celebrate = true
             if earned >= 2 { Haptics.play(.success) }
+            countUpJewels()
+        }
+    }
+
+    /// Rolls the jewel number up from zero for a satisfying reward reveal.
+    private func countUpJewels() {
+        guard let total = reward?.total, total > 0 else { return }
+        let steps = 22
+        let stepValue = max(1, total / steps)
+        Timer.scheduledTimer(withTimeInterval: 0.045, repeats: true) { timer in
+            let next = jewelsShown + stepValue
+            if next >= total {
+                jewelsShown = total
+                timer.invalidate()
+                Haptics.play(.light)
+            } else {
+                jewelsShown = next
+            }
         }
     }
 }

@@ -21,7 +21,17 @@ final class GameProgress: ObservableObject {
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
 
+    /// The player's treasure chest — jewels earned for correct answers,
+    /// perfect rounds and first-time level clears.
+    @Published private(set) var jewels: Int = 0
+
     private let defaultsKey = "quizspark.progress.v1"
+    private let jewelsKey = "quizspark.jewels.v1"
+
+    // Jewel reward amounts.
+    static let jewelsPerCorrect = 5
+    static let perfectBonus = 20
+    static let firstClearBonus = 10
 
     init() { load() }
 
@@ -89,20 +99,45 @@ final class GameProgress: ObservableObject {
         }
     }
 
+    /// Finishes a level: saves the best star count, awards jewels, and returns
+    /// a breakdown so the result screen can show the reward. Call once per
+    /// completed play-through.
+    func completeLevel(islandID: Int, level: Int,
+                       correct: Int, total: Int, earned: Int) -> JewelReward {
+        // The first-clear bonus applies only the first time a level is cleared.
+        let firstClear = !isCleared(islandID: islandID, level: level) && earned >= 1
+
+        record(islandID: islandID, level: level, earned: earned)
+
+        let perCorrect = correct * Self.jewelsPerCorrect
+        let perfect = (total > 0 && correct == total) ? Self.perfectBonus : 0
+        let firstBonus = firstClear ? Self.firstClearBonus : 0
+
+        let reward = JewelReward(correctCount: correct,
+                                 perCorrect: perCorrect,
+                                 perfectBonus: perfect,
+                                 firstClearBonus: firstBonus)
+        jewels += reward.total
+        saveJewels()
+        return reward
+    }
+
     /// Wipes all saved progress (handy for testing / a "reset" button).
     func resetAll() {
         stars = [:]
+        jewels = 0
         save()
+        saveJewels()
     }
 
     // MARK: - Persistence
 
     private func load() {
-        guard
-            let data = UserDefaults.standard.data(forKey: defaultsKey),
-            let decoded = try? JSONDecoder().decode([String: Int].self, from: data)
-        else { return }
-        stars = decoded
+        if let data = UserDefaults.standard.data(forKey: defaultsKey),
+           let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
+            stars = decoded
+        }
+        jewels = UserDefaults.standard.integer(forKey: jewelsKey)
     }
 
     private func save() {
@@ -110,4 +145,20 @@ final class GameProgress: ObservableObject {
             UserDefaults.standard.set(data, forKey: defaultsKey)
         }
     }
+
+    private func saveJewels() {
+        UserDefaults.standard.set(jewels, forKey: jewelsKey)
+    }
+}
+
+/// A breakdown of the jewels earned from finishing a level.
+struct JewelReward {
+    let correctCount: Int
+    let perCorrect: Int
+    let perfectBonus: Int
+    let firstClearBonus: Int
+
+    var total: Int { perCorrect + perfectBonus + firstClearBonus }
+    var isPerfect: Bool { perfectBonus > 0 }
+    var isFirstClear: Bool { firstClearBonus > 0 }
 }
