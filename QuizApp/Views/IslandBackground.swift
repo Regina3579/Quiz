@@ -50,6 +50,38 @@ struct IslandBackground: View {
     }
 }
 
+// MARK: - Quiz gameplay background
+
+/// The gameplay background for a quiz: the island's colour gradient with its
+/// topic-matched ambient effects (jungle leaves, galaxy stars, ocean bubbles,
+/// dino embers…) drifting gently on top. It deliberately never uses the scenic
+/// photo, so the white question and answer cards stay perfectly readable while
+/// each category still feels like its own little world.
+struct QuizBackground: View {
+    let island: Island
+
+    private var sprites: [Sprite] { Sprite.set(for: island.id) }
+
+    var body: some View {
+        ZStack {
+            island.palette.gradient.ignoresSafeArea()
+
+            GeometryReader { geo in
+                TimelineView(.animation) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate
+                    ZStack {
+                        ForEach(sprites) { sprite in
+                            sprite.rendered(t: t, size: geo.size)
+                        }
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+        }
+    }
+}
+
 // MARK: - Sprite model
 
 struct Sprite: Identifiable {

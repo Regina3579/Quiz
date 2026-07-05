@@ -12,6 +12,7 @@ struct QuizView: View {
     @StateObject private var model: QuizViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var explanationExpanded = false
+    @State private var celebrateTrigger = 0
 
     private let valid: Bool
 
@@ -30,7 +31,7 @@ struct QuizView: View {
 
     var body: some View {
         ZStack {
-            model.island.palette.gradient.ignoresSafeArea()
+            QuizBackground(island: model.island)
 
             if model.isFinished {
                 ResultView(model: model) { dismiss() }
@@ -42,6 +43,9 @@ struct QuizView: View {
                 gameplay
                     .transition(.opacity)
             }
+
+            // Gold stars, sparkles and confetti when the answer is correct.
+            CorrectBurst(trigger: celebrateTrigger)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -95,6 +99,9 @@ struct QuizView: View {
                 }
                 .onChange(of: model.hasAnswered) { answered in
                     if answered {
+                        if model.selectedOption == model.currentQuestion.correctIndex {
+                            celebrateTrigger += 1
+                        }
                         withAnimation(.easeOut(duration: 0.45)) {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
@@ -195,7 +202,7 @@ struct QuizView: View {
                         .fixedSize(horizontal: false, vertical: explanationExpanded)
                 }
                 .padding(18)
-                .bubbleCard(cornerRadius: 18)
+                .bubbleCard(cornerRadius: 18, fill: Theme.didYouKnow)
             }
 
             Button {
@@ -208,11 +215,11 @@ struct QuizView: View {
                         .font(Theme.bold(18))
                     Image(systemName: "arrow.right.circle.fill").font(.title2)
                 }
-                .foregroundColor(model.island.palette.end)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white))
-                .shadow(color: .black.opacity(0.15), radius: 8, y: 5)
+                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Theme.nextButton))
+                .shadow(color: .black.opacity(0.2), radius: 8, y: 5)
             }
             .buttonStyle(PressableButtonStyle())
         }

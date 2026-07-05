@@ -27,9 +27,10 @@ enum Theme {
 
     // MARK: - Text
 
-    /// Dark, friendly ink used on light backgrounds.
-    static let ink = Color(red: 0.20, green: 0.17, blue: 0.42)
-    static let inkSoft = Color(red: 0.42, green: 0.40, blue: 0.58)
+    /// Dark, friendly ink used on light backgrounds. (#342E6C)
+    static let ink = Color(red: 0.204, green: 0.180, blue: 0.424)
+    /// Muted secondary text. (#7A74A6)
+    static let inkSoft = Color(red: 0.478, green: 0.455, blue: 0.651)
 
     /// Pure white for text placed on top of vibrant gradients.
     static let onColor = Color.white
@@ -37,10 +38,27 @@ enum Theme {
 
     // MARK: - Accents
 
-    static let correct = Color(red: 0.28, green: 0.80, blue: 0.45)
-    static let incorrect = Color(red: 1.00, green: 0.44, blue: 0.48)
-    static let star = Color(red: 1.00, green: 0.80, blue: 0.20)
+    /// Correct-answer green. (#4CD964)
+    static let correct = Color(red: 0.298, green: 0.851, blue: 0.392)
+    /// Wrong-answer red. (#FF6B6B)
+    static let incorrect = Color(red: 1.00, green: 0.420, blue: 0.420)
+    /// Warm gold used for stars and the progress bar. (#FFD84D)
+    static let star = Color(red: 1.00, green: 0.847, blue: 0.302)
+    static let progress = Color(red: 1.00, green: 0.847, blue: 0.302)
     static let sunshine = Color(red: 1.00, green: 0.78, blue: 0.30)
+
+    /// Soft cream fill for the "Did you know?" box. (#FFF8D6)
+    static let didYouKnow = Color(red: 1.00, green: 0.973, blue: 0.839)
+
+    /// Purple gradient for the primary "Next" button. (#8B5CF6 → #A855F7)
+    static let nextButton = LinearGradient(
+        colors: [
+            Color(red: 0.545, green: 0.361, blue: 0.965),
+            Color(red: 0.659, green: 0.333, blue: 0.969)
+        ],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
 
     // MARK: - Metrics
 

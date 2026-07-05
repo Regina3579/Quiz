@@ -18,7 +18,7 @@ struct ProgressBar: View {
                     .fill(Color.white.opacity(0.30))
 
                 Capsule()
-                    .fill(Color.white)
+                    .fill(Theme.progress)
                     .frame(width: max(12, geo.size.width * value))
                     .animation(.spring(response: 0.5, dampingFraction: 0.8), value: value)
             }
