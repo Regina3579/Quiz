@@ -118,9 +118,7 @@ struct HomeView: View {
         VStack {
             HStack {
                 HStack(spacing: 6) {
-                    Image(systemName: "diamond.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Theme.jewelPink)
+                    JewelIcon(size: 20)
                     Text("\(progress.jewels)")
                         .font(Theme.bold(17))
                         .foregroundStyle(Theme.jewelPink)

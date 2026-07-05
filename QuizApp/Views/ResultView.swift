@@ -122,9 +122,7 @@ struct ResultView: View {
                 VStack(spacing: 10) {
                     // The big jewel total, counting up.
                     HStack(spacing: 8) {
-                        Image(systemName: "diamond.fill")
-                            .font(.system(size: 26))
-                            .foregroundStyle(Theme.jewelPink)
+                        JewelIcon(size: 34)
                         Text("+\(jewelsShown)")
                             .font(Theme.display(36))
                             .foregroundStyle(Theme.jewelPink)

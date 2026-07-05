@@ -82,6 +82,17 @@ enum Theme {
     }
 }
 
+/// The pink-gem jewel icon used everywhere jewels are shown.
+struct JewelIcon: View {
+    var size: CGFloat = 16
+    var body: some View {
+        Image("JewelGem")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+    }
+}
+
 /// A soft white "bubble" card with a chunky, playful drop shadow.
 struct BubbleCard: ViewModifier {
     var cornerRadius: CGFloat = Theme.cornerRadius
