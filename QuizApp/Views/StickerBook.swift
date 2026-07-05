@@ -81,6 +81,57 @@ struct StickerGlyph: View {
     }
 }
 
+// MARK: - Map button (a cute little closed book)
+
+/// A small standing sticker book used as the button on the Adventure Map.
+struct StickerBookIcon: View {
+    var body: some View {
+        VStack(spacing: 3) {
+            ZStack(alignment: .leading) {
+                // Pages peeking out behind the cover.
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(.white)
+                    .frame(width: 50, height: 60)
+                    .offset(x: 6)
+                    .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
+
+                // The colourful cover.
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(
+                        LinearGradient(colors: [
+                            Color(red: 1.00, green: 0.45, blue: 0.72),
+                            Color(red: 0.66, green: 0.42, blue: 0.98)
+                        ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .frame(width: 52, height: 64)
+                    .overlay(alignment: .leading) {
+                        // The spine.
+                        Rectangle().fill(.black.opacity(0.18)).frame(width: 7)
+                    }
+                    .overlay {
+                        VStack(spacing: 2) {
+                            Text("⭐️").font(.system(size: 20))
+                            Text("Stickers")
+                                .font(.system(size: 8, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(.white.opacity(0.6), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 4, y: 3)
+            }
+
+            Text("My Book")
+                .font(Theme.bold(11))
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
+        }
+        .frame(width: 62)
+    }
+}
+
 // MARK: - Sticker book
 
 struct StickerBookView: View {
@@ -90,6 +141,8 @@ struct StickerBookView: View {
     private let totalPages = 25
     @State private var currentPage = 0
     @State private var showShop = false
+    @State private var flipAngle: Double = 0
+    @State private var isFlipping = false
 
     var body: some View {
         ZStack {
@@ -106,17 +159,9 @@ struct StickerBookView: View {
             VStack(spacing: 10) {
                 header
 
-                TabView(selection: $currentPage) {
-                    ForEach(0..<totalPages, id: \.self) { page in
-                        StickerPageView(page: page, totalPages: totalPages)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 4)
-                            .tag(page)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                bookArea
 
-                addStickerBar
+                controlBar
             }
             .padding(.top, 6)
         }
@@ -171,34 +216,121 @@ struct StickerBookView: View {
         .padding(.horizontal, 16)
     }
 
-    private var addStickerBar: some View {
-        VStack(spacing: 4) {
-            Button {
-                Haptics.play(.light)
-                showShop = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Stickers")
-                }
-                .font(Theme.bold(18))
-                .foregroundColor(.white)
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Theme.nextButton)
-                )
-                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-            }
-            .buttonStyle(PressableButtonStyle())
+    // MARK: - The virtual book
 
-            Text("Drag to move • Pinch to resize • Long-press to peel off")
+    private var bookArea: some View {
+        ZStack {
+            // Leather book cover behind the page.
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(
+                    LinearGradient(colors: [
+                        Color(red: 0.55, green: 0.28, blue: 0.60),
+                        Color(red: 0.40, green: 0.18, blue: 0.48)
+                    ], startPoint: .top, endPoint: .bottom)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 12, y: 8)
+
+            // Stacked page edges peeking out on the right for a booky look.
+            HStack {
+                Spacer()
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.white.opacity(0.85))
+                    .frame(width: 10)
+                    .padding(.vertical, 26)
+                    .offset(x: 3)
+            }
+
+            // The current page, flipping around the spine on the left.
+            StickerPageView(page: currentPage, totalPages: totalPages)
+                .rotation3DEffect(.degrees(flipAngle),
+                                  axis: (x: 0, y: 1, z: 0),
+                                  anchor: .leading,
+                                  perspective: 0.35)
+                .shadow(color: .black.opacity(abs(flipAngle) > 1 ? 0.35 : 0),
+                        radius: 12, x: flipAngle < 0 ? -10 : 10)
+                .padding(14)
+        }
+        .padding(.horizontal, 14)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 24)
+                .onEnded { value in
+                    if value.translation.width < -40 { turn(forward: true) }
+                    else if value.translation.width > 40 { turn(forward: false) }
+                }
+        )
+    }
+
+    private var controlBar: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                pageArrow(system: "chevron.left", enabled: currentPage > 0) {
+                    turn(forward: false)
+                }
+
+                Button {
+                    Haptics.play(.light)
+                    showShop = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add Stickers")
+                    }
+                    .font(Theme.bold(17))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 13)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Theme.nextButton)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                }
+                .buttonStyle(PressableButtonStyle())
+
+                pageArrow(system: "chevron.right", enabled: currentPage < totalPages - 1) {
+                    turn(forward: true)
+                }
+            }
+
+            Text("Swipe or tap the arrows to turn the page")
                 .font(Theme.medium(11))
                 .foregroundColor(Theme.inkSoft)
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
+    }
+
+    private func pageArrow(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: system)
+                .font(Theme.bold(20))
+                .foregroundColor(.white)
+                .frame(width: 50, height: 50)
+                .background(Circle().fill(enabled ? AnyShapeStyle(Theme.nextButton)
+                                                  : AnyShapeStyle(Color.gray.opacity(0.4))))
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .disabled(!enabled)
+    }
+
+    /// Flips one page like a real book, around the spine on the left.
+    private func turn(forward: Bool) {
+        guard !isFlipping else { return }
+        if forward && currentPage >= totalPages - 1 { return }
+        if !forward && currentPage <= 0 { return }
+        isFlipping = true
+        Haptics.play(.light)
+
+        let awayAngle: Double = forward ? -105 : 105
+        withAnimation(.easeIn(duration: 0.22)) { flipAngle = awayAngle }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            currentPage += forward ? 1 : -1
+            flipAngle = -awayAngle
+            withAnimation(.easeOut(duration: 0.22)) { flipAngle = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) { isFlipping = false }
+        }
     }
 }
 

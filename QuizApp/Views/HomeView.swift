@@ -39,7 +39,7 @@ struct HomeView: View {
                 }
 
                 jewelBalance
-                muteButton
+                rightControls
             }
             .navigationDestination(for: Island.self) { island in
                 IslandView(island: island)
@@ -67,24 +67,6 @@ struct HomeView: View {
                 .font(Theme.medium(15))
                 .foregroundColor(mapInk.opacity(0.85))
                 .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
-
-            Button {
-                Haptics.play(.light)
-                showStickerBook = true
-            } label: {
-                HStack(spacing: 6) {
-                    Text("📖")
-                    Text("My Sticker Book").font(Theme.bold(14))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Capsule().fill(Theme.nextButton))
-                .overlay(Capsule().stroke(.white.opacity(0.6), lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
-            }
-            .buttonStyle(PressableButtonStyle())
-            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
         .opacity(appeared ? 1 : 0)
@@ -92,30 +74,41 @@ struct HomeView: View {
         .animation(.easeOut(duration: 0.5), value: appeared)
     }
 
-    // MARK: - Mute button (top-right corner)
+    // MARK: - Right-side controls (mute + sticker book)
 
-    private var muteButton: some View {
+    private var rightControls: some View {
         VStack {
             HStack {
                 Spacer()
-                Button {
-                    Haptics.play(.light)
-                    isMuted.toggle()
-                } label: {
-                    Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .font(Theme.bold(18))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(Color.black.opacity(0.28)))
-                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1.5))
-                        .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                VStack(spacing: 14) {
+                    Button {
+                        Haptics.play(.light)
+                        isMuted.toggle()
+                    } label: {
+                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                            .font(Theme.bold(18))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.black.opacity(0.28)))
+                            .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1.5))
+                            .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
+
+                    Button {
+                        Haptics.play(.light)
+                        showStickerBook = true
+                    } label: {
+                        StickerBookIcon()
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel("Open my sticker book")
                 }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
             }
             Spacer()
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.top, 6)
     }
 
