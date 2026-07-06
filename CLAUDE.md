@@ -58,7 +58,7 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 5. 🧭 Explorer's Trail — ✅ 10 levels (rich explanations)
 6. 🌺 Blossom Garden — ✅ 10 levels (rich explanations)
 7. 🔬 Science Lab — ✅ 10 levels (rich explanations)
-8. 🏰 Brain Castle — 1 level so far
+8. 🏰 Brain Castle — ✅ 10 levels (rich explanations)
 9. 👑 Ancient Kingdom — 1 level so far
 10. 🏆 Champion's Summit — 1 level so far (mixed grand challenge)
 
