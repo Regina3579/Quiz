@@ -150,6 +150,7 @@ struct StickerBookView: View {
                 // Drop the new sticker in the middle of the current page.
                 progress.placeSticker(sticker.id, page: currentPage, x: 0.5, y: 0.5)
                 Haptics.play(.light)
+                Sound.stickerPop()
             }
             .environmentObject(progress)
         }
@@ -157,27 +158,9 @@ struct StickerBookView: View {
 
     private var header: some View {
         HStack {
-            Button {
-                Haptics.play(.light)
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(Theme.bold(16))
-                    .foregroundColor(Theme.ink)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(.white.opacity(0.8)))
-            }
-
-            Spacer()
-
-            VStack(spacing: 1) {
-                Text("My Sticker Book")
-                    .font(Theme.display(20))
-                    .foregroundColor(Theme.ink)
-                Text("Page \(currentPage + 1) of \(totalPages)")
-                    .font(Theme.medium(12))
-                    .foregroundColor(Theme.inkSoft)
-            }
+            Text("My Sticker Book")
+                .font(Theme.display(21))
+                .foregroundColor(Theme.ink)
 
             Spacer()
 
@@ -189,36 +172,24 @@ struct StickerBookView: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 40)
-            .background(Capsule().fill(.white.opacity(0.8)))
+            .background(Capsule().fill(.white.opacity(0.85)))
         }
         .padding(.horizontal, 16)
+    }
+
+    /// A pink circular button gradient, matching the storybook look.
+    private var pinkButton: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.46, blue: 0.72),
+            Color(red: 1.00, green: 0.30, blue: 0.58)
+        ], startPoint: .top, endPoint: .bottom)
     }
 
     // MARK: - The virtual book
 
     private var bookArea: some View {
         ZStack {
-            // Leather book cover behind the page.
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(
-                    LinearGradient(colors: [
-                        Color(red: 0.55, green: 0.28, blue: 0.60),
-                        Color(red: 0.40, green: 0.18, blue: 0.48)
-                    ], startPoint: .top, endPoint: .bottom)
-                )
-                .shadow(color: .black.opacity(0.3), radius: 12, y: 8)
-
-            // Stacked page edges peeking out on the right for a booky look.
-            HStack {
-                Spacer()
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.white.opacity(0.85))
-                    .frame(width: 10)
-                    .padding(.vertical, 26)
-                    .offset(x: 3)
-            }
-
-            // The current page, flipping around the spine on the left.
+            // The open two-page book, flipping around the spine on the left.
             StickerPageView(page: currentPage, totalPages: totalPages)
                 .rotation3DEffect(.degrees(flipAngle),
                                   axis: (x: 0, y: 1, z: 0),
@@ -226,9 +197,33 @@ struct StickerBookView: View {
                                   perspective: 0.35)
                 .shadow(color: .black.opacity(abs(flipAngle) > 1 ? 0.35 : 0),
                         radius: 12, x: flipAngle < 0 ? -10 : 10)
-                .padding(14)
+                .padding(.horizontal, 6)
+
+            // Fixed controls that do not flip with the page.
+            VStack {
+                HStack {
+                    Spacer()
+                    roundButton(system: "xmark", enabled: true) {
+                        Haptics.play(.light)
+                        dismiss()
+                    }
+                }
+                Spacer()
+            }
+            .padding(10)
+
+            HStack {
+                roundButton(system: "chevron.left", enabled: currentPage > 0) {
+                    turn(forward: false)
+                }
+                Spacer()
+                roundButton(system: "chevron.right", enabled: currentPage < totalPages - 1) {
+                    turn(forward: true)
+                }
+            }
+            .padding(.horizontal, 2)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 10)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 24)
@@ -241,53 +236,44 @@ struct StickerBookView: View {
 
     private var controlBar: some View {
         VStack(spacing: 6) {
-            HStack(spacing: 12) {
-                pageArrow(system: "chevron.left", enabled: currentPage > 0) {
-                    turn(forward: false)
+            Button {
+                Haptics.play(.light)
+                showShop = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Stickers")
                 }
-
-                Button {
-                    Haptics.play(.light)
-                    showShop = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Add Stickers")
-                    }
-                    .font(Theme.bold(17))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 13)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Theme.nextButton)
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-                }
-                .buttonStyle(PressableButtonStyle())
-
-                pageArrow(system: "chevron.right", enabled: currentPage < totalPages - 1) {
-                    turn(forward: true)
-                }
+                .font(Theme.bold(17))
+                .foregroundColor(.white)
+                .padding(.vertical, 13)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Theme.nextButton)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
             }
+            .buttonStyle(PressableButtonStyle())
 
-            Text("Swipe or tap the arrows to turn the page")
+            Text("Page \(currentPage + 1) of \(totalPages)  •  Swipe or tap the arrows")
                 .font(Theme.medium(11))
                 .foregroundColor(Theme.inkSoft)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 30)
         .padding(.bottom, 8)
     }
 
-    private func pageArrow(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    private func roundButton(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: system)
-                .font(Theme.bold(20))
+                .font(Theme.bold(18))
                 .foregroundColor(.white)
-                .frame(width: 50, height: 50)
-                .background(Circle().fill(enabled ? AnyShapeStyle(Theme.nextButton)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(enabled ? AnyShapeStyle(pinkButton)
                                                   : AnyShapeStyle(Color.gray.opacity(0.4))))
-                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 2))
+                .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(!enabled)
@@ -300,6 +286,7 @@ struct StickerBookView: View {
         if !forward && currentPage <= 0 { return }
         isFlipping = true
         Haptics.play(.light)
+        Sound.pageFlip()
 
         let awayAngle: Double = forward ? -105 : 105
         withAnimation(.easeIn(duration: 0.22)) { flipAngle = awayAngle }
@@ -334,27 +321,45 @@ private struct StickerPageView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                // The open two-page book spread (cream paper).
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(pageTint)
+                    .overlay(
+                        // Soft shadow down the centre — the book's spine/gutter.
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.20), .black.opacity(0.20), .clear],
+                            startPoint: .leading, endPoint: .trailing)
+                            .frame(width: 40)
+                            .blur(radius: 4)
+                    )
+                    .overlay(
+                        // A crisp centre crease line.
+                        Rectangle()
+                            .fill(.black.opacity(0.10))
+                            .frame(width: 1.5)
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(.white, lineWidth: 3)
                     )
-                    .shadow(color: .black.opacity(0.15), radius: 10, y: 6)
+                    .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
 
-                // Faint page number watermark in the corner.
+                // Faint page numbers in the outer bottom corners.
                 VStack {
                     Spacer()
                     HStack {
+                        Text("\(page * 2 + 1)")
+                            .padding(.leading, 22)
                         Spacer()
-                        Text("\(page + 1)")
-                            .font(Theme.display(30))
-                            .foregroundColor(Theme.inkSoft.opacity(0.18))
-                            .padding(18)
+                        Text("\(page * 2 + 2)")
+                            .padding(.trailing, 22)
                     }
+                    .font(Theme.bold(14))
+                    .foregroundColor(Theme.inkSoft.opacity(0.30))
+                    .padding(.bottom, 14)
                 }
 
-                // Placed stickers on this page.
+                // Placed stickers, spread across both pages.
                 ForEach(progress.stickers(onPage: page)) { placed in
                     PlacedStickerView(placed: placed, pageSize: geo.size)
                 }

@@ -54,6 +54,12 @@ enum Sound {
         play("wrong")
     }
 
+    /// Soft paper swish when a sticker-book page is turned.
+    static func pageFlip() { play("pageflip") }
+
+    /// Cheery pop when a sticker is placed in the book.
+    static func stickerPop() { play("stickerpop") }
+
     static func play(_ name: String) {
         // Respect the in-app mute button — skip all sound when muted.
         guard !isMuted else { return }
