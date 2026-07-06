@@ -59,7 +59,7 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 6. 🌺 Blossom Garden — ✅ 10 levels (rich explanations)
 7. 🔬 Science Lab — ✅ 10 levels (rich explanations)
 8. 🏰 Brain Castle — ✅ 10 levels (rich explanations)
-9. 👑 Ancient Kingdom — 1 level so far
+9. 👑 Ancient Kingdom — ✅ 10 levels (rich explanations)
 10. 🏆 Champion's Summit — 1 level so far (mixed grand challenge)
 
 ## Xcode project note
