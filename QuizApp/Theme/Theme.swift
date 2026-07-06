@@ -83,13 +83,48 @@ enum Theme {
 }
 
 /// The pink-gem jewel icon used everywhere jewels are shown.
+/// Set `sparkle: true` for little twinkling stars that make it glitter.
 struct JewelIcon: View {
     var size: CGFloat = 16
+    var sparkle: Bool = false
+
+    @State private var twinkle = false
+
     var body: some View {
         Image("JewelGem")
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
+            .overlay {
+                if sparkle {
+                    ZStack {
+                        sparkleStar(size: size * 0.5)
+                            .offset(x: size * 0.30, y: -size * 0.28)
+                            .opacity(twinkle ? 1 : 0.25)
+                            .scaleEffect(twinkle ? 1 : 0.5)
+                        sparkleStar(size: size * 0.34)
+                            .offset(x: -size * 0.30, y: size * 0.18)
+                            .opacity(twinkle ? 0.3 : 1)
+                            .scaleEffect(twinkle ? 0.5 : 1)
+                        sparkleStar(size: size * 0.28)
+                            .offset(x: size * 0.05, y: -size * 0.02)
+                            .opacity(twinkle ? 0.9 : 0.4)
+                    }
+                }
+            }
+            .onAppear {
+                guard sparkle else { return }
+                withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
+                    twinkle = true
+                }
+            }
+    }
+
+    private func sparkleStar(size: CGFloat) -> some View {
+        Image(systemName: "sparkle")
+            .font(.system(size: size))
+            .foregroundStyle(.white)
+            .shadow(color: Theme.jewelPink.opacity(0.8), radius: 2)
     }
 }
 

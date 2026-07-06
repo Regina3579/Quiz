@@ -117,19 +117,20 @@ struct HomeView: View {
     private var jewelBalance: some View {
         VStack {
             HStack {
-                HStack(spacing: 6) {
-                    JewelIcon(size: 20)
+                HStack(spacing: 7) {
+                    JewelIcon(size: 22, sparkle: true)
                     Text("\(progress.jewels)")
-                        .font(Theme.bold(17))
-                        .foregroundStyle(Theme.jewelPink)
+                        .font(Theme.bold(19))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.55), radius: 2, y: 1)
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.jewels)
                 }
                 .padding(.horizontal, 14)
                 .frame(height: 44)
-                .background(Capsule().fill(Color.black.opacity(0.28)))
-                .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                .background(Capsule().fill(Color.black.opacity(0.42)))
+                .overlay(Capsule().stroke(.white.opacity(0.65), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
                 Spacer()
             }
             Spacer()
