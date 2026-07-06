@@ -60,7 +60,7 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 7. 🔬 Science Lab — ✅ 10 levels (rich explanations)
 8. 🏰 Brain Castle — ✅ 10 levels (rich explanations)
 9. 👑 Ancient Kingdom — ✅ 10 levels (rich explanations)
-10. 🏆 Champion's Summit — 1 level so far (mixed grand challenge)
+10. 🏆 Champion's Summit — ✅ 10 levels (mixed grand challenge, rich explanations)
 
 ## Xcode project note
 
