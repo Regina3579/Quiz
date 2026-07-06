@@ -18,6 +18,10 @@ final class GameProgress: ObservableObject {
     /// the normal "unlock as you go" progression.
     static let unlockEverything = true
 
+    /// TESTING: when true, every sticker counts as already owned, so they can
+    /// all be placed for free. Set back to false to restore buying with jewels.
+    static let unlockAllStickers = true
+
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
 
@@ -133,7 +137,10 @@ final class GameProgress: ObservableObject {
     // MARK: - Sticker book
 
     /// Whether the child already owns a sticker.
-    func owns(_ sticker: Sticker) -> Bool { ownedStickers.contains(sticker.id) }
+    func owns(_ sticker: Sticker) -> Bool {
+        if Self.unlockAllStickers { return true }
+        return ownedStickers.contains(sticker.id)
+    }
 
     /// Whether the child can afford a sticker they don't already own.
     func canBuy(_ sticker: Sticker) -> Bool {
