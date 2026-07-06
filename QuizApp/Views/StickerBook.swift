@@ -101,52 +101,14 @@ struct StickerGlyph: View {
 
 // MARK: - Map button (a cute little closed book)
 
-/// A small standing sticker book used as the button on the Adventure Map.
+/// The "My Sticker Book" cover art used as the button on the Adventure Map.
 struct StickerBookIcon: View {
     var body: some View {
-        VStack(spacing: 3) {
-            ZStack(alignment: .leading) {
-                // Pages peeking out behind the cover.
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(.white)
-                    .frame(width: 50, height: 60)
-                    .offset(x: 6)
-                    .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
-
-                // The colourful cover.
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(
-                        LinearGradient(colors: [
-                            Color(red: 1.00, green: 0.45, blue: 0.72),
-                            Color(red: 0.66, green: 0.42, blue: 0.98)
-                        ], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    )
-                    .frame(width: 52, height: 64)
-                    .overlay(alignment: .leading) {
-                        // The spine.
-                        Rectangle().fill(.black.opacity(0.18)).frame(width: 7)
-                    }
-                    .overlay {
-                        VStack(spacing: 2) {
-                            Text("⭐️").font(.system(size: 20))
-                            Text("Stickers")
-                                .font(.system(size: 8, weight: .heavy, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(.white.opacity(0.6), lineWidth: 1.5)
-                    )
-                    .shadow(color: .black.opacity(0.3), radius: 4, y: 3)
-            }
-
-            Text("My Book")
-                .font(Theme.bold(11))
-                .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
-        }
-        .frame(width: 62)
+        Image("StickerBookCover")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 66, height: 66)
+            .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
     }
 }
 
