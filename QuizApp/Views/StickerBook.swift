@@ -125,25 +125,31 @@ struct StickerBookView: View {
     @State private var isFlipping = false
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.62, green: 0.78, blue: 1.00),
-                    Color(red: 0.86, green: 0.80, blue: 1.00),
-                    Color(red: 1.00, green: 0.85, blue: 0.95)
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
+        GeometryReader { geo in
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.62, green: 0.78, blue: 1.00),
+                        Color(red: 0.86, green: 0.80, blue: 1.00),
+                        Color(red: 1.00, green: 0.85, blue: 0.95)
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-            VStack(spacing: 10) {
-                header
-
+                // The book, centred with clear space above and below.
                 bookArea
+                    .frame(width: geo.size.width - 24,
+                           height: geo.size.height * 0.60)
+                    .position(x: geo.size.width / 2, y: geo.size.height * 0.46)
 
-                controlBar
+                // Add Stickers button sits in the space below the book.
+                VStack {
+                    Spacer()
+                    controlBar
+                        .padding(.bottom, 20)
+                }
             }
-            .padding(.top, 6)
         }
         .sheet(isPresented: $showShop) {
             StickerShopSheet { sticker in
@@ -156,27 +162,6 @@ struct StickerBookView: View {
         }
     }
 
-    private var header: some View {
-        HStack {
-            Text("My Sticker Book")
-                .font(Theme.display(21))
-                .foregroundColor(Theme.ink)
-
-            Spacer()
-
-            HStack(spacing: 5) {
-                JewelIcon(size: 18)
-                Text("\(progress.jewels)")
-                    .font(Theme.bold(15))
-                    .foregroundStyle(Theme.jewelPink)
-            }
-            .padding(.horizontal, 12)
-            .frame(height: 40)
-            .background(Capsule().fill(.white.opacity(0.85)))
-        }
-        .padding(.horizontal, 16)
-    }
-
     /// A pink circular button gradient, matching the storybook look.
     private var pinkButton: LinearGradient {
         LinearGradient(colors: [
@@ -187,9 +172,28 @@ struct StickerBookView: View {
 
     // MARK: - The virtual book
 
+    /// A thick pink-to-purple book cover.
+    private var coverGradient: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.44, blue: 0.72),
+            Color(red: 0.62, green: 0.36, blue: 0.96)
+        ], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
     private var bookArea: some View {
         ZStack {
-            // The open two-page book, flipping around the spine on the left.
+            // The thick pink/purple book cover.
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(coverGradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .stroke(.white.opacity(0.4), lineWidth: 2)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 16, y: 10)
+                .padding(.horizontal, 10)
+
+            // The open cream two-page spread, inset so the cover shows as a
+            // thick edge, flipping around the spine on the left.
             StickerPageView(page: currentPage, totalPages: totalPages)
                 .rotation3DEffect(.degrees(flipAngle),
                                   axis: (x: 0, y: 1, z: 0),
@@ -197,7 +201,8 @@ struct StickerBookView: View {
                                   perspective: 0.35)
                 .shadow(color: .black.opacity(abs(flipAngle) > 1 ? 0.35 : 0),
                         radius: 12, x: flipAngle < 0 ? -10 : 10)
-                .padding(.horizontal, 6)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
 
             // Fixed controls that do not flip with the page.
             VStack {
@@ -210,7 +215,8 @@ struct StickerBookView: View {
                 }
                 Spacer()
             }
-            .padding(10)
+            .padding(.top, 4)
+            .padding(.trailing, 2)
 
             HStack {
                 roundButton(system: "chevron.left", enabled: currentPage > 0) {
@@ -221,9 +227,7 @@ struct StickerBookView: View {
                     turn(forward: true)
                 }
             }
-            .padding(.horizontal, 2)
         }
-        .padding(.horizontal, 10)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 24)
@@ -359,12 +363,43 @@ private struct StickerPageView: View {
                     .padding(.bottom, 14)
                 }
 
-                // Placed stickers, spread across both pages.
+                // Cute empty sticker spaces dotted across both pages.
+                ForEach(Array(spaceSpots.enumerated()), id: \.offset) { _, spot in
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(spot.tint.opacity(0.10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(spot.tint.opacity(0.55),
+                                              style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+                        )
+                        .overlay(
+                            Image(systemName: "sparkle")
+                                .font(.system(size: 15))
+                                .foregroundColor(spot.tint.opacity(0.55))
+                        )
+                        .frame(width: geo.size.width * 0.13, height: geo.size.width * 0.13)
+                        .position(x: spot.x * geo.size.width, y: spot.y * geo.size.height)
+                }
+
+                // Placed stickers, spread across both pages (on top of the spaces).
                 ForEach(progress.stickers(onPage: page)) { placed in
                     PlacedStickerView(placed: placed, pageSize: geo.size)
                 }
             }
         }
+    }
+
+    /// Positions and pastel tints for the decorative empty sticker spaces.
+    private struct Spot { let x: Double; let y: Double; let tint: Color }
+    private var spaceSpots: [Spot] {
+        [
+            Spot(x: 0.17, y: 0.32, tint: Color(red: 1.00, green: 0.50, blue: 0.70)),
+            Spot(x: 0.34, y: 0.60, tint: Color(red: 0.55, green: 0.60, blue: 1.00)),
+            Spot(x: 0.17, y: 0.75, tint: Color(red: 0.45, green: 0.80, blue: 0.55)),
+            Spot(x: 0.66, y: 0.32, tint: Color(red: 1.00, green: 0.68, blue: 0.35)),
+            Spot(x: 0.83, y: 0.60, tint: Color(red: 0.72, green: 0.48, blue: 1.00)),
+            Spot(x: 0.66, y: 0.75, tint: Color(red: 1.00, green: 0.50, blue: 0.70))
+        ]
     }
 }
 
