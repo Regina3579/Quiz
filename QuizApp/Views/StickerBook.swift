@@ -136,8 +136,8 @@ struct StickerBookView: View {
 
                 // The book, centred with clear space above and below.
                 bookArea
-                    .frame(width: geo.size.width - 24,
-                           height: geo.size.height * 0.60)
+                    .frame(width: max(0, geo.size.width - 24),
+                           height: max(0, geo.size.height * 0.60))
                     .position(x: geo.size.width / 2, y: geo.size.height * 0.46)
 
                 // Add Stickers button sits in the space below the book.
