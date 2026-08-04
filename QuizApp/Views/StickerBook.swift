@@ -55,19 +55,16 @@ enum StickerCatalog {
     static let cuteCost = 50
     static let epicCost = 100
 
-    /// 🦁 Animal Kingdom — cute animals (Cute tier) and fancy animals (Epic).
+    /// 🦁 Animal Kingdom — the ten hand-picked cute animal stickers.
     static let animalKingdom = StickerCategory(
         id: "animals",
         name: "Animal Kingdom",
         emoji: "🦁",
-        cute: (1...20).map { n in
+        cute: (1...10).map { n in
             Sticker(id: "animal_c\(n)", emoji: "🐾", cost: cuteCost,
                     imageName: String(format: "StickerC%02d", n))
         },
-        epic: (1...20).map { n in
-            Sticker(id: "animal_e\(n)", emoji: "👑", cost: epicCost,
-                    imageName: String(format: "StickerE%02d", n))
-        }
+        epic: []
     )
 
     /// All categories shown in the shop (more will be added over time).
@@ -182,51 +179,10 @@ struct StickerBookView: View {
 
     private var bookArea: some View {
         ZStack {
-            // The thick pink/purple book cover.
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(coverGradient)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(.white.opacity(0.4), lineWidth: 2)
-                )
-                .shadow(color: .black.opacity(0.3), radius: 16, y: 10)
-                .padding(.horizontal, 10)
-
-            // The open cream two-page spread, inset so the cover shows as a
-            // thick edge, flipping around the spine on the left.
-            StickerPageView(page: currentPage, totalPages: totalPages)
-                .rotation3DEffect(.degrees(flipAngle),
-                                  axis: (x: 0, y: 1, z: 0),
-                                  anchor: .leading,
-                                  perspective: 0.35)
-                .shadow(color: .black.opacity(abs(flipAngle) > 1 ? 0.35 : 0),
-                        radius: 12, x: flipAngle < 0 ? -10 : 10)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-
-            // Fixed controls that do not flip with the page.
-            VStack {
-                HStack {
-                    Spacer()
-                    roundButton(system: "xmark", enabled: true) {
-                        Haptics.play(.light)
-                        dismiss()
-                    }
-                }
-                Spacer()
-            }
-            .padding(.top, 4)
-            .padding(.trailing, 2)
-
-            HStack {
-                roundButton(system: "chevron.left", enabled: currentPage > 0) {
-                    turn(forward: false)
-                }
-                Spacer()
-                roundButton(system: "chevron.right", enabled: currentPage < totalPages - 1) {
-                    turn(forward: true)
-                }
-            }
+            bookCover
+            pageSpread
+            closeOverlay
+            arrowsOverlay
         }
         .contentShape(Rectangle())
         .gesture(
@@ -236,6 +192,62 @@ struct StickerBookView: View {
                     else if value.translation.width > 40 { turn(forward: false) }
                 }
         )
+    }
+
+    /// The thick pink/purple book cover.
+    private var bookCover: some View {
+        RoundedRectangle(cornerRadius: 30, style: .continuous)
+            .fill(coverGradient)
+            .overlay(
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .stroke(.white.opacity(0.4), lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 16, y: 10)
+            .padding(.horizontal, 10)
+    }
+
+    /// The open cream two-page spread, inset so the cover shows as a thick
+    /// edge, flipping around the spine on the left.
+    private var pageSpread: some View {
+        let liftShadow = abs(flipAngle) > 1 ? 0.35 : 0.0
+        let shadowX: CGFloat = flipAngle < 0 ? -10 : 10
+        return StickerPageView(page: currentPage, totalPages: totalPages)
+            .rotation3DEffect(.degrees(flipAngle),
+                              axis: (x: 0, y: 1, z: 0),
+                              anchor: .leading,
+                              perspective: 0.35)
+            .shadow(color: .black.opacity(liftShadow), radius: 12, x: shadowX)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+    }
+
+    /// The small close button in the top-right corner of the book.
+    private var closeOverlay: some View {
+        VStack {
+            HStack {
+                Spacer()
+                roundButton(system: "xmark", enabled: true) {
+                    Haptics.play(.light)
+                    dismiss()
+                }
+            }
+            Spacer()
+        }
+        .padding(.top, 4)
+        .padding(.trailing, 2)
+    }
+
+    /// The page-turn arrows on the left and right sides.
+    private var arrowsOverlay: some View {
+        HStack {
+            roundButton(system: "chevron.left", enabled: currentPage > 0) {
+                turn(forward: false)
+            }
+            Spacer()
+            roundButton(system: "chevron.right", enabled: currentPage < totalPages - 1) {
+                turn(forward: true)
+            }
+        }
     }
 
     private var controlBar: some View {
@@ -364,21 +376,8 @@ private struct StickerPageView: View {
                 }
 
                 // Cute empty sticker spaces dotted across both pages.
-                ForEach(Array(spaceSpots.enumerated()), id: \.offset) { _, spot in
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(spot.tint.opacity(0.10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(spot.tint.opacity(0.55),
-                                              style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
-                        )
-                        .overlay(
-                            Image(systemName: "sparkle")
-                                .font(.system(size: 15))
-                                .foregroundColor(spot.tint.opacity(0.55))
-                        )
-                        .frame(width: geo.size.width * 0.13, height: geo.size.width * 0.13)
-                        .position(x: spot.x * geo.size.width, y: spot.y * geo.size.height)
+                ForEach(Array(spaceSpots.enumerated()), id: \.offset) { pair in
+                    stickerSpace(pair.element, pageSize: geo.size)
                 }
 
                 // Placed stickers, spread across both pages (on top of the spaces).
@@ -387,6 +386,25 @@ private struct StickerPageView: View {
                 }
             }
         }
+    }
+
+    /// One decorative dashed sticker slot.
+    private func stickerSpace(_ spot: Spot, pageSize: CGSize) -> some View {
+        let side = pageSize.width * 0.13
+        return RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(spot.tint.opacity(0.10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(spot.tint.opacity(0.55),
+                                  style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+            )
+            .overlay(
+                Image(systemName: "sparkle")
+                    .font(.system(size: 15))
+                    .foregroundColor(spot.tint.opacity(0.55))
+            )
+            .frame(width: side, height: side)
+            .position(x: spot.x * pageSize.width, y: spot.y * pageSize.height)
     }
 
     /// Positions and pastel tints for the decorative empty sticker spaces.
@@ -585,14 +603,18 @@ struct StickerShopSheet: View {
                 .padding(.horizontal, 20)
 
             ScrollView {
-                section(title: "🌸 Cute Collection",
-                        subtitle: "50 jewels each",
-                        stickers: category.cute)
+                if !category.cute.isEmpty {
+                    section(title: "🌸 Cute Collection",
+                            subtitle: "50 jewels each",
+                            stickers: category.cute)
+                }
 
-                section(title: "✨ Epic Collection",
-                        subtitle: "100 jewels each",
-                        stickers: category.epic)
-                    .padding(.top, 4)
+                if !category.epic.isEmpty {
+                    section(title: "✨ Epic Collection",
+                            subtitle: "100 jewels each",
+                            stickers: category.epic)
+                        .padding(.top, 4)
+                }
             }
         }
     }
