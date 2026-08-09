@@ -55,16 +55,37 @@ enum StickerCatalog {
     static let cuteCost = 50
     static let epicCost = 100
 
-    /// 🦁 Animal Kingdom — the ten hand-picked cute animal stickers.
+    private static func cuteSticker(_ n: Int) -> Sticker {
+        Sticker(id: "animal_c\(n)", emoji: "🐾", cost: cuteCost,
+                imageName: String(format: "StickerC%02d", n))
+    }
+    private static func epicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "animal_e\(n)", emoji: "👑", cost: epicCost,
+                imageName: String(format: "StickerE%02d", n))
+    }
+
+    /// 🦁 Animal Kingdom — a hand-picked set of cute and epic animals.
     static let animalKingdom = StickerCategory(
         id: "animals",
         name: "Animal Kingdom",
         emoji: "🦁",
-        cute: (1...10).map { n in
-            Sticker(id: "animal_c\(n)", emoji: "🐾", cost: cuteCost,
-                    imageName: String(format: "StickerC%02d", n))
-        },
-        epic: []
+        cute: [
+            cuteSticker(1),   // lion
+            cuteSticker(2),   // tiger
+            cuteSticker(4),   // monkey
+            cuteSticker(5),   // giraffe
+            cuteSticker(6),   // panda
+            cuteSticker(8),   // cat
+            cuteSticker(9),   // dog
+            cuteSticker(11),  // otter ("bear")
+            cuteSticker(12),  // hedgehog ("porcupine")
+            cuteSticker(17)   // dolphin
+        ],
+        epic: [
+            epicSticker(18),  // last three of the epic set
+            epicSticker(19),
+            epicSticker(20)
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
