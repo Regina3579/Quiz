@@ -77,14 +77,14 @@ enum StickerCatalog {
             cuteSticker(6),   // panda
             cuteSticker(8),   // cat
             cuteSticker(9),   // dog
-            cuteSticker(11),  // otter ("bear")
-            cuteSticker(12),  // hedgehog ("porcupine")
-            cuteSticker(17)   // dolphin
+            cuteSticker(11),  // otter
+            cuteSticker(12),  // hedgehog
+            cuteSticker(13)   // raccoon
         ],
         epic: [
-            epicSticker(18),  // last three of the epic set
-            epicSticker(19),
-            epicSticker(20)
+            epicSticker(18),  // pink deer
+            epicSticker(19),  // gold lion
+            epicSticker(20)   // fairy bunny
         ]
     )
 
