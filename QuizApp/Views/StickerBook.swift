@@ -329,7 +329,9 @@ struct StickerBookView: View {
         Haptics.play(.light)
         Sound.pageFlip()
 
-        let awayAngle: Double = forward ? -105 : 105
+        // Stay safely under 90°: at or past edge-on the perspective
+        // projection becomes degenerate and yields non-finite geometry.
+        let awayAngle: Double = forward ? -78 : 78
         withAnimation(.easeIn(duration: 0.22)) { flipAngle = awayAngle }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
             currentPage += forward ? 1 : -1
