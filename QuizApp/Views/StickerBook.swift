@@ -91,8 +91,28 @@ enum StickerCatalog {
         ]
     )
 
+    private static func galaxySticker(_ n: Int) -> Sticker {
+        Sticker(id: "galaxy_c\(n)", emoji: "🚀", cost: cuteCost,
+                imageName: String(format: "StickerG%02d", n))
+    }
+
+    /// 🚀 Galaxy Quest — cute space explorers and friendly planets.
+    static let galaxyQuest = StickerCategory(
+        id: "galaxy",
+        name: "Galaxy Quest",
+        emoji: "🚀",
+        cute: [
+            galaxySticker(1),  // astronaut penguin
+            galaxySticker(2),  // smiling ringed planet
+            galaxySticker(3),  // bunny on a rocket
+            galaxySticker(4),  // astronaut boy on the moon
+            galaxySticker(5)   // astronaut elephant
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
-    static let categories: [StickerCategory] = [animalKingdom]
+    static let categories: [StickerCategory] = [animalKingdom, galaxyQuest]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
 
