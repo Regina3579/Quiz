@@ -15,6 +15,7 @@
 		AB000000000000000000003B /* IslandView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000003C /* IslandView.swift */; };
 		AB0000000000000000000043 /* IslandBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000042 /* IslandBackground.swift */; };
 		AB0000000000000000000044 /* StickerBook.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000045 /* StickerBook.swift */; };
+		AB000000000000000000004A /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000004B /* NameEntryView.swift */; };
 		AB000000000000000000000A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000009 /* HomeView.swift */; };
 		AB000000000000000000000C /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000B /* QuizView.swift */; };
 		AB000000000000000000000E /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000000D /* ResultView.swift */; };
@@ -43,6 +44,7 @@
 		AB000000000000000000003C /* IslandView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000042 /* IslandBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandBackground.swift; sourceTree = "<group>"; };
 		AB0000000000000000000045 /* StickerBook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickerBook.swift; sourceTree = "<group>"; };
+		AB000000000000000000004B /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000009 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		AB000000000000000000000B /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
 		AB000000000000000000000D /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 				AB000000000000000000000B /* QuizView.swift */,
 				AB000000000000000000000D /* ResultView.swift */,
 				AB0000000000000000000045 /* StickerBook.swift */,
+				AB000000000000000000004B /* NameEntryView.swift */,
 				AB0000000000000000000026 /* Components */,
 			);
 			path = Views;
@@ -260,6 +263,7 @@
 				AB000000000000000000000C /* QuizView.swift in Sources */,
 				AB000000000000000000000E /* ResultView.swift in Sources */,
 				AB0000000000000000000044 /* StickerBook.swift in Sources */,
+				AB000000000000000000004A /* NameEntryView.swift in Sources */,
 				AB0000000000000000000010 /* AnswerButton.swift in Sources */,
 				AB0000000000000000000014 /* ProgressBar.swift in Sources */,
 				AB0000000000000000000016 /* TimerRing.swift in Sources */,

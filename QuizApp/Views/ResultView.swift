@@ -33,12 +33,16 @@ struct ResultView: View {
         }
     }
 
+    /// The child's name, ready to drop into a greeting (empty if not set).
+    private var playerName: String { Player.name }
+
     private var headline: String {
+        let name = playerName
         switch earned {
-        case 3: return "Perfect!"
-        case 2: return "Great Job!"
+        case 3: return name.isEmpty ? "Perfect!" : "Perfect, \(name)!"
+        case 2: return name.isEmpty ? "Great Job!" : "Great job, \(name)!"
         case 1: return "Level Cleared!"
-        default: return "Almost There!"
+        default: return name.isEmpty ? "Almost There!" : "Almost there, \(name)!"
         }
     }
 

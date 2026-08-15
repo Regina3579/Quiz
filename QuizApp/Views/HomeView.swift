@@ -13,7 +13,9 @@ struct HomeView: View {
     private let islands = QuizData.islands
     @State private var appeared = false
     @State private var showStickerBook = false
+    @State private var showNameEntry = false
     @AppStorage(Sound.muteKey) private var isMuted = false
+    @AppStorage(Player.nameKey) private var playerName = ""
 
     private let rowHeight: CGFloat = 150
 
@@ -51,7 +53,14 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showStickerBook) {
             StickerBookView().environmentObject(progress)
         }
-        .onAppear { appeared = true }
+        .fullScreenCover(isPresented: $showNameEntry) {
+            NameEntryView(isEditing: !playerName.isEmpty)
+        }
+        .onAppear {
+            appeared = true
+            // Ask for a name the very first time the app is opened.
+            if playerName.isEmpty { showNameEntry = true }
+        }
     }
 
     // MARK: - Header
@@ -63,10 +72,32 @@ struct HomeView: View {
                 .foregroundColor(mapInk)
                 .shadow(color: .white.opacity(0.5), radius: 3, y: 1)
 
-            Text("Explore every island on your adventure!")
-                .font(Theme.medium(15))
-                .foregroundColor(mapInk.opacity(0.85))
-                .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
+            if playerName.isEmpty {
+                Text("Explore every island on your adventure!")
+                    .font(Theme.medium(15))
+                    .foregroundColor(mapInk.opacity(0.85))
+                    .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
+            } else {
+                // Tapping the greeting lets the child change their name.
+                Button {
+                    Haptics.play(.light)
+                    showNameEntry = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Hi, \(playerName)!")
+                            .font(Theme.bold(16))
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 15))
+                    }
+                    .foregroundColor(mapInk)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(.white.opacity(0.65)))
+                    .overlay(Capsule().stroke(mapInk.opacity(0.25), lineWidth: 1))
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("Change your name")
+            }
         }
         .frame(maxWidth: .infinity)
         .opacity(appeared ? 1 : 0)
