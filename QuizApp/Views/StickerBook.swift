@@ -84,7 +84,10 @@ enum StickerCatalog {
         epic: [
             epicSticker(18),  // pink deer
             epicSticker(19),  // gold lion
-            epicSticker(20)   // fairy bunny
+            epicSticker(20),  // fairy bunny
+            epicSticker(21),  // crowned unicorn
+            epicSticker(22),  // royal elephant
+            epicSticker(23)   // flower deer
         ]
     )
 
