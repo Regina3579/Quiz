@@ -95,6 +95,10 @@ enum StickerCatalog {
         Sticker(id: "galaxy_c\(n)", emoji: "🚀", cost: cuteCost,
                 imageName: String(format: "StickerG%02d", n))
     }
+    private static func galaxyEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "galaxy_e\(n)", emoji: "🌌", cost: epicCost,
+                imageName: String(format: "StickerGE%02d", n))
+    }
 
     /// 🚀 Galaxy Quest — cute space explorers and friendly planets.
     static let galaxyQuest = StickerCategory(
@@ -108,7 +112,13 @@ enum StickerCatalog {
             galaxySticker(4),  // astronaut boy on the moon
             galaxySticker(5)   // astronaut elephant
         ],
-        epic: []
+        epic: [
+            galaxyEpicSticker(1),  // star fighter streaking past a galaxy
+            galaxyEpicSticker(2),  // astronaut watching a ringed planet
+            galaxyEpicSticker(3),  // star wizard juggling planets
+            galaxyEpicSticker(4),  // unicorn astronaut on a cloud
+            galaxyEpicSticker(5)   // alien flying a saucer
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
@@ -164,6 +174,11 @@ struct StickerBookView: View {
     @State private var showShop = false
     @State private var flipAngle: Double = 0
     @State private var isFlipping = false
+    @State private var noteText = ""
+    @FocusState private var noteFocused: Bool
+
+    /// Two short lines is plenty for a kid's adventure note.
+    private let noteLimit = 90
 
     var body: some View {
         GeometryReader { geo in
@@ -178,23 +193,27 @@ struct StickerBookView: View {
                 )
                 .ignoresSafeArea()
 
-                // The book, centred with clear space above and below. Only
-                // laid out once the container reports a usable size, so the
-                // inner padding can never produce a negative dimension.
+                // The book, with clear space above and below, then the note and
+                // controls. Only laid out once the container reports a usable
+                // size, so the inner padding can never produce a negative
+                // dimension.
                 if geo.size.width > 120 && geo.size.height > 120 {
-                    bookArea
-                        .frame(width: geo.size.width - 24,
-                               height: geo.size.height * 0.60)
-                        .position(x: geo.size.width / 2, y: geo.size.height * 0.46)
-                }
-
-                // Add Stickers button sits in the space below the book.
-                VStack {
-                    Spacer()
-                    controlBar
-                        .padding(.bottom, 20)
+                    VStack(spacing: 10) {
+                        Spacer(minLength: 6)
+                        bookArea
+                            .frame(width: geo.size.width - 24,
+                                   height: geo.size.height * 0.50)
+                        noteCard
+                        controlBar
+                        Spacer(minLength: 6)
+                    }
                 }
             }
+        }
+        .onAppear { noteText = progress.note(onPage: currentPage) }
+        .onChange(of: currentPage) { page in
+            noteFocused = false
+            noteText = progress.note(onPage: page)
         }
         .sheet(isPresented: $showShop) {
             StickerShopSheet { sticker in
@@ -296,6 +315,55 @@ struct StickerBookView: View {
                 turn(forward: true)
             }
         }
+    }
+
+    /// A little notepad under the book where the child can write a line or two
+    /// about their adventure. Each page of the book keeps its own note.
+    private var noteCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text("📝")
+                Text("My Note")
+                    .font(Theme.bold(15))
+                    .foregroundColor(Theme.ink)
+                Spacer()
+                if noteFocused {
+                    Button("Done") {
+                        noteFocused = false
+                        Haptics.play(.light)
+                    }
+                    .font(Theme.bold(14))
+                    .foregroundColor(Color(red: 0.545, green: 0.361, blue: 0.965))
+                }
+            }
+
+            TextField("Write about your adventure…", text: $noteText, axis: .vertical)
+                .font(Theme.medium(14))
+                .foregroundColor(Theme.ink)
+                .lineLimit(2, reservesSpace: true)
+                .focused($noteFocused)
+                .submitLabel(.done)
+                .onChange(of: noteText) { newValue in
+                    // Keep it to a couple of lines, and save as they type.
+                    if newValue.count > noteLimit {
+                        noteText = String(newValue.prefix(noteLimit))
+                        return
+                    }
+                    progress.setNote(newValue, onPage: currentPage)
+                }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Theme.didYouKnow)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.8), lineWidth: 2)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+        .padding(.horizontal, 22)
     }
 
     private var controlBar: some View {
@@ -425,49 +493,12 @@ private struct StickerPageView: View {
                     .padding(.bottom, 14)
                 }
 
-                // Cute empty sticker spaces dotted across both pages.
-                ForEach(Array(spaceSpots.enumerated()), id: \.offset) { pair in
-                    stickerSpace(pair.element, pageSize: geo.size)
-                }
-
-                // Placed stickers, spread across both pages (on top of the spaces).
+                // Plain paper — stickers go wherever the child wants them.
                 ForEach(progress.stickers(onPage: page)) { placed in
                     PlacedStickerView(placed: placed, pageSize: geo.size)
                 }
             }
         }
-    }
-
-    /// One decorative dashed sticker slot.
-    private func stickerSpace(_ spot: Spot, pageSize: CGSize) -> some View {
-        let side = pageSize.width * 0.13
-        return RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(spot.tint.opacity(0.10))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(spot.tint.opacity(0.55),
-                                  style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
-            )
-            .overlay(
-                Image(systemName: "sparkle")
-                    .font(.system(size: 15))
-                    .foregroundColor(spot.tint.opacity(0.55))
-            )
-            .frame(width: side, height: side)
-            .position(x: spot.x * pageSize.width, y: spot.y * pageSize.height)
-    }
-
-    /// Positions and pastel tints for the decorative empty sticker spaces.
-    private struct Spot { let x: Double; let y: Double; let tint: Color }
-    private var spaceSpots: [Spot] {
-        [
-            Spot(x: 0.17, y: 0.32, tint: Color(red: 1.00, green: 0.50, blue: 0.70)),
-            Spot(x: 0.34, y: 0.60, tint: Color(red: 0.55, green: 0.60, blue: 1.00)),
-            Spot(x: 0.17, y: 0.75, tint: Color(red: 0.45, green: 0.80, blue: 0.55)),
-            Spot(x: 0.66, y: 0.32, tint: Color(red: 1.00, green: 0.68, blue: 0.35)),
-            Spot(x: 0.83, y: 0.60, tint: Color(red: 0.72, green: 0.48, blue: 1.00)),
-            Spot(x: 0.66, y: 0.75, tint: Color(red: 1.00, green: 0.50, blue: 0.70))
-        ]
     }
 }
 
