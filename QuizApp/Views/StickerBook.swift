@@ -117,7 +117,8 @@ enum StickerCatalog {
             galaxyEpicSticker(2),  // astronaut watching a ringed planet
             galaxyEpicSticker(3),  // star wizard juggling planets
             galaxyEpicSticker(4),  // unicorn astronaut on a cloud
-            galaxyEpicSticker(5)   // alien flying a saucer
+            galaxyEpicSticker(5),  // alien flying a saucer
+            galaxyEpicSticker(6)   // robot astronaut hugging a star
         ]
     )
 
