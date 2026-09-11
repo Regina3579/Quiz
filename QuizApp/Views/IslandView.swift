@@ -18,22 +18,24 @@ struct IslandView: View {
     private let rowHeight: CGFloat = 128
 
     var body: some View {
-        ZStack {
-            IslandBackground(island: island)
+        GeometryReader { geo in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 20)
+                        .padding(.top, 4)
+                        .padding(.bottom, 8)
 
-            GeometryReader { geo in
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        header
-                            .padding(.horizontal, 20)
-                            .padding(.top, 4)
-                            .padding(.bottom, 8)
-
-                        trail(width: geo.size.width)
-                    }
+                    trail(width: geo.size.width)
                 }
+                // Anchor the trail to the top of the scroll view so level 1 is
+                // always the first thing on screen, however tall the device is.
+                .frame(maxWidth: .infinity, alignment: .top)
             }
         }
+        // A background never influences the size of what it sits behind, so the
+        // scenic artwork can't shift the level trail no matter the screen size.
+        .background(IslandBackground(island: island))
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

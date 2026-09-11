@@ -20,10 +20,18 @@ struct IslandBackground: View {
             // Base: a full-screen scenic photo when the island has one,
             // otherwise the island's colour gradient.
             if let bg = island.backgroundImageName {
-                Image(bg)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                // The photo is pinned to the container's own size and clipped.
+                // Without this, `scaledToFill` reports a layout size bigger
+                // than the screen, which inflates any ZStack it sits in and
+                // pushes sibling content off the top — very visible on iPad.
+                GeometryReader { geo in
+                    Image(bg)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                }
+                .ignoresSafeArea()
                 // Gentle scrim so the header text and level nodes stay readable.
                 LinearGradient(
                     colors: [.black.opacity(0.38), .black.opacity(0.10),
