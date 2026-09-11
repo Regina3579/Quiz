@@ -173,8 +173,27 @@ struct StickerBookView: View {
     private let totalPages = 25
     @State private var currentPage = 0
     @State private var showShop = false
-    @State private var flipAngle: Double = 0
+    /// The leaf currently being turned, if any.
+    @State private var flip: FlipState?
+    /// How far the turning leaf has rotated, in degrees.
+    @State private var leafAngle: Double = 0
     @State private var isFlipping = false
+
+    /// Describes a page turn in progress: which spread we are leaving, which
+    /// we are heading to, and whether the leaf is still on its way to the
+    /// spine (`.lifting`) or coming back down on the other side (`.landing`).
+    private struct FlipState {
+        enum Stage { case lifting, landing }
+        let forward: Bool
+        let from: Int
+        let to: Int
+        var stage: Stage
+    }
+
+    /// The leaf stops just short of edge-on. At exactly 90° the perspective
+    /// projection is degenerate and produces non-finite geometry, so the
+    /// content swap happens here instead.
+    private let leafEdge: Double = 88
     @State private var noteText = ""
     @FocusState private var noteFocused: Bool
 
@@ -275,18 +294,65 @@ struct StickerBookView: View {
     }
 
     /// The open cream two-page spread, inset so the cover shows as a thick
-    /// edge, flipping around the spine on the left.
+    /// edge. A page turn lifts a single leaf around the spine in the middle,
+    /// the way a real book does, rather than swinging the whole spread.
     private var pageSpread: some View {
-        let liftShadow = abs(flipAngle) > 1 ? 0.35 : 0.0
-        let shadowX: CGFloat = flipAngle < 0 ? -10 : 10
-        return StickerPageView(page: currentPage, totalPages: totalPages)
-            .rotation3DEffect(.degrees(flipAngle),
+        ZStack {
+            baseSpread
+            if let f = flip {
+                turningLeaf(f)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+    }
+
+    /// What lies flat on the table: mid-turn the two halves come from
+    /// different spreads, so the page being uncovered shows through.
+    @ViewBuilder
+    private var baseSpread: some View {
+        if let f = flip {
+            let leftPage = f.forward ? f.from : f.to
+            let rightPage = f.forward ? f.to : f.from
+            ZStack {
+                leaf(page: leftPage, side: .left)
+                leaf(page: rightPage, side: .right)
+            }
+        } else {
+            StickerPageView(page: currentPage, totalPages: totalPages)
+        }
+    }
+
+    /// The single leaf in the air, rotating about the spine.
+    private func turningLeaf(_ f: FlipState) -> some View {
+        // Lifting shows the face we are leaving; landing shows the far side of
+        // the same leaf, which is a page of the spread we are turning to.
+        let side: LeafSide
+        let page: Int
+        switch (f.forward, f.stage) {
+        case (true, .lifting):   side = .right; page = f.from
+        case (true, .landing):   side = .left;  page = f.to
+        case (false, .lifting):  side = .left;  page = f.from
+        case (false, .landing):  side = .right; page = f.to
+        }
+
+        // Paper darkens as it stands up, which sells the lift.
+        let shade = min(0.45, abs(leafAngle) / leafEdge * 0.45)
+
+        return leaf(page: page, side: side)
+            .overlay(LeafClip(side: side).fill(Color.black.opacity(shade)))
+            .rotation3DEffect(.degrees(leafAngle),
                               axis: (x: 0, y: 1, z: 0),
-                              anchor: .leading,
-                              perspective: 0.35)
-            .shadow(color: .black.opacity(liftShadow), radius: 12, x: shadowX)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+                              anchor: .center,
+                              perspective: 0.5)
+            .shadow(color: .black.opacity(0.35), radius: 10,
+                    x: f.forward ? -8 : 8)
+    }
+
+    /// One half of a spread, clipped down the spine.
+    private func leaf(page: Int, side: LeafSide) -> some View {
+        StickerPageView(page: page, totalPages: totalPages)
+            .clipShape(LeafClip(side: side))
     }
 
     /// The small close button in the top-right corner of the book.
@@ -412,25 +478,57 @@ struct StickerBookView: View {
         .disabled(!enabled)
     }
 
-    /// Flips one page like a real book, around the spine on the left.
+    /// Turns a single leaf around the spine, the way a real book does: the
+    /// half nearest the edge lifts, stands up at the middle, then falls flat
+    /// on the other side. Done in two stages so the leaf never crosses the
+    /// degenerate 90° point with its content on the wrong face.
     private func turn(forward: Bool) {
         guard !isFlipping else { return }
-        if forward && currentPage >= totalPages - 1 { return }
-        if !forward && currentPage <= 0 { return }
+        let target = currentPage + (forward ? 1 : -1)
+        guard target >= 0 && target < totalPages else { return }
+
         isFlipping = true
         Haptics.play(.light)
         Sound.pageFlip()
 
-        // Stay safely under 90°: at or past edge-on the perspective
-        // projection becomes degenerate and yields non-finite geometry.
-        let awayAngle: Double = forward ? -78 : 78
-        withAnimation(.easeIn(duration: 0.22)) { flipAngle = awayAngle }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-            currentPage += forward ? 1 : -1
-            flipAngle = -awayAngle
-            withAnimation(.easeOut(duration: 0.22)) { flipAngle = 0 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) { isFlipping = false }
+        flip = FlipState(forward: forward, from: currentPage, to: target, stage: .lifting)
+        leafAngle = 0
+
+        // Stage 1: the leaf lifts off the page and stands up at the spine.
+        let lifted = forward ? -leafEdge : leafEdge
+        withAnimation(.easeIn(duration: 0.26)) { leafAngle = lifted }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+            // Stage 2: swap to the leaf's far side and let it fall flat.
+            flip?.stage = .landing
+            leafAngle = -lifted
+            withAnimation(.easeOut(duration: 0.26)) { leafAngle = 0 }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.27) {
+                currentPage = target
+                flip = nil
+                leafAngle = 0
+                isFlipping = false
+            }
         }
+    }
+}
+
+// MARK: - Leaf clipping
+
+/// Which half of the spread a leaf is.
+private enum LeafSide { case left, right }
+
+/// Clips a spread down the spine so only one leaf shows.
+private struct LeafClip: Shape {
+    let side: LeafSide
+
+    func path(in rect: CGRect) -> Path {
+        let half = rect.width / 2
+        let r = side == .left
+            ? CGRect(x: rect.minX, y: rect.minY, width: half, height: rect.height)
+            : CGRect(x: rect.midX, y: rect.minY, width: half, height: rect.height)
+        return Path(r)
     }
 }
 
@@ -479,18 +577,17 @@ private struct StickerPageView: View {
                     )
                     .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
 
-                // Faint page numbers in the outer bottom corners.
+                // One faint page number per spread, so the book counts the same
+                // way the caption underneath it does.
                 VStack {
                     Spacer()
                     HStack {
-                        Text("\(page * 2 + 1)")
-                            .padding(.leading, 22)
                         Spacer()
-                        Text("\(page * 2 + 2)")
+                        Text("\(page + 1)")
+                            .font(Theme.bold(14))
+                            .foregroundColor(Theme.inkSoft.opacity(0.30))
                             .padding(.trailing, 22)
                     }
-                    .font(Theme.bold(14))
-                    .foregroundColor(Theme.inkSoft.opacity(0.30))
                     .padding(.bottom, 14)
                 }
 
