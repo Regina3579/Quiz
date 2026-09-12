@@ -204,9 +204,29 @@ enum StickerCatalog {
         ]
     )
 
+    private static func explorerSticker(_ n: Int) -> Sticker {
+        Sticker(id: "explorer_c\(n)", emoji: "🧭", cost: cuteCost,
+                imageName: String(format: "StickerX%02d", n))
+    }
+
+    /// 🧭 Explorer's Trail — wandering the world, one landmark at a time.
+    static let explorersTrail = StickerCategory(
+        id: "explorer",
+        name: "Explorer's Trail",
+        emoji: "🧭",
+        cute: [
+            explorerSticker(1),  // explorer girl with binoculars and a globe
+            explorerSticker(2),  // hot-air balloon over the world
+            explorerSticker(3),  // smiling suitcase ready to travel
+            explorerSticker(4),  // London bus by Big Ben
+            explorerSticker(5)   // Paris and the Eiffel Tower
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
     static let categories: [StickerCategory] = [
-        animalKingdom, galaxyQuest, dinoValley, oceanParadise
+        animalKingdom, galaxyQuest, dinoValley, oceanParadise, explorersTrail
     ]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
