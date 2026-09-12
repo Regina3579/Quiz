@@ -41,19 +41,20 @@ final class GameProgress: ObservableObject {
     /// Best score reached in each Pro Challenge mode.
     @Published private(set) var proBestScores: [String: Int] = [:]
 
+    /// When the Daily Challenge was last completed.
+    @Published private(set) var dailyPlayedOn: Date?
+
     private let defaultsKey = "quizspark.progress.v1"
     private let jewelsKey = "quizspark.jewels.v1"
     private let ownedStickersKey = "quizspark.stickers.owned.v1"
     private let placedStickersKey = "quizspark.stickers.placed.v1"
     private let placedNotesKey = "quizspark.notes.placed.v1"
     private let proScoresKey = "quizspark.pro.best.v1"
+    private let dailyPlayedKey = "quizspark.pro.daily.v1"
     /// The retired one-note-per-page store, read once so nothing is lost.
     private let pageNotesKey = "quizspark.stickers.notes.v1"
 
-    // Jewel reward amounts.
-    static let jewelsPerCorrect = 5
-    static let perfectBonus = 20
-    static let firstClearBonus = 10
+    // Jewel reward amounts live in JewelRules, at the bottom of this file.
 
     init() { load() }
 
@@ -123,22 +124,16 @@ final class GameProgress: ObservableObject {
 
     /// Finishes a level: saves the best star count, awards jewels, and returns
     /// a breakdown so the result screen can show the reward. Call once per
-    /// completed play-through.
+    /// completed play-through. Pass the per-question results so the streak
+    /// bonuses can be worked out.
     func completeLevel(islandID: Int, level: Int,
-                       correct: Int, total: Int, earned: Int) -> JewelReward {
-        // The first-clear bonus applies only the first time a level is cleared.
-        let firstClear = !isCleared(islandID: islandID, level: level) && earned >= 1
-
+                       correct: Int, total: Int, earned: Int,
+                       results: [Bool]) -> JewelReward {
         record(islandID: islandID, level: level, earned: earned)
 
-        let perCorrect = correct * Self.jewelsPerCorrect
-        let perfect = (total > 0 && correct == total) ? Self.perfectBonus : 0
-        let firstBonus = firstClear ? Self.firstClearBonus : 0
-
-        let reward = JewelReward(correctCount: correct,
-                                 perCorrect: perCorrect,
-                                 perfectBonus: perfect,
-                                 firstClearBonus: firstBonus)
+        let reward = JewelRules.reward(results: results,
+                                       correct: correct,
+                                       total: total)
         jewels += reward.total
         saveJewels()
         return reward
@@ -204,6 +199,19 @@ final class GameProgress: ObservableObject {
     /// The best score reached in each Pro mode, keyed by the mode's raw value.
     func proBest(_ mode: ProMode) -> Int { proBestScores[mode.rawValue] ?? 0 }
 
+    /// Whether a once-a-day mode has already been played today.
+    func isPlayedToday(_ mode: ProMode) -> Bool {
+        guard mode.isOncePerDay else { return false }
+        guard let last = dailyPlayedOn else { return false }
+        return Calendar.current.isDateInToday(last)
+    }
+
+    /// Marks the Daily Challenge as done for today.
+    func markPlayedToday() {
+        dailyPlayedOn = Date()
+        UserDefaults.standard.set(dailyPlayedOn, forKey: dailyPlayedKey)
+    }
+
     /// Banks the jewels from a finished Pro round and remembers the best
     /// score. Returns true when this run beat the previous best.
     @discardableResult
@@ -212,6 +220,7 @@ final class GameProgress: ObservableObject {
             jewels += earned
             saveJewels()
         }
+        if mode.isOncePerDay { markPlayedToday() }
         let isBest = score > proBest(mode)
         if isBest {
             proBestScores[mode.rawValue] = score
@@ -263,6 +272,8 @@ final class GameProgress: ObservableObject {
         placedStickers = []
         placedNotes = []
         proBestScores = [:]
+        dailyPlayedOn = nil
+        UserDefaults.standard.removeObject(forKey: dailyPlayedKey)
         save()
         saveJewels()
         saveStickers()
@@ -303,6 +314,7 @@ final class GameProgress: ObservableObject {
            let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
             proBestScores = decoded
         }
+        dailyPlayedOn = UserDefaults.standard.object(forKey: dailyPlayedKey) as? Date
     }
 
     private func save() {
@@ -337,14 +349,81 @@ final class GameProgress: ObservableObject {
     }
 }
 
-/// A breakdown of the jewels earned from finishing a level.
+/// The one place the jewel economy is defined, so the adventure map and the
+/// Pro Challenge always pay out by the same rules.
+///
+///   Correct answer        +5
+///   3 correct in a row    +5    once per round
+///   5 correct in a row   +10    once per round
+///   Perfect round        +20
+///
+/// The streak bonuses are deliberately awarded at most once each. Paying
+/// them every time a run of three comes around again would let a long
+/// round snowball far past what a sticker is worth.
+enum JewelRules {
+    static let perCorrect = 5
+    static let streakOfThree = 5
+    static let streakOfFive = 10
+    static let perfectRound = 20
+
+    /// The longest run of correct answers in a set of results.
+    static func longestStreak(_ results: [Bool]) -> Int {
+        var best = 0, run = 0
+        for correct in results {
+            run = correct ? run + 1 : 0
+            best = max(best, run)
+        }
+        return best
+    }
+
+    /// Works out the payout for a finished round.
+    /// - Parameters:
+    ///   - streakMultiplier: doubles the streak bonuses, for Jewel Rush.
+    ///   - completionBonus: a flat extra for finishing a Pro mode.
+    static func reward(results: [Bool],
+                       correct: Int,
+                       total: Int,
+                       streakMultiplier: Int = 1,
+                       completionBonus: Int = 0) -> JewelReward {
+        let streak = longestStreak(results)
+        let perfect = total > 0 && correct == total
+        return JewelReward(
+            correctCount: correct,
+            perCorrect: correct * perCorrect,
+            streakThreeBonus: streak >= 3 ? streakOfThree * streakMultiplier : 0,
+            streakFiveBonus: streak >= 5 ? streakOfFive * streakMultiplier : 0,
+            perfectBonus: perfect ? perfectRound : 0,
+            completionBonus: completionBonus,
+            longestStreak: streak)
+    }
+
+    /// The most a round of this shape can pay, for the "up to N jewels" label.
+    static func bestPossible(questionCount: Int,
+                             streakMultiplier: Int = 1,
+                             completionBonus: Int = 0) -> Int {
+        let all = Array(repeating: true, count: questionCount)
+        return reward(results: all,
+                      correct: questionCount,
+                      total: questionCount,
+                      streakMultiplier: streakMultiplier,
+                      completionBonus: completionBonus).total
+    }
+}
+
+/// A breakdown of the jewels earned from finishing a round.
 struct JewelReward {
     let correctCount: Int
     let perCorrect: Int
+    let streakThreeBonus: Int
+    let streakFiveBonus: Int
     let perfectBonus: Int
-    let firstClearBonus: Int
+    let completionBonus: Int
+    let longestStreak: Int
 
-    var total: Int { perCorrect + perfectBonus + firstClearBonus }
+    var total: Int {
+        perCorrect + streakThreeBonus + streakFiveBonus + perfectBonus + completionBonus
+    }
     var isPerfect: Bool { perfectBonus > 0 }
-    var isFirstClear: Bool { firstClearBonus > 0 }
+    var hasStreakThree: Bool { streakThreeBonus > 0 }
+    var hasStreakFive: Bool { streakFiveBonus > 0 }
 }

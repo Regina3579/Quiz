@@ -494,6 +494,12 @@ enum ProQuestions {
     /// so a repeat play is never the same round twice.
     static func draw(for mode: ProMode, islandID: Int? = nil) -> [Question] {
         switch mode {
+        case .dailyChallenge:
+            // A broad mix, so the daily set is a fair test of everything.
+            return Array(easy.shuffled().prefix(3))
+                 + Array(medium.shuffled().prefix(4))
+                 + Array(hard.shuffled().prefix(3))
+
         case .lightningRound:
             return Array(easy.shuffled().prefix(mode.questionCount))
 

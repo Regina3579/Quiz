@@ -26,9 +26,6 @@ final class ProQuizViewModel: ObservableObject {
     /// Per-question record, used for the recap row on the results screen.
     @Published private(set) var results: [Bool] = []
 
-    /// Jewels banked so far this round, before any completion bonus.
-    @Published private(set) var jewelsEarned = 0
-
     /// How many correct answers in a row right now.
     @Published private(set) var streak = 0
     /// The best streak reached during the round.
@@ -79,22 +76,24 @@ final class ProQuizViewModel: ObservableObject {
         score == totalQuestions && totalQuestions > 0
     }
 
-    /// The jewels for finishing everything correctly, added at the end.
-    var completionBonus: Int { isPerfect ? mode.completionBonus : 0 }
-
-    var totalJewels: Int { jewelsEarned + completionBonus }
-
-    /// What the next correct answer is currently worth.
-    var nextAnswerValue: Int {
-        guard mode.hasStreakBonus else { return mode.jewelsPerCorrect }
-        return mode.jewelsPerCorrect * ProMode.streakMultiplier(forStreak: streak + 1)
+    /// The full payout for the round, worked out by the same rules the
+    /// adventure map uses. The completion bonus is paid for finishing, so a
+    /// Perfect Run that ended early does not collect it.
+    var reward: JewelReward {
+        JewelRules.reward(results: results,
+                          correct: score,
+                          total: totalQuestions,
+                          streakMultiplier: mode.streakMultiplier,
+                          completionBonus: finished ? mode.completionBonus : 0)
     }
+
+    var totalJewels: Int { reward.total }
+
+    /// True once the child has faced every question in the round.
+    private var finished: Bool { results.count >= totalQuestions }
 
     /// The live streak multiplier, for the badge on screen.
-    var streakMultiplier: Int {
-        guard mode.hasStreakBonus else { return 1 }
-        return ProMode.streakMultiplier(forStreak: streak)
-    }
+    var streakMultiplier: Int { mode.streakMultiplier }
 
     // MARK: - Playing
 
@@ -139,17 +138,9 @@ final class ProQuizViewModel: ObservableObject {
             score += 1
             streak += 1
             bestStreak = max(bestStreak, streak)
-            jewelsEarned += nextAnswerValueForJustScored()
         } else {
             streak = 0
         }
-    }
-
-    /// The streak has already been incremented by the time we pay out, so the
-    /// multiplier is read at its new value.
-    private func nextAnswerValueForJustScored() -> Int {
-        guard mode.hasStreakBonus else { return mode.jewelsPerCorrect }
-        return mode.jewelsPerCorrect * ProMode.streakMultiplier(forStreak: streak)
     }
 
     func next() {
@@ -185,7 +176,6 @@ final class ProQuizViewModel: ObservableObject {
         hasAnswered = false
         isFinished = false
         results = []
-        jewelsEarned = 0
         streak = 0
         bestStreak = 0
         endedEarly = false

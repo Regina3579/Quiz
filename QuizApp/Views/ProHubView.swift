@@ -2,7 +2,7 @@
 //  ProHubView.swift
 //  QuizApp
 //
-//  The Pro Challenge room. Five harder ways to play, each paying out in
+//  The Pro Challenge room. Six harder ways to play, each paying out in
 //  jewels so the sticker shop keeps filling up.
 //
 
@@ -81,7 +81,7 @@ struct ProHubView: View {
                 .font(Theme.display(32))
                 .foregroundColor(.white)
                 .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
-            Text("Five harder ways to play — every round pays jewels")
+            Text("Six harder ways to play — every round pays jewels")
                 .font(Theme.medium(14))
                 .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
@@ -106,6 +106,7 @@ struct ProHubView: View {
 
     private func modeCard(_ mode: ProMode, index: Int) -> some View {
         let best = progress.proBest(mode)
+        let doneToday = progress.isPlayedToday(mode)
 
         return Button {
             Haptics.play(.light)
@@ -127,7 +128,7 @@ struct ProHubView: View {
                         .foregroundColor(.white.opacity(0.9))
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 10) {
-                        rewardTag(mode)
+                        if doneToday { doneTodayTag } else { rewardTag(mode) }
                         if best > 0 { bestTag(best, of: mode.questionCount) }
                     }
                     .padding(.top, 2)
@@ -150,8 +151,10 @@ struct ProHubView: View {
                     .stroke(.white.opacity(0.35), lineWidth: 1.5)
             )
             .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
+            .saturation(doneToday ? 0.45 : 1)
         }
         .buttonStyle(PressableButtonStyle())
+        .disabled(doneToday)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 18)
         .animation(.spring(response: 0.5, dampingFraction: 0.85)
@@ -168,6 +171,18 @@ struct ProHubView: View {
         .padding(.horizontal, 9)
         .padding(.vertical, 4)
         .background(Capsule().fill(.black.opacity(0.22)))
+    }
+
+    private var doneTodayTag: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 11))
+            Text("done today")
+                .font(Theme.bold(12))
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(.black.opacity(0.28)))
     }
 
     private func bestTag(_ best: Int, of total: Int) -> some View {

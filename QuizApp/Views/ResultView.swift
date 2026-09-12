@@ -137,12 +137,16 @@ struct ResultView: View {
 
                     // What made up the reward.
                     VStack(spacing: 6) {
-                        rewardLine("⭐️", "\(reward.correctCount) correct × 5", reward.perCorrect)
+                        rewardLine("⭐️", "\(reward.correctCount) correct × \(JewelRules.perCorrect)",
+                                   reward.perCorrect)
+                        if reward.hasStreakThree {
+                            rewardLine("🔥", "3 in a row", reward.streakThreeBonus)
+                        }
+                        if reward.hasStreakFive {
+                            rewardLine("🔥", "5 in a row", reward.streakFiveBonus)
+                        }
                         if reward.isPerfect {
                             rewardLine("🎁", "Perfect round bonus", reward.perfectBonus)
-                        }
-                        if reward.isFirstClear {
-                            rewardLine("💎", "First clear bonus", reward.firstClearBonus)
                         }
                     }
                 }
@@ -228,7 +232,8 @@ struct ResultView: View {
                                             level: model.level.number,
                                             correct: model.score,
                                             total: model.totalQuestions,
-                                            earned: earned)
+                                            earned: earned,
+                                            results: model.results)
             recorded = true
         }
 

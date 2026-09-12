@@ -133,12 +133,22 @@ struct ProResultView: View {
             }
 
             VStack(spacing: 6) {
-                line("✅", "\(model.score) correct", model.jewelsEarned)
-                if mode.hasStreakBonus && model.bestStreak > 1 {
-                    line("🔥", "Best streak: \(model.bestStreak) in a row", nil)
+                let reward = model.reward
+                line("✅", "\(reward.correctCount) correct × \(JewelRules.perCorrect)",
+                     reward.perCorrect)
+                if reward.hasStreakThree {
+                    line("🔥", "3 in a row" + (mode.hasStreakBonus ? " (double)" : ""),
+                         reward.streakThreeBonus)
                 }
-                if model.completionBonus > 0 {
-                    line("🎁", "Clean sweep bonus", model.completionBonus)
+                if reward.hasStreakFive {
+                    line("🔥", "5 in a row" + (mode.hasStreakBonus ? " (double)" : ""),
+                         reward.streakFiveBonus)
+                }
+                if reward.isPerfect {
+                    line("🎁", "Perfect round bonus", reward.perfectBonus)
+                }
+                if reward.completionBonus > 0 {
+                    line("🏁", "\(mode.title) completed", reward.completionBonus)
                 }
             }
         }
@@ -168,19 +178,33 @@ struct ProResultView: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            Button {
-                Haptics.play(.light)
-                showContent = false
-                celebrate = false
-                jewelsShown = 0
-                recorded = false
-                isNewBest = false
-                withAnimation { model.restart() }
-                animateIn()
-            } label: {
-                actionLabel(icon: "arrow.clockwise", text: "Play Again", filled: true)
+            // A once-a-day mode cannot be replayed for more jewels today.
+            if mode.isOncePerDay {
+                HStack(spacing: 7) {
+                    Image(systemName: "calendar.badge.clock")
+                    Text("Come back tomorrow for a new set")
+                        .font(Theme.bold(15))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color.white.opacity(0.18)))
+            } else {
+                Button {
+                    Haptics.play(.light)
+                    showContent = false
+                    celebrate = false
+                    jewelsShown = 0
+                    recorded = false
+                    isNewBest = false
+                    withAnimation { model.restart() }
+                    animateIn()
+                } label: {
+                    actionLabel(icon: "arrow.clockwise", text: "Play Again", filled: true)
+                }
+                .buttonStyle(PressableButtonStyle())
             }
-            .buttonStyle(PressableButtonStyle())
 
             Button {
                 Haptics.play(.light)

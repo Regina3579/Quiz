@@ -10,8 +10,9 @@
 
 import SwiftUI
 
-/// One of the five Pro Challenge modes.
+/// One of the Pro Challenge modes.
 enum ProMode: String, CaseIterable, Identifiable, Hashable {
+    case dailyChallenge
     case timedChallenge
     case lightningRound
     case perfectRun
@@ -24,6 +25,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
+        case .dailyChallenge: return "Daily Challenge"
         case .timedChallenge: return "Timed Challenge"
         case .lightningRound: return "Lightning Round"
         case .perfectRun:     return "Perfect Run"
@@ -34,6 +36,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
 
     var emoji: String {
         switch self {
+        case .dailyChallenge: return "📅"
         case .timedChallenge: return "⏱️"
         case .lightningRound: return "⚡️"
         case .perfectRun:     return "🎯"
@@ -45,6 +48,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The one-line promise shown on the mode's card.
     var tagline: String {
         switch self {
+        case .dailyChallenge: return "A fresh set every day · once a day"
         case .timedChallenge: return "10 questions · 15 seconds each"
         case .lightningRound: return "10 easy questions · 8 seconds each"
         case .perfectRun:     return "One wrong answer ends the round"
@@ -56,6 +60,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The friendly "how to play" text shown before the round starts.
     var rules: String {
         switch self {
+        case .dailyChallenge:
+            return "Ten mixed questions, a brand new set every single day, "
+                 + "with no clock to rush you. It can only be played once a "
+                 + "day — so come back tomorrow for the next one."
         case .timedChallenge:
             return "Ten questions, and the clock gives you fifteen seconds for "
                  + "each one. Let the timer run out and that question counts as "
@@ -69,9 +77,9 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
                  + "second chances: one wrong answer ends the round on the "
                  + "spot. Go slowly and think — nothing is chasing you here."
         case .jewelRush:
-            return "Every correct answer pays jewels, and answers in a row pay "
-                 + "more and more. Three in a row doubles your jewels, six in a "
-                 + "row triples them. One slip and the streak starts again."
+            return "Every correct answer pays jewels, and this is the mode where "
+                 + "streaks count double: reach three in a row and five in a row "
+                 + "for twice the usual bonus. A wrong answer resets the run."
         case .categoryMaster:
             return "Pick one island and face fifteen questions drawn from every "
                  + "corner of it, easy through to expert. Prove you really are "
@@ -101,60 +109,51 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// True when a single wrong answer ends the round immediately.
     var endsOnWrongAnswer: Bool { self == .perfectRun }
 
-    /// True when answering in a row multiplies the jewels earned.
+    /// True when streak bonuses are worth double in this mode.
     var hasStreakBonus: Bool { self == .jewelRush }
+
+    /// True when the mode may only be played once a day.
+    var isOncePerDay: Bool { self == .dailyChallenge }
 
     /// True when the child picks an island before playing.
     var needsCategory: Bool { self == .categoryMaster }
 
     // MARK: - Rewards
 
-    /// Jewels for one correct answer, before any streak multiplier.
-    var jewelsPerCorrect: Int {
+    /// Every correct answer is worth the same everywhere in the app.
+    var jewelsPerCorrect: Int { JewelRules.perCorrect }
+
+    /// A flat reward for finishing the mode, on top of the usual streak and
+    /// perfect-round bonuses.
+    var completionBonus: Int {
         switch self {
-        case .timedChallenge: return 8
-        case .lightningRound: return 5
-        case .perfectRun:     return 10
-        case .jewelRush:      return 5
-        case .categoryMaster: return 6
+        case .dailyChallenge: return 20
+        case .timedChallenge: return 10
+        case .lightningRound: return 10
+        case .perfectRun:     return 20
+        case .jewelRush:      return 10
+        case .categoryMaster: return 20
         }
     }
 
-    /// Extra jewels for getting every question right.
-    var completionBonus: Int {
-        switch self {
-        case .timedChallenge: return 30
-        case .lightningRound: return 25
-        case .perfectRun:     return 50
-        case .jewelRush:      return 30
-        case .categoryMaster: return 40
-        }
-    }
+    /// Jewel Rush is the streak mode, so its streak bonuses count double.
+    /// The bonuses themselves are still paid at most once each.
+    var streakMultiplier: Int { self == .jewelRush ? 2 : 1 }
 
     /// The best possible haul, shown on the card so the prize is clear.
     var bestPossibleJewels: Int {
-        if hasStreakBonus {
-            // Every answer correct means the multiplier climbs to 3×.
-            return (0..<questionCount)
-                .map { jewelsPerCorrect * ProMode.streakMultiplier(forStreak: $0 + 1) }
-                .reduce(0, +) + completionBonus
-        }
-        return jewelsPerCorrect * questionCount + completionBonus
-    }
-
-    /// Jewel Rush pays more the longer the run of correct answers gets.
-    static func streakMultiplier(forStreak streak: Int) -> Int {
-        switch streak {
-        case 6...: return 3
-        case 3...: return 2
-        default:   return 1
-        }
+        JewelRules.bestPossible(questionCount: questionCount,
+                                streakMultiplier: streakMultiplier,
+                                completionBonus: completionBonus)
     }
 
     // MARK: - Look
 
     var palette: Island.Palette {
         switch self {
+        case .dailyChallenge:
+            return .init(start: Color(red: 0.42, green: 0.80, blue: 0.96),
+                         end:   Color(red: 0.20, green: 0.45, blue: 0.86))
         case .timedChallenge:
             return .init(start: Color(red: 0.99, green: 0.45, blue: 0.35),
                          end:   Color(red: 0.93, green: 0.22, blue: 0.45))
