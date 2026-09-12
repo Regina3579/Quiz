@@ -148,7 +148,9 @@ enum StickerCatalog {
             dinoEpicSticker(2),  // spinosaurus before a volcano
             dinoEpicSticker(3),  // T. rex wearing a leaf necklace
             dinoEpicSticker(4),  // crystal triceratops in blossom
-            dinoEpicSticker(5)   // roaring T. rex at sunset
+            dinoEpicSticker(5),  // roaring T. rex at sunset
+            dinoEpicSticker(6),  // crowned crystal T. rex by a waterfall
+            dinoEpicSticker(7)   // chef triceratops with a burger
         ]
     )
 
