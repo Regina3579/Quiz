@@ -154,8 +154,30 @@ enum StickerCatalog {
         ]
     )
 
+    private static func oceanSticker(_ n: Int) -> Sticker {
+        Sticker(id: "ocean_c\(n)", emoji: "🐬", cost: cuteCost,
+                imageName: String(format: "StickerO%02d", n))
+    }
+
+    /// 🐬 Ocean Paradise — cheerful friends from the reef and the waves.
+    static let oceanParadise = StickerCategory(
+        id: "ocean",
+        name: "Ocean Paradise",
+        emoji: "🐬",
+        cute: [
+            oceanSticker(1),  // leaping dolphin in a splash
+            oceanSticker(2),  // spouting whale over a wave
+            oceanSticker(3),  // sea turtle above the coral
+            oceanSticker(4),  // octopus with a pearl
+            oceanSticker(5)   // crab holding a scallop shell
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
-    static let categories: [StickerCategory] = [animalKingdom, galaxyQuest, dinoValley]
+    static let categories: [StickerCategory] = [
+        animalKingdom, galaxyQuest, dinoValley, oceanParadise
+    ]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
 
