@@ -310,6 +310,9 @@ struct StickerBookView: View {
     private let leafEdge: Double = 88
     /// The text box currently open for typing, if any.
     @State private var editingNote: UUID?
+    @State private var showTips = false
+    /// The tips card shows itself the first time the book is ever opened.
+    @AppStorage("quizspark.book.tipsSeen") private var tipsSeen = false
 
     var body: some View {
         GeometryReader { geo in
@@ -335,6 +338,13 @@ struct StickerBookView: View {
                             .frame(width: geo.size.width - 24,
                                    height: geo.size.height * 0.58)
                         controlBar
+                            // Kept on this view rather than the root: two
+                            // sheets on one view conflict, and the shop
+                            // already owns the root's sheet.
+                            .sheet(isPresented: $showTips,
+                                   onDismiss: { tipsSeen = true }) {
+                                StickerBookTipsCard()
+                            }
                         Spacer(minLength: 6)
                     }
                 }
@@ -342,6 +352,14 @@ struct StickerBookView: View {
         }
         // Turning the page puts away whatever was being typed.
         .onChange(of: currentPage) { _ in editingNote = nil }
+        .onAppear {
+            // Show the child how it works once, then never unprompted again.
+            if !tipsSeen {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    showTips = true
+                }
+            }
+        }
         .sheet(isPresented: $showShop) {
             StickerShopSheet { sticker in
                 // Drop the new sticker in the middle of the current page.
@@ -539,9 +557,29 @@ struct StickerBookView: View {
                 .accessibilityLabel("Add a text box")
             }
 
-            Text("Page \(currentPage + 1) of \(totalPages)  •  Drag a text box anywhere")
-                .font(Theme.medium(11))
-                .foregroundColor(Theme.inkSoft)
+            // Just the page count, with a quiet way to ask how things work.
+            HStack(spacing: 8) {
+                Text("Page \(currentPage + 1) of \(totalPages)")
+                    .font(Theme.medium(11))
+                    .foregroundColor(Theme.inkSoft)
+
+                Button {
+                    Haptics.play(.light)
+                    showTips = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "lightbulb.fill").font(.system(size: 9))
+                        Text("Tips").font(Theme.bold(11))
+                    }
+                    .foregroundColor(Theme.inkSoft)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(.white.opacity(0.75)))
+                    .overlay(Capsule().stroke(Theme.inkSoft.opacity(0.3), lineWidth: 1))
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("How the sticker book works")
+            }
         }
         .padding(.horizontal, 30)
         .padding(.bottom, 8)
@@ -594,6 +632,93 @@ struct StickerBookView: View {
                 leafAngle = 0
                 isFlipping = false
             }
+        }
+    }
+}
+
+// MARK: - How the book works
+
+/// A small, friendly card explaining the gestures. It appears by itself the
+/// first time the book is opened and is available from the Tips button after
+/// that, so the page itself stays clear of instructions.
+private struct StickerBookTipsCard: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private let tips: [(icon: String, title: String, detail: String)] = [
+        ("✋", "Move it",   "Drag a sticker or a text box anywhere you like"),
+        ("✏️", "Write",     "Tap a text box to write in it, then tap Done"),
+        ("🤏", "Resize",    "Pinch a sticker to make it bigger or smaller"),
+        ("❌", "Take it off", "Hold a sticker, or tap the little red cross"),
+        ("📖", "Turn over", "Swipe the page, or tap the arrows at the sides")
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // A soft handle-ish header rather than a heavy title bar.
+            VStack(spacing: 4) {
+                Text("✨").font(.system(size: 26))
+                Text("Your Sticker Book")
+                    .font(Theme.display(22))
+                    .foregroundColor(Theme.ink)
+            }
+            .padding(.top, 22)
+            .padding(.bottom, 14)
+
+            VStack(spacing: 10) {
+                ForEach(tips, id: \.title) { tip in
+                    row(tip)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Button {
+                Haptics.play(.light)
+                dismiss()
+            } label: {
+                Text("Got it!")
+                    .font(Theme.bold(17))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Theme.nextButton))
+                    .shadow(color: .black.opacity(0.18), radius: 5, y: 3)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+            .padding(.bottom, 22)
+        }
+        .frame(maxWidth: .infinity)
+        .background(
+            LinearGradient(colors: [
+                Color(red: 1.00, green: 0.98, blue: 0.94),
+                Color(red: 1.00, green: 0.93, blue: 0.95)
+            ], startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea()
+        )
+        .presentationDetents([.height(460)])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func row(_ tip: (icon: String, title: String, detail: String)) -> some View {
+        HStack(spacing: 12) {
+            Text(tip.icon)
+                .font(.system(size: 20))
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(.white))
+                .overlay(Circle().stroke(Theme.inkSoft.opacity(0.18), lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(tip.title)
+                    .font(Theme.bold(14))
+                    .foregroundColor(Theme.ink)
+                Text(tip.detail)
+                    .font(Theme.medium(12))
+                    .foregroundColor(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
         }
     }
 }
