@@ -49,6 +49,9 @@ struct HomeView: View {
             .navigationDestination(for: LevelRoute.self) { route in
                 QuizView(route: route)
             }
+            .navigationDestination(for: ProHubRoute.self) { _ in
+                ProHubView()
+            }
         }
         .fullScreenCover(isPresented: $showStickerBook) {
             StickerBookView().environmentObject(progress)
@@ -112,6 +115,14 @@ struct HomeView: View {
             HStack {
                 Spacer()
                 VStack(spacing: 14) {
+                    // The way in to the Pro Challenge modes.
+                    NavigationLink(value: ProHubRoute()) {
+                        ProCrownButton()
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
+                    .accessibilityLabel("Open the Pro Challenge")
+
                     Button {
                         Haptics.play(.light)
                         isMuted.toggle()
@@ -228,6 +239,39 @@ struct HomeView: View {
         .scaleEffect(appeared ? 1 : 0.7)
         .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(index) * 0.06),
                    value: appeared)
+    }
+}
+
+// MARK: - Pro button
+
+/// The gold crown button that opens the Pro Challenge room, with a small
+/// PRO tag so it reads as the special section rather than another island.
+private struct ProCrownButton: View {
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 21))
+                .foregroundColor(Color(red: 0.36, green: 0.20, blue: 0.02))
+                .frame(width: 50, height: 50)
+                .background(
+                    Circle().fill(LinearGradient(colors: [
+                        Color(red: 1.00, green: 0.88, blue: 0.42),
+                        Color(red: 0.96, green: 0.68, blue: 0.16)
+                    ], startPoint: .top, endPoint: .bottom))
+                )
+                .overlay(Circle().stroke(.white, lineWidth: 2))
+                .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
+
+            Text("PRO")
+                .font(Theme.bold(9))
+                .foregroundColor(.white)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(Color(red: 0.55, green: 0.22, blue: 0.78)))
+                .overlay(Capsule().stroke(.white.opacity(0.85), lineWidth: 1))
+                .offset(y: 7)
+        }
+        .frame(width: 50, height: 58)
     }
 }
 

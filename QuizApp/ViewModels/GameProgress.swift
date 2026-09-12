@@ -38,11 +38,15 @@ final class GameProgress: ObservableObject {
     /// Text boxes the child has dropped onto the sticker-book pages.
     @Published private(set) var placedNotes: [PlacedNote] = []
 
+    /// Best score reached in each Pro Challenge mode.
+    @Published private(set) var proBestScores: [String: Int] = [:]
+
     private let defaultsKey = "quizspark.progress.v1"
     private let jewelsKey = "quizspark.jewels.v1"
     private let ownedStickersKey = "quizspark.stickers.owned.v1"
     private let placedStickersKey = "quizspark.stickers.placed.v1"
     private let placedNotesKey = "quizspark.notes.placed.v1"
+    private let proScoresKey = "quizspark.pro.best.v1"
     /// The retired one-note-per-page store, read once so nothing is lost.
     private let pageNotesKey = "quizspark.stickers.notes.v1"
 
@@ -195,6 +199,27 @@ final class GameProgress: ObservableObject {
         placedStickers.filter { $0.page == page }
     }
 
+    // MARK: - Pro Challenge
+
+    /// The best score reached in each Pro mode, keyed by the mode's raw value.
+    func proBest(_ mode: ProMode) -> Int { proBestScores[mode.rawValue] ?? 0 }
+
+    /// Banks the jewels from a finished Pro round and remembers the best
+    /// score. Returns true when this run beat the previous best.
+    @discardableResult
+    func finishProRound(mode: ProMode, score: Int, jewels earned: Int) -> Bool {
+        if earned > 0 {
+            jewels += earned
+            saveJewels()
+        }
+        let isBest = score > proBest(mode)
+        if isBest {
+            proBestScores[mode.rawValue] = score
+            saveProScores()
+        }
+        return isBest
+    }
+
     /// All text boxes on a given page.
     func notes(onPage page: Int) -> [PlacedNote] {
         placedNotes.filter { $0.page == page }
@@ -237,10 +262,12 @@ final class GameProgress: ObservableObject {
         ownedStickers = []
         placedStickers = []
         placedNotes = []
+        proBestScores = [:]
         save()
         saveJewels()
         saveStickers()
         saveNotes()
+        saveProScores()
     }
 
     // MARK: - Persistence
@@ -272,6 +299,10 @@ final class GameProgress: ObservableObject {
             }
             saveNotes()
         }
+        if let data = UserDefaults.standard.data(forKey: proScoresKey),
+           let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
+            proBestScores = decoded
+        }
     }
 
     private func save() {
@@ -296,6 +327,12 @@ final class GameProgress: ObservableObject {
     private func saveNotes() {
         if let data = try? JSONEncoder().encode(placedNotes) {
             UserDefaults.standard.set(data, forKey: placedNotesKey)
+        }
+    }
+
+    private func saveProScores() {
+        if let data = try? JSONEncoder().encode(proBestScores) {
+            UserDefaults.standard.set(data, forKey: proScoresKey)
         }
     }
 }
