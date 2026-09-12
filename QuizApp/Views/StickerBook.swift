@@ -122,8 +122,28 @@ enum StickerCatalog {
         ]
     )
 
+    private static func dinoSticker(_ n: Int) -> Sticker {
+        Sticker(id: "dino_c\(n)", emoji: "🦕", cost: cuteCost,
+                imageName: String(format: "StickerD%02d", n))
+    }
+
+    /// 🦖 Dino Valley — friendly baby dinosaurs from the prehistoric trail.
+    static let dinoValley = StickerCategory(
+        id: "dino",
+        name: "Dino Valley",
+        emoji: "🦖",
+        cute: [
+            dinoSticker(1),  // baby T. rex by a footprint sign
+            dinoSticker(2),  // brachiosaurus munching leaves
+            dinoSticker(3),  // triceratops with a flower crown
+            dinoSticker(4),  // stegosaurus with sunset plates
+            dinoSticker(5)   // hatchling in a cracked egg
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
-    static let categories: [StickerCategory] = [animalKingdom, galaxyQuest]
+    static let categories: [StickerCategory] = [animalKingdom, galaxyQuest, dinoValley]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
 
