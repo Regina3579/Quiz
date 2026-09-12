@@ -36,6 +36,18 @@ struct PlacedSticker: Identifiable, Codable, Hashable {
     var rotation: Double = 0
 }
 
+/// A little text box the child has dropped onto a page. Like a sticker it
+/// lives at a fraction of the page so it survives rotation and resizing, and
+/// it can be dragged anywhere and written in.
+struct PlacedNote: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var page: Int
+    /// Position as a fraction of the page (0…1).
+    var x: Double
+    var y: Double
+    var text: String = ""
+}
+
 /// A themed group of stickers in the shop (e.g. "Animal Kingdom"). Each
 /// category has a Cute tier (50 jewels) and an Epic tier (100 jewels).
 struct StickerCategory: Identifiable {
@@ -248,11 +260,8 @@ struct StickerBookView: View {
     /// projection is degenerate and produces non-finite geometry, so the
     /// content swap happens here instead.
     private let leafEdge: Double = 88
-    @State private var noteText = ""
-    @FocusState private var noteFocused: Bool
-
-    /// Two short lines is plenty for a kid's adventure note.
-    private let noteLimit = 90
+    /// The text box currently open for typing, if any.
+    @State private var editingNote: UUID?
 
     var body: some View {
         GeometryReader { geo in
@@ -267,7 +276,7 @@ struct StickerBookView: View {
                 )
                 .ignoresSafeArea()
 
-                // The book, with clear space above and below, then the note and
+                // The book, with clear space above and below, then the
                 // controls. Only laid out once the container reports a usable
                 // size, so the inner padding can never produce a negative
                 // dimension.
@@ -276,19 +285,15 @@ struct StickerBookView: View {
                         Spacer(minLength: 6)
                         bookArea
                             .frame(width: geo.size.width - 24,
-                                   height: geo.size.height * 0.50)
-                        noteCard
+                                   height: geo.size.height * 0.58)
                         controlBar
                         Spacer(minLength: 6)
                     }
                 }
             }
         }
-        .onAppear { noteText = progress.note(onPage: currentPage) }
-        .onChange(of: currentPage) { page in
-            noteFocused = false
-            noteText = progress.note(onPage: page)
-        }
+        // Turning the page puts away whatever was being typed.
+        .onChange(of: currentPage) { _ in editingNote = nil }
         .sheet(isPresented: $showShop) {
             StickerShopSheet { sticker in
                 // Drop the new sticker in the middle of the current page.
@@ -373,7 +378,8 @@ struct StickerBookView: View {
                 leaf(page: rightPage, side: .right)
             }
         } else {
-            StickerPageView(page: currentPage, totalPages: totalPages)
+            StickerPageView(page: currentPage, totalPages: totalPages,
+                            editing: $editingNote)
         }
     }
 
@@ -405,7 +411,7 @@ struct StickerBookView: View {
 
     /// One half of a spread, clipped down the spine.
     private func leaf(page: Int, side: LeafSide) -> some View {
-        StickerPageView(page: page, totalPages: totalPages)
+        StickerPageView(page: page, totalPages: totalPages, editing: $editingNote)
             .clipShape(LeafClip(side: side))
     }
 
@@ -438,78 +444,54 @@ struct StickerBookView: View {
         }
     }
 
-    /// A little notepad under the book where the child can write a line or two
-    /// about their adventure. Each page of the book keeps its own note.
-    private var noteCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Text("📝")
-                Text("My Note")
-                    .font(Theme.bold(15))
-                    .foregroundColor(Theme.ink)
-                Spacer()
-                if noteFocused {
-                    Button("Done") {
-                        noteFocused = false
-                        Haptics.play(.light)
-                    }
-                    .font(Theme.bold(14))
-                    .foregroundColor(Color(red: 0.545, green: 0.361, blue: 0.965))
-                }
-            }
-
-            TextField("Write about your adventure…", text: $noteText, axis: .vertical)
-                .font(Theme.medium(14))
-                .foregroundColor(Theme.ink)
-                .lineLimit(2, reservesSpace: true)
-                .focused($noteFocused)
-                .submitLabel(.done)
-                .onChange(of: noteText) { newValue in
-                    // Keep it to a couple of lines, and save as they type.
-                    if newValue.count > noteLimit {
-                        noteText = String(newValue.prefix(noteLimit))
-                        return
-                    }
-                    progress.setNote(newValue, onPage: currentPage)
-                }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Theme.didYouKnow)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.8), lineWidth: 2)
-        )
-        .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
-        .padding(.horizontal, 22)
-    }
-
     private var controlBar: some View {
         VStack(spacing: 6) {
-            Button {
-                Haptics.play(.light)
-                showShop = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Stickers")
+            HStack(spacing: 10) {
+                Button {
+                    Haptics.play(.light)
+                    showShop = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add Stickers")
+                    }
+                    .font(Theme.bold(17))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 13)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Theme.nextButton)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
                 }
-                .font(Theme.bold(17))
-                .foregroundColor(.white)
-                .padding(.vertical, 13)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Theme.nextButton)
-                )
-                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-            }
-            .buttonStyle(PressableButtonStyle())
+                .buttonStyle(PressableButtonStyle())
 
-            Text("Page \(currentPage + 1) of \(totalPages)  •  Swipe or tap the arrows")
+                // Drops a fresh text box onto the page, ready to type in.
+                Button {
+                    Haptics.play(.light)
+                    Sound.stickerPop()
+                    editingNote = progress.addNote(page: currentPage, x: 0.5, y: 0.42)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "textformat")
+                        Text("Text")
+                    }
+                    .font(Theme.bold(17))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 13)
+                    .padding(.horizontal, 18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(pinkButton)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("Add a text box")
+            }
+
+            Text("Page \(currentPage + 1) of \(totalPages)  •  Drag a text box anywhere")
                 .font(Theme.medium(11))
                 .foregroundColor(Theme.inkSoft)
         }
@@ -591,6 +573,8 @@ private struct LeafClip: Shape {
 private struct StickerPageView: View {
     let page: Int
     let totalPages: Int
+    /// The text box open for typing, shared so only one is ever open.
+    @Binding var editing: UUID?
     @EnvironmentObject private var progress: GameProgress
 
     /// A soft pastel tint that varies gently from page to page.
@@ -649,8 +633,136 @@ private struct StickerPageView: View {
                 ForEach(progress.stickers(onPage: page)) { placed in
                     PlacedStickerView(placed: placed, pageSize: geo.size)
                 }
+
+                // Text boxes sit above the stickers so they stay readable.
+                ForEach(progress.notes(onPage: page)) { note in
+                    PlacedNoteView(note: note, pageSize: geo.size, editing: $editing)
+                }
             }
         }
+    }
+}
+
+// MARK: - A text box the child can move around the page and write in
+
+/// A little card of paper the child drops on a page. Drag it anywhere; tap it
+/// to type. Long-press removes it, matching how stickers behave.
+private struct PlacedNoteView: View {
+    let note: PlacedNote
+    let pageSize: CGSize
+    @Binding var editing: UUID?
+    @EnvironmentObject private var progress: GameProgress
+
+    @State private var dragOffset: CGSize = .zero
+    @State private var draft = ""
+    @FocusState private var focused: Bool
+
+    /// Enough for a couple of lines in a child's handwriting.
+    private let limit = 120
+
+    private var isEditing: Bool { editing == note.id }
+    private var boxWidth: CGFloat { max(120, pageSize.width * 0.30) }
+
+    var body: some View {
+        let baseX = note.x * pageSize.width
+        let baseY = note.y * pageSize.height
+
+        card
+            .frame(width: boxWidth)
+            .position(x: baseX + dragOffset.width, y: baseY + dragOffset.height)
+            // While typing, the box stays put so the drag can't fight the
+            // keyboard or the text selection.
+            .gesture(isEditing ? nil : dragGesture(baseX: baseX, baseY: baseY))
+            .simultaneousGesture(isEditing ? nil : deleteGesture)
+            .onAppear {
+                draft = note.text
+                if isEditing { focused = true }
+            }
+            .onChange(of: isEditing) { nowEditing in
+                if nowEditing {
+                    draft = note.text
+                    focused = true
+                } else {
+                    focused = false
+                }
+            }
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if isEditing {
+                TextField("Write here…", text: $draft, axis: .vertical)
+                    .font(Theme.medium(13))
+                    .foregroundColor(Theme.ink)
+                    .lineLimit(1...4)
+                    .focused($focused)
+                    .onChange(of: draft) { value in
+                        if value.count > limit {
+                            draft = String(value.prefix(limit))
+                            return
+                        }
+                        progress.setNoteText(note.id, text: value)
+                    }
+
+                Button("Done") {
+                    Haptics.play(.light)
+                    progress.setNoteText(note.id, text: draft)
+                    editing = nil
+                }
+                .font(Theme.bold(12))
+                .foregroundColor(Color(red: 0.545, green: 0.361, blue: 0.965))
+            } else {
+                Text(note.text.isEmpty ? "Tap to write…" : note.text)
+                    .font(Theme.medium(13))
+                    .foregroundColor(note.text.isEmpty ? Theme.inkSoft : Theme.ink)
+                    .lineLimit(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Theme.didYouKnow)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(isEditing ? Color(red: 0.545, green: 0.361, blue: 0.965)
+                                  : Theme.inkSoft.opacity(0.35),
+                        lineWidth: isEditing ? 2 : 1.5)
+        )
+        .shadow(color: .black.opacity(0.18), radius: 5, y: 3)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if !isEditing {
+                Haptics.play(.light)
+                editing = note.id
+            }
+        }
+    }
+
+    private func dragGesture(baseX: CGFloat, baseY: CGFloat) -> some Gesture {
+        DragGesture()
+            .onChanged { value in dragOffset = value.translation }
+            .onEnded { value in
+                let nx = clamp((baseX + value.translation.width) / pageSize.width)
+                let ny = clamp((baseY + value.translation.height) / pageSize.height)
+                dragOffset = .zero
+                progress.moveNote(note.id, x: nx, y: ny)
+            }
+    }
+
+    private var deleteGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.6)
+            .onEnded { _ in
+                Haptics.play(.success)
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    progress.removeNote(note.id)
+                }
+            }
+    }
+
+    private func clamp(_ v: CGFloat) -> Double {
+        Double(min(max(v, 0.08), 0.92))
     }
 }
 

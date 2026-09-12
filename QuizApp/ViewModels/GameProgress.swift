@@ -35,13 +35,15 @@ final class GameProgress: ObservableObject {
     /// Stickers the child has placed in their sticker book (page + position).
     @Published private(set) var placedStickers: [PlacedSticker] = []
 
-    /// The child's own note for each sticker-book page, keyed by page number.
-    @Published private(set) var pageNotes: [Int: String] = [:]
+    /// Text boxes the child has dropped onto the sticker-book pages.
+    @Published private(set) var placedNotes: [PlacedNote] = []
 
     private let defaultsKey = "quizspark.progress.v1"
     private let jewelsKey = "quizspark.jewels.v1"
     private let ownedStickersKey = "quizspark.stickers.owned.v1"
     private let placedStickersKey = "quizspark.stickers.placed.v1"
+    private let placedNotesKey = "quizspark.notes.placed.v1"
+    /// The retired one-note-per-page store, read once so nothing is lost.
     private let pageNotesKey = "quizspark.stickers.notes.v1"
 
     // Jewel reward amounts.
@@ -193,18 +195,38 @@ final class GameProgress: ObservableObject {
         placedStickers.filter { $0.page == page }
     }
 
-    /// The child's note written on a given page ("" when they haven't yet).
-    func note(onPage page: Int) -> String {
-        pageNotes[page] ?? ""
+    /// All text boxes on a given page.
+    func notes(onPage page: Int) -> [PlacedNote] {
+        placedNotes.filter { $0.page == page }
     }
 
-    /// Saves the note the child typed on a page.
-    func setNote(_ text: String, onPage page: Int) {
-        if text.isEmpty {
-            pageNotes.removeValue(forKey: page)
-        } else {
-            pageNotes[page] = text
-        }
+    /// Drops a fresh empty text box on a page and returns its id.
+    @discardableResult
+    func addNote(page: Int, x: Double, y: Double) -> UUID {
+        let note = PlacedNote(page: page, x: x, y: y)
+        placedNotes.append(note)
+        saveNotes()
+        return note.id
+    }
+
+    /// Moves a text box to a new spot on its page.
+    func moveNote(_ id: UUID, x: Double, y: Double) {
+        guard let i = placedNotes.firstIndex(where: { $0.id == id }) else { return }
+        placedNotes[i].x = x
+        placedNotes[i].y = y
+        saveNotes()
+    }
+
+    /// Saves what the child wrote in a text box.
+    func setNoteText(_ id: UUID, text: String) {
+        guard let i = placedNotes.firstIndex(where: { $0.id == id }) else { return }
+        placedNotes[i].text = text
+        saveNotes()
+    }
+
+    /// Peels a text box off the page.
+    func removeNote(_ id: UUID) {
+        placedNotes.removeAll { $0.id == id }
         saveNotes()
     }
 
@@ -214,7 +236,7 @@ final class GameProgress: ObservableObject {
         jewels = 0
         ownedStickers = []
         placedStickers = []
-        pageNotes = [:]
+        placedNotes = []
         save()
         saveJewels()
         saveStickers()
@@ -237,11 +259,18 @@ final class GameProgress: ObservableObject {
            let decoded = try? JSONDecoder().decode([PlacedSticker].self, from: data) {
             placedStickers = decoded
         }
-        // Notes are stored with String keys (JSON can't key a dictionary by Int).
-        if let data = UserDefaults.standard.data(forKey: pageNotesKey),
-           let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
-            pageNotes = Dictionary(uniqueKeysWithValues:
-                decoded.compactMap { key, value in Int(key).map { ($0, value) } })
+        if let data = UserDefaults.standard.data(forKey: placedNotesKey),
+           let decoded = try? JSONDecoder().decode([PlacedNote].self, from: data) {
+            placedNotes = decoded
+        } else if let data = UserDefaults.standard.data(forKey: pageNotesKey),
+                  let old = try? JSONDecoder().decode([String: String].self, from: data) {
+            // Carry over notes written against the old one-per-page pad by
+            // dropping each onto its page as a text box.
+            placedNotes = old.compactMap { key, value in
+                guard let page = Int(key), !value.isEmpty else { return nil }
+                return PlacedNote(page: page, x: 0.30, y: 0.78, text: value)
+            }
+            saveNotes()
         }
     }
 
@@ -265,10 +294,8 @@ final class GameProgress: ObservableObject {
     }
 
     private func saveNotes() {
-        let encodable = Dictionary(uniqueKeysWithValues:
-            pageNotes.map { (String($0.key), $0.value) })
-        if let data = try? JSONEncoder().encode(encodable) {
-            UserDefaults.standard.set(data, forKey: pageNotesKey)
+        if let data = try? JSONEncoder().encode(placedNotes) {
+            UserDefaults.standard.set(data, forKey: placedNotesKey)
         }
     }
 }
