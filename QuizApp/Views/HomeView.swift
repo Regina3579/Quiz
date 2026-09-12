@@ -16,6 +16,7 @@ struct HomeView: View {
     @State private var showNameEntry = false
     @AppStorage(Sound.muteKey) private var isMuted = false
     @AppStorage(Player.nameKey) private var playerName = ""
+    @AppStorage("quizspark.pro.visited") private var proVisited = false
 
     private let rowHeight: CGFloat = 150
 
@@ -76,7 +77,7 @@ struct HomeView: View {
                 .shadow(color: .white.opacity(0.5), radius: 3, y: 1)
 
             if playerName.isEmpty {
-                Text("Explore every island on your adventure!")
+                Text("Big adventures make brighter minds!")
                     .font(Theme.medium(15))
                     .foregroundColor(mapInk.opacity(0.85))
                     .shadow(color: .white.opacity(0.5), radius: 2, y: 1)
@@ -100,6 +101,11 @@ struct HomeView: View {
                 }
                 .buttonStyle(PressableButtonStyle())
                 .accessibilityLabel("Change your name")
+
+                Text("Big adventures make brighter minds!")
+                    .font(Theme.medium(13))
+                    .foregroundColor(mapInk.opacity(0.85))
+                    .shadow(color: .white.opacity(0.6), radius: 2, y: 1)
             }
         }
         .frame(maxWidth: .infinity)
@@ -117,10 +123,13 @@ struct HomeView: View {
                 VStack(spacing: 14) {
                     // The way in to the Pro Challenge modes.
                     NavigationLink(value: ProHubRoute()) {
-                        ProCrownButton()
+                        ProCrownButton(showNew: !proVisited)
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
+                    .simultaneousGesture(TapGesture().onEnded {
+                        Haptics.play(.light)
+                        proVisited = true
+                    })
                     .accessibilityLabel("Open the Pro Challenge")
 
                     Button {
@@ -244,34 +253,69 @@ struct HomeView: View {
 
 // MARK: - Pro button
 
-/// The gold crown button that opens the Pro Challenge room, with a small
-/// PRO tag so it reads as the special section rather than another island.
+/// The way in to the Pro Challenge room: a deep purple medallion with a gold
+/// crown, a "Challenges" ribbon beneath it, and a NEW flash until it has been
+/// opened once.
 private struct ProCrownButton: View {
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 21))
-                .foregroundColor(Color(red: 0.36, green: 0.20, blue: 0.02))
-                .frame(width: 50, height: 50)
-                .background(
-                    Circle().fill(LinearGradient(colors: [
-                        Color(red: 1.00, green: 0.88, blue: 0.42),
-                        Color(red: 0.96, green: 0.68, blue: 0.16)
-                    ], startPoint: .top, endPoint: .bottom))
-                )
-                .overlay(Circle().stroke(.white, lineWidth: 2))
-                .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
+    /// Drops the NEW flash once the child has visited the Pro room.
+    let showNew: Bool
 
-            Text("PRO")
-                .font(Theme.bold(9))
-                .foregroundColor(.white)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(Color(red: 0.55, green: 0.22, blue: 0.78)))
-                .overlay(Capsule().stroke(.white.opacity(0.85), lineWidth: 1))
-                .offset(y: 7)
+    private var medallion: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 0.62, green: 0.32, blue: 0.93),
+            Color(red: 0.38, green: 0.16, blue: 0.72)
+        ], startPoint: .top, endPoint: .bottom)
+    }
+
+    private var gold: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.90, blue: 0.48),
+            Color(red: 0.96, green: 0.68, blue: 0.14)
+        ], startPoint: .top, endPoint: .bottom)
+    }
+
+    var body: some View {
+        VStack(spacing: -8) {
+            ZStack {
+                Circle()
+                    .fill(medallion)
+                    .frame(width: 62, height: 62)
+                    .overlay(Circle().stroke(gold, lineWidth: 3))
+                    .shadow(color: .black.opacity(0.35), radius: 6, y: 4)
+
+                VStack(spacing: 1) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(gold)
+                    Text("PRO")
+                        .font(Theme.display(14))
+                        .foregroundColor(.white)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if showNew {
+                    Text("NEW")
+                        .font(Theme.bold(9))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color(red: 0.93, green: 0.21, blue: 0.31)))
+                        .overlay(Capsule().stroke(.white, lineWidth: 1.2))
+                        .offset(x: 10, y: -4)
+                }
+            }
+
+            // The little ribbon that names what the medallion opens.
+            Text("Challenges")
+                .font(Theme.bold(11))
+                .foregroundColor(Color(red: 0.36, green: 0.20, blue: 0.02))
+                .padding(.horizontal, 9)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(gold))
+                .overlay(Capsule().stroke(.white.opacity(0.8), lineWidth: 1))
+                .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
         }
-        .frame(width: 50, height: 58)
+        .frame(width: 82)
     }
 }
 
@@ -335,11 +379,27 @@ private struct IslandBadge: View {
             }
 
             VStack(spacing: 4) {
+                // The name sits on a little parchment banner so it stays
+                // readable wherever it lands on the map.
                 Text(island.name)
-                    .font(Theme.bold(16))
+                    .font(Theme.bold(15))
                     .foregroundColor(Color(red: 0.28, green: 0.15, blue: 0.04))
-                    .shadow(color: .white.opacity(0.8), radius: 3)
-                    .shadow(color: .white.opacity(0.6), radius: 1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(LinearGradient(colors: [
+                                Color(red: 0.99, green: 0.94, blue: 0.80),
+                                Color(red: 0.94, green: 0.85, blue: 0.65)
+                            ], startPoint: .top, endPoint: .bottom))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .stroke(Color(red: 0.60, green: 0.44, blue: 0.22), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
 
                 if unlocked {
                     HStack(spacing: 3) {

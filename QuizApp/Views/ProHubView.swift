@@ -73,33 +73,87 @@ struct ProHubView: View {
         .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1))
     }
 
+    private var gold: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.92, blue: 0.55),
+            Color(red: 0.98, green: 0.72, blue: 0.16)
+        ], startPoint: .top, endPoint: .bottom)
+    }
+
     private var header: some View {
-        VStack(spacing: 8) {
-            Text("👑")
-                .font(.system(size: 46))
-            Text("Pro Challenge")
-                .font(Theme.display(32))
-                .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
-            Text("Six harder ways to play — every round pays jewels")
-                .font(Theme.medium(14))
-                .foregroundColor(.white.opacity(0.9))
+        VStack(spacing: 10) {
+            Text("👑").font(.system(size: 44))
+
+            VStack(spacing: -2) {
+                Text("Pro")
+                    .font(Theme.display(42))
+                    .foregroundStyle(gold)
+                Text("Challenge")
+                    .font(Theme.display(34))
+                    .foregroundColor(.white)
+            }
+            .shadow(color: .black.opacity(0.45), radius: 5, y: 3)
+
+            Text("Bigger challenges. More jewels. More fun!")
+                .font(Theme.bold(15))
+                .foregroundStyle(gold)
                 .multilineTextAlignment(.center)
+
+            featurePills
         }
         .padding(.top, 4)
-        .padding(.bottom, 2)
+        .padding(.bottom, 6)
         .opacity(appeared ? 1 : 0)
         .animation(.easeOut(duration: 0.45), value: appeared)
     }
 
-    private var footer: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "sparkles")
-            Text("Spend your jewels in the sticker book")
-                .font(Theme.medium(13))
+    /// The three promises of the Pro room, side by side under the title.
+    private var featurePills: some View {
+        HStack(alignment: .top, spacing: 0) {
+            featurePill("✨", "Get rare\nstickers")
+            pillDivider
+            featurePill("💎", "Earn bonus\njewels")
+            pillDivider
+            featurePill("⭐️", "Play exciting\nchallenges")
         }
-        .foregroundColor(.white.opacity(0.75))
-        .padding(.top, 6)
+        .padding(.top, 2)
+    }
+
+    private func featurePill(_ icon: String, _ label: String) -> some View {
+        VStack(spacing: 5) {
+            Text(icon).font(.system(size: 26))
+            Text(label)
+                .font(Theme.bold(12))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var pillDivider: some View {
+        Rectangle()
+            .fill(.white.opacity(0.25))
+            .frame(width: 1, height: 34)
+    }
+
+    private var footer: some View {
+        HStack(spacing: 10) {
+            Text("📖").font(.system(size: 26))
+            Text("Spend your jewels in the sticker book!")
+                .font(Theme.bold(14))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            Text("✨").font(.system(size: 22))
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .fill(.white.opacity(0.12)))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .stroke(.white.opacity(0.25), lineWidth: 1))
+        .padding(.top, 8)
     }
 
     // MARK: - Mode card
@@ -114,15 +168,23 @@ struct ProHubView: View {
         } label: {
             HStack(spacing: 14) {
                 Text(mode.emoji)
-                    .font(.system(size: 34))
-                    .frame(width: 58, height: 58)
-                    .background(Circle().fill(.white.opacity(0.25)))
-                    .overlay(Circle().stroke(.white.opacity(0.55), lineWidth: 1.5))
+                    .font(.system(size: 40))
+                    .frame(width: 68, height: 68)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(.white.opacity(0.28))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(.white.opacity(0.6), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(mode.title)
-                        .font(Theme.bold(19))
+                        .font(Theme.display(21))
                         .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
                     Text(mode.tagline)
                         .font(Theme.medium(13))
                         .foregroundColor(.white.opacity(0.9))
@@ -145,15 +207,25 @@ struct ProHubView: View {
                     .font(Theme.bold(15))
                     .foregroundColor(.white.opacity(0.8))
             }
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(mode.palette.gradient)
+                // Gradient first, then a big ghosted echo of the mode's icon
+                // on top of it — both behind the card's own content.
+                ZStack(alignment: .trailing) {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(mode.palette.gradient)
+                    Text(mode.emoji)
+                        .font(.system(size: 104))
+                        .opacity(0.14)
+                        .offset(x: 20)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .allowsHitTesting(false)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(.white.opacity(0.35), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(.white.opacity(0.45), lineWidth: 1.5)
             )
             .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
             .saturation(doneToday ? 0.45 : 1)
