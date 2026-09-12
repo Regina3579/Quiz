@@ -131,6 +131,10 @@ final class GameProgress: ObservableObject {
                        results: [Bool]) -> JewelReward {
         record(islandID: islandID, level: level, earned: earned)
 
+        // So tomorrow's Daily Challenge can pass over what was just answered.
+        DailyChallenge.noteLevelPlayed(islandID: islandID, level: level,
+                                       questionCount: total)
+
         let reward = JewelRules.reward(results: results,
                                        correct: correct,
                                        total: total)

@@ -48,7 +48,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The one-line promise shown on the mode's card.
     var tagline: String {
         switch self {
-        case .dailyChallenge: return "5 quick questions · once a day"
+        case .dailyChallenge: return "5 questions from today's adventure · once a day"
         case .timedChallenge: return "10 questions · 15 seconds each"
         case .lightningRound: return "10 easy questions · 8 seconds each"
         case .perfectRun:     return "One wrong answer ends the round"
@@ -61,10 +61,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     var rules: String {
         switch self {
         case .dailyChallenge:
-            return "A short mini-quiz: five mixed questions, a brand new set "
-                 + "every single day, with no clock to rush you. Finish it for "
-                 + "a bonus, and get all five right for a little extra on top. "
-                 + "One go a day — come back tomorrow for the next one."
+            return "A short mini-quiz from one of your adventures, and the "
+                 + "adventure changes every day. Five questions picked fresh "
+                 + "from its hundred, easy through to hard, with no clock. "
+                 + "One go a day — tomorrow brings a different world."
         case .timedChallenge:
             return "Ten questions, and the clock gives you fifteen seconds for "
                  + "each one. Let the timer run out and that question counts as "

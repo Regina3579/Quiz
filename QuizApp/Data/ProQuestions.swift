@@ -15,8 +15,9 @@
 //    medium — needs a moment's thought
 //    hard   — precise facts, genuinely challenging for kids
 //
-//  Category Master doesn't use this bank: picking one island and drawing
-//  from its own ten levels is exactly what "one category only" means.
+//  Two modes don't use this bank. Category Master draws from the one island
+//  you pick, and the Daily Challenge draws from whichever island is that
+//  day's adventure — see DailyChallenge.
 //
 
 import Foundation
@@ -495,11 +496,8 @@ enum ProQuestions {
     static func draw(for mode: ProMode, islandID: Int? = nil) -> [Question] {
         switch mode {
         case .dailyChallenge:
-            // Five questions: a gentle start, a push in the middle, one to
-            // stretch them at the end.
-            return Array(easy.shuffled().prefix(2))
-                 + Array(medium.shuffled().prefix(2))
-                 + Array(hard.shuffled().prefix(1))
+            // Drawn from today's adventure, not this bank — see DailyChallenge.
+            return DailyChallenge.todaysQuestions()
 
         case .lightningRound:
             return Array(easy.shuffled().prefix(mode.questionCount))

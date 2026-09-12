@@ -127,6 +127,11 @@ struct ProHubView: View {
                         .font(Theme.medium(13))
                         .foregroundColor(.white.opacity(0.9))
                         .fixedSize(horizontal: false, vertical: true)
+                    if mode.isOncePerDay, let today = DailyChallenge.island() {
+                        Text("Today: \(today.emoji) \(today.name)")
+                            .font(Theme.bold(12))
+                            .foregroundColor(.white)
+                    }
                     HStack(spacing: 10) {
                         if doneToday { doneTodayTag } else { rewardTag(mode) }
                         if best > 0 { bestTag(best, of: mode.questionCount) }
@@ -233,6 +238,10 @@ private struct ProBriefingSheet: View {
                             .padding(16)
                             .bubbleCard(cornerRadius: 18, fill: Theme.didYouKnow)
 
+                        if mode.isOncePerDay, let today = DailyChallenge.island() {
+                            todaysAdventure(today)
+                        }
+
                         rewardRow
 
                         if mode.needsCategory { islandPicker }
@@ -253,6 +262,27 @@ private struct ProBriefingSheet: View {
                 }
             }
         }
+    }
+
+    private func todaysAdventure(_ island: Island) -> some View {
+        HStack(spacing: 10) {
+            Text(island.emoji).font(.system(size: 28))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Today's adventure")
+                    .font(Theme.medium(12))
+                    .foregroundColor(.white.opacity(0.85))
+                Text(island.name)
+                    .font(Theme.bold(17))
+                    .foregroundColor(.white)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(.white.opacity(0.18)))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .stroke(.white.opacity(0.35), lineWidth: 1))
     }
 
     private var rewardRow: some View {
