@@ -379,20 +379,28 @@ enum JewelRules {
     /// Works out the payout for a finished round.
     /// - Parameters:
     ///   - streakMultiplier: doubles the streak bonuses, for Jewel Rush.
+    ///   - awardsStreakBonuses: false for short rounds like the Daily
+    ///     Challenge, where five questions would trigger both milestones at
+    ///     once and overpay a deliberately modest round.
+    ///   - perfectBonus: overrides the usual perfect-round reward.
     ///   - completionBonus: a flat extra for finishing a Pro mode.
     static func reward(results: [Bool],
                        correct: Int,
                        total: Int,
                        streakMultiplier: Int = 1,
+                       awardsStreakBonuses: Bool = true,
+                       perfectBonus: Int? = nil,
                        completionBonus: Int = 0) -> JewelReward {
         let streak = longestStreak(results)
         let perfect = total > 0 && correct == total
+        let three = awardsStreakBonuses && streak >= 3 ? streakOfThree * streakMultiplier : 0
+        let five = awardsStreakBonuses && streak >= 5 ? streakOfFive * streakMultiplier : 0
         return JewelReward(
             correctCount: correct,
             perCorrect: correct * perCorrect,
-            streakThreeBonus: streak >= 3 ? streakOfThree * streakMultiplier : 0,
-            streakFiveBonus: streak >= 5 ? streakOfFive * streakMultiplier : 0,
-            perfectBonus: perfect ? perfectRound : 0,
+            streakThreeBonus: three,
+            streakFiveBonus: five,
+            perfectBonus: perfect ? (perfectBonus ?? perfectRound) : 0,
             completionBonus: completionBonus,
             longestStreak: streak)
     }
@@ -400,12 +408,16 @@ enum JewelRules {
     /// The most a round of this shape can pay, for the "up to N jewels" label.
     static func bestPossible(questionCount: Int,
                              streakMultiplier: Int = 1,
+                             awardsStreakBonuses: Bool = true,
+                             perfectBonus: Int? = nil,
                              completionBonus: Int = 0) -> Int {
         let all = Array(repeating: true, count: questionCount)
         return reward(results: all,
                       correct: questionCount,
                       total: questionCount,
                       streakMultiplier: streakMultiplier,
+                      awardsStreakBonuses: awardsStreakBonuses,
+                      perfectBonus: perfectBonus,
                       completionBonus: completionBonus).total
     }
 }

@@ -495,10 +495,11 @@ enum ProQuestions {
     static func draw(for mode: ProMode, islandID: Int? = nil) -> [Question] {
         switch mode {
         case .dailyChallenge:
-            // A broad mix, so the daily set is a fair test of everything.
-            return Array(easy.shuffled().prefix(3))
-                 + Array(medium.shuffled().prefix(4))
-                 + Array(hard.shuffled().prefix(3))
+            // Five questions: a gentle start, a push in the middle, one to
+            // stretch them at the end.
+            return Array(easy.shuffled().prefix(2))
+                 + Array(medium.shuffled().prefix(2))
+                 + Array(hard.shuffled().prefix(1))
 
         case .lightningRound:
             return Array(easy.shuffled().prefix(mode.questionCount))

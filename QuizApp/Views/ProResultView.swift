@@ -145,7 +145,9 @@ struct ProResultView: View {
                          reward.streakFiveBonus)
                 }
                 if reward.isPerfect {
-                    line("🎁", "Perfect round bonus", reward.perfectBonus)
+                    line("🎁", mode.isOncePerDay ? "Perfect Daily bonus"
+                                                 : "Perfect round bonus",
+                         reward.perfectBonus)
                 }
                 if reward.completionBonus > 0 {
                     line("🏁", "\(mode.title) completed", reward.completionBonus)

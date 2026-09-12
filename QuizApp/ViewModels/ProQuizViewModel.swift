@@ -84,6 +84,8 @@ final class ProQuizViewModel: ObservableObject {
                           correct: score,
                           total: totalQuestions,
                           streakMultiplier: mode.streakMultiplier,
+                          awardsStreakBonuses: mode.awardsStreakBonuses,
+                          perfectBonus: mode.perfectBonus,
                           completionBonus: finished ? mode.completionBonus : 0)
     }
 

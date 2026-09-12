@@ -48,7 +48,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The one-line promise shown on the mode's card.
     var tagline: String {
         switch self {
-        case .dailyChallenge: return "A fresh set every day · once a day"
+        case .dailyChallenge: return "5 quick questions · once a day"
         case .timedChallenge: return "10 questions · 15 seconds each"
         case .lightningRound: return "10 easy questions · 8 seconds each"
         case .perfectRun:     return "One wrong answer ends the round"
@@ -61,9 +61,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     var rules: String {
         switch self {
         case .dailyChallenge:
-            return "Ten mixed questions, a brand new set every single day, "
-                 + "with no clock to rush you. It can only be played once a "
-                 + "day — so come back tomorrow for the next one."
+            return "A short mini-quiz: five mixed questions, a brand new set "
+                 + "every single day, with no clock to rush you. Finish it for "
+                 + "a bonus, and get all five right for a little extra on top. "
+                 + "One go a day — come back tomorrow for the next one."
         case .timedChallenge:
             return "Ten questions, and the clock gives you fifteen seconds for "
                  + "each one. Let the timer run out and that question counts as "
@@ -92,6 +93,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// How many questions the round asks.
     var questionCount: Int {
         switch self {
+        case .dailyChallenge: return 5
         case .categoryMaster: return 15
         default:              return 10
         }
@@ -140,10 +142,22 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The bonuses themselves are still paid at most once each.
     var streakMultiplier: Int { self == .jewelRush ? 2 : 1 }
 
+    /// The Daily Challenge is only five questions long, so a clean sweep
+    /// would trip both streak milestones at once. It skips them and pays a
+    /// small perfect bonus instead, keeping the round deliberately modest.
+    var awardsStreakBonuses: Bool { self != .dailyChallenge }
+
+    /// What a flawless round is worth, where it differs from the usual +20.
+    var perfectBonus: Int {
+        self == .dailyChallenge ? 5 : JewelRules.perfectRound
+    }
+
     /// The best possible haul, shown on the card so the prize is clear.
     var bestPossibleJewels: Int {
         JewelRules.bestPossible(questionCount: questionCount,
                                 streakMultiplier: streakMultiplier,
+                                awardsStreakBonuses: awardsStreakBonuses,
+                                perfectBonus: perfectBonus,
                                 completionBonus: completionBonus)
     }
 
