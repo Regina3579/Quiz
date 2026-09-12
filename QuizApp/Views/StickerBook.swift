@@ -197,7 +197,10 @@ enum StickerCatalog {
             oceanEpicSticker(2),  // crowned whale shark with pearls
             oceanEpicSticker(3),  // jewelled lobster by a treasure chest
             oceanEpicSticker(4),  // angelfish queen before a coral palace
-            oceanEpicSticker(5)   // dolphin leaping through a wave
+            oceanEpicSticker(5),  // dolphin leaping through a wave
+            oceanEpicSticker(6),  // crowned lionfish over the reef
+            oceanEpicSticker(7),  // pearl nautilus princess
+            oceanEpicSticker(8)   // rainbow mantis shrimp on the gems
         ]
     )
 
