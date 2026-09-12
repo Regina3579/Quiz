@@ -181,7 +181,12 @@ enum StickerCatalog {
             oceanSticker(2),  // spouting whale over a wave
             oceanSticker(3),  // sea turtle above the coral
             oceanSticker(4),  // octopus with a pearl
-            oceanSticker(5)   // crab holding a scallop shell
+            oceanSticker(5),   // crab holding a scallop shell
+            oceanSticker(6),   // clownfish in a pink anemone
+            oceanSticker(7),   // seahorse with a rainbow fin
+            oceanSticker(8),   // pufferfish over the coral
+            oceanSticker(9),   // seal pup with a starfish friend
+            oceanSticker(10)   // squid among the bubbles
         ],
         epic: []
     )
