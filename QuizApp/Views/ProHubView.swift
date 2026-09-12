@@ -2,7 +2,7 @@
 //  ProHubView.swift
 //  QuizApp
 //
-//  The Pro Challenge room. Six harder ways to play, each paying out in
+//  The Pro Challenge room. Five harder ways to play, each paying out in
 //  jewels so the sticker shop keeps filling up.
 //
 
@@ -23,7 +23,7 @@ struct ProHubView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     header
-                    ForEach(Array(ProMode.allCases.enumerated()), id: \.element) { pair in
+                    ForEach(Array(ProMode.proModes.enumerated()), id: \.element) { pair in
                         modeCard(pair.element, index: pair.offset)
                     }
                     footer

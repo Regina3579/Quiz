@@ -36,6 +36,11 @@ struct HomeView: View {
                                 .padding(.top, 8)
                                 .padding(.bottom, 4)
 
+                            dailyChallengeCard
+                                .padding(.horizontal, 20)
+                                .padding(.top, 10)
+                                .padding(.bottom, 2)
+
                             trail(width: geo.size.width)
                         }
                     }
@@ -52,6 +57,10 @@ struct HomeView: View {
             }
             .navigationDestination(for: ProHubRoute.self) { _ in
                 ProHubView()
+            }
+            // The Daily Challenge is launched straight from the map.
+            .navigationDestination(for: ProRoute.self) { route in
+                ProQuizView(route: route)
             }
         }
         .fullScreenCover(isPresented: $showStickerBook) {
@@ -112,6 +121,85 @@ struct HomeView: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : -12)
         .animation(.easeOut(duration: 0.5), value: appeared)
+    }
+
+    // MARK: - Daily Challenge (free for everyone)
+
+    /// The Daily Challenge sits right on the map rather than in the Pro room:
+    /// it is free for every child, and the whole point is that they meet it
+    /// the moment they open the app.
+    private var dailyChallengeCard: some View {
+        let mode = ProMode.dailyChallenge
+        let doneToday = progress.isPlayedToday(mode)
+        let today = DailyChallenge.island()
+
+        return NavigationLink(value: ProRoute(mode: mode)) {
+            HStack(spacing: 13) {
+                Text(mode.emoji)
+                    .font(.system(size: 32))
+                    .frame(width: 56, height: 56)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.white.opacity(0.3)))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(.white.opacity(0.65), lineWidth: 1.5))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Daily Challenge")
+                        .font(Theme.display(20))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+
+                    if let today {
+                        Text("Today: \(today.emoji) \(today.name)")
+                            .font(Theme.bold(12))
+                            .foregroundColor(.white.opacity(0.95))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+
+                    HStack(spacing: 5) {
+                        if doneToday {
+                            Image(systemName: "checkmark.circle.fill").font(.system(size: 11))
+                            Text("Done today — back tomorrow!")
+                                .font(Theme.bold(12))
+                        } else {
+                            JewelIcon(size: 13)
+                            Text("5 questions · up to \(mode.bestPossibleJewels)")
+                                .font(Theme.bold(12))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(.black.opacity(0.24)))
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: doneToday ? "checkmark" : "chevron.right")
+                    .font(Theme.bold(15))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+            .padding(13)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(mode.palette.gradient)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(.white.opacity(0.55), lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 7, y: 4)
+            .saturation(doneToday ? 0.5 : 1)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .disabled(doneToday)
+        .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
+        .accessibilityLabel(doneToday ? "Daily Challenge, already played today"
+                                      : "Play today's Daily Challenge")
+        .opacity(appeared ? 1 : 0)
+        .animation(.easeOut(duration: 0.5).delay(0.1), value: appeared)
     }
 
     // MARK: - Right-side controls (mute + sticker book)

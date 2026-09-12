@@ -212,7 +212,11 @@ struct ProResultView: View {
                 Haptics.play(.light)
                 onExit()
             } label: {
-                actionLabel(icon: "square.grid.2x2.fill", text: "Back to Pro", filled: false)
+                // The Daily Challenge is launched from the map, everything
+                // else from the Pro room, so name the right destination.
+                actionLabel(icon: mode.isPro ? "square.grid.2x2.fill" : "map.fill",
+                            text: mode.isPro ? "Back to Pro" : "Back to Map",
+                            filled: false)
             }
             .buttonStyle(PressableButtonStyle())
         }

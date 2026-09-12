@@ -2,15 +2,18 @@
 //  ProMode.swift
 //  QuizApp
 //
-//  The Pro Challenge modes. Each mode is a different way to test what the
-//  child has learned on the adventure map: against the clock, without a
-//  single slip, or deep inside one category. They all pay out in jewels,
-//  which buy stickers for the sticker book.
+//  The challenge modes. Each is a different way to test what the child has
+//  learned on the adventure map: against the clock, without a single slip,
+//  or deep inside one category. They all pay out in jewels, which buy
+//  stickers for the sticker book.
+//
+//  Five of them live in the Pro room. The Daily Challenge is free for
+//  everyone and sits on the adventure map itself.
 //
 
 import SwiftUI
 
-/// One of the Pro Challenge modes.
+/// One of the challenge modes.
 enum ProMode: String, CaseIterable, Identifiable, Hashable {
     case dailyChallenge
     case timedChallenge
@@ -20,6 +23,13 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     case categoryMaster
 
     var id: String { rawValue }
+
+    /// True when the mode belongs to the Pro room. The Daily Challenge is
+    /// free for everyone and lives on the adventure map instead.
+    var isPro: Bool { self != .dailyChallenge }
+
+    /// The modes listed inside the Pro room.
+    static var proModes: [ProMode] { allCases.filter(\.isPro) }
 
     // MARK: - Presentation
 
