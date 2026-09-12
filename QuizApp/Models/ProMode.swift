@@ -61,10 +61,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     var rules: String {
         switch self {
         case .dailyChallenge:
-            return "A short mini-quiz from one of your adventures, and the "
-                 + "adventure changes every day. Five questions picked fresh "
-                 + "from its hundred, easy through to hard, with no clock. "
-                 + "One go a day — tomorrow brings a different world."
+            return "Every day of the week has its own adventure — Monday is "
+                 + "the jungle, Wednesday is the ocean — and the weekend is a "
+                 + "surprise. Five questions from that world, easy through to "
+                 + "hard, no clock. One go a day, so come back tomorrow."
         case .timedChallenge:
             return "Ten questions, and the clock gives you fifteen seconds for "
                  + "each one. Let the timer run out and that question counts as "

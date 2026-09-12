@@ -240,6 +240,7 @@ private struct ProBriefingSheet: View {
 
                         if mode.isOncePerDay, let today = DailyChallenge.island() {
                             todaysAdventure(today)
+                            weekStrip
                         }
 
                         rewardRow
@@ -283,6 +284,52 @@ private struct ProBriefingSheet: View {
             .fill(.white.opacity(0.18)))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .stroke(.white.opacity(0.35), lineWidth: 1))
+    }
+
+    /// The Monday-to-Friday line-up, so a child can see that Wednesday is
+    /// ocean day and has a reason to come back for it.
+    private var weekStrip: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("This week")
+                .font(Theme.bold(14))
+                .foregroundColor(.white.opacity(0.9))
+
+            HStack(spacing: 6) {
+                ForEach(DailyChallenge.weekdaySchedule, id: \.weekday) { entry in
+                    dayChip(entry.weekday, entry.island)
+                }
+                weekendChip
+            }
+        }
+    }
+
+    private func dayChip(_ label: String, _ island: Island) -> some View {
+        let isToday = DailyChallenge.island()?.id == island.id
+                   && !DailyChallenge.isWeekend()
+        return VStack(spacing: 4) {
+            Text(label)
+                .font(Theme.bold(10))
+                .foregroundColor(isToday ? Theme.ink : .white.opacity(0.85))
+            Text(island.emoji).font(.system(size: 20))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(isToday ? Color.white : Color.white.opacity(0.16)))
+    }
+
+    private var weekendChip: some View {
+        let isToday = DailyChallenge.isWeekend()
+        return VStack(spacing: 4) {
+            Text("Sat/Sun")
+                .font(Theme.bold(10))
+                .foregroundColor(isToday ? Theme.ink : .white.opacity(0.85))
+            Text("🎲").font(.system(size: 20))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(isToday ? Color.white : Color.white.opacity(0.16)))
     }
 
     private var rewardRow: some View {

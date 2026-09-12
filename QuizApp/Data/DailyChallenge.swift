@@ -37,13 +37,60 @@ enum DailyChallenge {
         return Int((startOfDay.timeIntervalSince1970 / 86_400).rounded(.down))
     }
 
-    /// Today's adventure. With ten islands this cycles every ten days, so a
-    /// child sees each world regularly without it being the same every week.
+    /// The weekday themes. Monday to Friday each keep the same adventure
+    /// every week, so a child learns that Wednesday is ocean day and has a
+    /// reason to come back for it.
+    ///
+    /// There are ten islands and only seven days, so the five that are not
+    /// spoken for take turns at the weekend. That keeps the school week
+    /// predictable while making sure no adventure is left out, and gives
+    /// Saturday and Sunday a bit of surprise.
+    private static let weekdayIslandID: [Int: Int] = [
+        2: 0,   // Monday    🦁 Jungle Kingdom
+        3: 1,   // Tuesday   🚀 Galaxy Quest
+        4: 3,   // Wednesday 🐬 Ocean Paradise
+        5: 2,   // Thursday  🦕 Dino Valley
+        6: 6    // Friday    🔬 Science Lab
+    ]
+
+    /// The adventures that rotate through Saturday and Sunday.
+    private static let weekendIslandIDs = [4, 5, 7, 8, 9]
+
+    /// Today's adventure.
     static func island(on date: Date = Date()) -> Island? {
         let all = QuizData.islands
         guard !all.isEmpty else { return nil }
-        let index = ((dayNumber(for: date) % all.count) + all.count) % all.count
-        return all[index]
+
+        // Calendar weekday: 1 = Sunday … 7 = Saturday.
+        let weekday = Calendar.current.component(.weekday, from: date)
+
+        if let id = weekdayIslandID[weekday], let island = QuizData.island(id: id) {
+            return island
+        }
+
+        // Saturday and Sunday step through the remaining adventures. Using the
+        // day number means consecutive weekend days never land on the same one.
+        let pool = weekendIslandIDs
+        let index = ((dayNumber(for: date) % pool.count) + pool.count) % pool.count
+        return QuizData.island(id: pool[index]) ?? all[0]
+    }
+
+    /// The fixed Monday-to-Friday line-up, for showing the week at a glance.
+    /// Saturday and Sunday are left out because they change week to week.
+    static var weekdaySchedule: [(weekday: String, island: Island)] {
+        let names = [2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri"]
+        return [2, 3, 4, 5, 6].compactMap { day in
+            guard let id = weekdayIslandID[day],
+                  let island = QuizData.island(id: id),
+                  let name = names[day] else { return nil }
+            return (name, island)
+        }
+    }
+
+    /// True when today is one of the rotating weekend days.
+    static func isWeekend(on date: Date = Date()) -> Bool {
+        let weekday = Calendar.current.component(.weekday, from: date)
+        return weekdayIslandID[weekday] == nil
     }
 
     // MARK: - Question identity
