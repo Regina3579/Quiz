@@ -16,27 +16,31 @@ struct ProHubView: View {
     @State private var briefing: ProMode?
     @State private var appeared = false
 
+    /// The header artwork is 941 x 485 in the design, and the back button and
+    /// jewel pill sit at these fractions of it. Overlaying them here keeps
+    /// them live while the rest of the header stays the original picture.
+    private let headerAspect: CGFloat = 941.0 / 485.0
+    private let backButtonAt = CGPoint(x: 0.080, y: 0.100)
+    private let jewelPillAt  = CGPoint(x: 0.869, y: 0.100)
+
     var body: some View {
         ZStack {
-            ProBackground()
+            ProBackground().ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
-                    header
-                    ForEach(Array(ProMode.proModes.enumerated()), id: \.element) { pair in
-                        modeCard(pair.element, index: pair.offset)
-                    }
-                    footer
+                VStack(spacing: 0) {
+                    headerArt
+                    cards
+                    Image("ProFooterArt")
+                        .resizable()
+                        .scaledToFit()
+                        .padding(.top, 4)
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 30)
             }
+            .ignoresSafeArea(edges: .bottom)
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) { backButton }
-            ToolbarItem(placement: .topBarTrailing) { jewelPill }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $briefing) { mode in
             ProBriefingSheet(mode: mode)
                 .environmentObject(progress)
@@ -44,7 +48,31 @@ struct ProHubView: View {
         .onAppear { appeared = true }
     }
 
-    // MARK: - Chrome
+    // MARK: - Header
+
+    /// The illustrated header, with the two live controls sitting exactly
+    /// where the design draws them.
+    private var headerArt: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = w / headerAspect
+
+            Image("ProHeaderArt")
+                .resizable()
+                .scaledToFit()
+                .frame(width: w, height: h)
+                .overlay(alignment: .topLeading) {
+                    backButton
+                        .position(x: w * backButtonAt.x, y: h * backButtonAt.y)
+                }
+                .overlay(alignment: .topLeading) {
+                    jewelPill
+                        .position(x: w * jewelPillAt.x, y: h * jewelPillAt.y)
+                }
+        }
+        // Reserve the picture's own height so the scroll view lays out right.
+        .aspectRatio(headerAspect, contentMode: .fit)
+    }
 
     private var backButton: some View {
         Button {
@@ -52,226 +80,88 @@ struct ProHubView: View {
             dismiss()
         } label: {
             Image(systemName: "chevron.left")
-                .font(Theme.bold(16))
+                .font(.system(size: 19, weight: .bold))
                 .foregroundColor(.white)
-                .padding(8)
-                .background(Circle().fill(Color.white.opacity(0.22)))
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(Color(red: 0.36, green: 0.22, blue: 0.62)))
+                .overlay(Circle().stroke(Color(red: 0.69, green: 0.55, blue: 0.98),
+                                         lineWidth: 2.5))
+                .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
         }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Back")
     }
 
     private var jewelPill: some View {
-        HStack(spacing: 6) {
-            JewelIcon(size: 18, sparkle: true)
+        HStack(spacing: 7) {
+            JewelIcon(size: 21, sparkle: true)
             Text("\(progress.jewels)")
-                .font(Theme.bold(16))
+                .font(Theme.display(21))
                 .foregroundColor(.white)
                 .contentTransition(.numericText())
         }
-        .padding(.horizontal, 12)
-        .frame(height: 34)
-        .background(Capsule().fill(Color.black.opacity(0.32)))
-        .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1))
+        .padding(.horizontal, 14)
+        .frame(height: 42)
+        .background(Capsule().fill(Color(red: 0.20, green: 0.12, blue: 0.38)))
+        .overlay(Capsule().stroke(Color(red: 0.69, green: 0.55, blue: 0.98),
+                                  lineWidth: 2.5))
+        .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
+        .accessibilityLabel("\(progress.jewels) jewels")
     }
 
-    private var gold: LinearGradient {
-        LinearGradient(colors: [
-            Color(red: 1.00, green: 0.92, blue: 0.55),
-            Color(red: 0.98, green: 0.72, blue: 0.16)
-        ], startPoint: .top, endPoint: .bottom)
-    }
+    // MARK: - Mode cards
 
-    private var header: some View {
-        VStack(spacing: 10) {
-            Text("👑").font(.system(size: 44))
-
-            VStack(spacing: -2) {
-                Text("Pro")
-                    .font(Theme.display(42))
-                    .foregroundStyle(gold)
-                Text("Challenge")
-                    .font(Theme.display(34))
-                    .foregroundColor(.white)
+    private var cards: some View {
+        VStack(spacing: 8) {
+            ForEach(Array(ProMode.proModes.enumerated()), id: \.element) { pair in
+                modeCard(pair.element, index: pair.offset)
             }
-            .shadow(color: .black.opacity(0.45), radius: 5, y: 3)
-
-            Text("Bigger challenges. More jewels. More fun!")
-                .font(Theme.bold(15))
-                .foregroundStyle(gold)
-                .multilineTextAlignment(.center)
-
-            featurePills
         }
-        .padding(.top, 4)
-        .padding(.bottom, 6)
-        .opacity(appeared ? 1 : 0)
-        .animation(.easeOut(duration: 0.45), value: appeared)
+        .padding(.horizontal, 18)
+        .padding(.top, 6)
     }
 
-    /// The three promises of the Pro room, side by side under the title.
-    private var featurePills: some View {
-        HStack(alignment: .top, spacing: 0) {
-            featurePill("✨", "Get rare\nstickers")
-            pillDivider
-            featurePill("💎", "Earn bonus\njewels")
-            pillDivider
-            featurePill("⭐️", "Play exciting\nchallenges")
-        }
-        .padding(.top, 2)
-    }
-
-    private func featurePill(_ icon: String, _ label: String) -> some View {
-        VStack(spacing: 5) {
-            Text(icon).font(.system(size: 26))
-            Text(label)
-                .font(Theme.bold(12))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var pillDivider: some View {
-        Rectangle()
-            .fill(.white.opacity(0.25))
-            .frame(width: 1, height: 34)
-    }
-
-    private var footer: some View {
-        HStack(spacing: 10) {
-            Text("📖").font(.system(size: 26))
-            Text("Spend your jewels in the sticker book!")
-                .font(Theme.bold(14))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-            Text("✨").font(.system(size: 22))
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .fill(.white.opacity(0.12)))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .stroke(.white.opacity(0.25), lineWidth: 1))
-        .padding(.top, 8)
-    }
-
-    // MARK: - Mode card
-
+    /// Each row is the card illustration itself. Everything on it — icon,
+    /// title, tagline, jewel total — is fixed for that mode, so the picture
+    /// can be used whole. Only a personal best is added on top.
     private func modeCard(_ mode: ProMode, index: Int) -> some View {
         let best = progress.proBest(mode)
-        let doneToday = progress.isPlayedToday(mode)
 
         return Button {
             Haptics.play(.light)
             briefing = mode
         } label: {
-            HStack(spacing: 14) {
-                Text(mode.emoji)
-                    .font(.system(size: 40))
-                    .frame(width: 68, height: 68)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(.white.opacity(0.28))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(.white.opacity(0.6), lineWidth: 1.5)
-                    )
-                    .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(mode.title)
-                        .font(Theme.display(21))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-                    Text(mode.tagline)
-                        .font(Theme.medium(13))
-                        .foregroundColor(.white.opacity(0.9))
-                        .fixedSize(horizontal: false, vertical: true)
-                    if mode.isOncePerDay, let today = DailyChallenge.island() {
-                        Text("Today: \(today.emoji) \(today.name)")
-                            .font(Theme.bold(12))
-                            .foregroundColor(.white)
-                    }
-                    HStack(spacing: 10) {
-                        if doneToday { doneTodayTag } else { rewardTag(mode) }
-                        if best > 0 { bestTag(best, of: mode.questionCount) }
-                    }
-                    .padding(.top, 2)
+            Group {
+                if let art = mode.cardImageName {
+                    Image(art).resizable().scaledToFit()
+                } else {
+                    Color.clear.frame(height: 1)
                 }
-
-                Spacer(minLength: 0)
-
-                Image(systemName: "chevron.right")
-                    .font(Theme.bold(15))
-                    .foregroundColor(.white.opacity(0.8))
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                // Gradient first, then a big ghosted echo of the mode's icon
-                // on top of it — both behind the card's own content.
-                ZStack(alignment: .trailing) {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(mode.palette.gradient)
-                    Text(mode.emoji)
-                        .font(.system(size: 104))
-                        .opacity(0.14)
-                        .offset(x: 20)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .allowsHitTesting(false)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(.white.opacity(0.45), lineWidth: 1.5)
-            )
-            .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
-            .saturation(doneToday ? 0.45 : 1)
+            .overlay(alignment: .bottomTrailing) {
+                if best > 0 { bestTag(best, of: mode.questionCount) }
+            }
         }
         .buttonStyle(PressableButtonStyle())
-        .disabled(doneToday)
+        .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleJewels) jewels")
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 18)
         .animation(.spring(response: 0.5, dampingFraction: 0.85)
             .delay(Double(index) * 0.06), value: appeared)
     }
 
-    private func rewardTag(_ mode: ProMode) -> some View {
-        HStack(spacing: 4) {
-            JewelIcon(size: 13)
-            Text("up to \(mode.bestPossibleJewels)")
-                .font(Theme.bold(12))
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(.black.opacity(0.22)))
-    }
-
-    private var doneTodayTag: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 11))
-            Text("done today")
-                .font(Theme.bold(12))
-        }
-        .foregroundColor(.white)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(.black.opacity(0.28)))
-    }
-
     private func bestTag(_ best: Int, of total: Int) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: "rosette").font(.system(size: 11))
-            Text("best \(best)/\(total)")
-                .font(Theme.bold(12))
+            Image(systemName: "rosette").font(.system(size: 10))
+            Text("best \(best)/\(total)").font(Theme.bold(11))
         }
         .foregroundColor(.white)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(.black.opacity(0.22)))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(.black.opacity(0.34)))
+        .overlay(Capsule().stroke(.white.opacity(0.4), lineWidth: 1))
+        .padding(.trailing, 52)
+        .padding(.bottom, 8)
     }
 }
 
@@ -519,11 +409,13 @@ struct ProBackground: View {
 
     var body: some View {
         ZStack {
+            // Sampled from the design so the gaps between the card artwork
+            // and the page behind them are the same colour.
             LinearGradient(colors: [
-                Color(red: 0.20, green: 0.12, blue: 0.42),
-                Color(red: 0.40, green: 0.17, blue: 0.55),
-                Color(red: 0.24, green: 0.16, blue: 0.50)
-            ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                Color(red: 0.20, green: 0.12, blue: 0.45),
+                Color(red: 0.18, green: 0.10, blue: 0.47),
+                Color(red: 0.13, green: 0.13, blue: 0.34)
+            ], startPoint: .top, endPoint: .bottom)
             .ignoresSafeArea()
 
             GeometryReader { geo in

@@ -173,6 +173,19 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
 
     // MARK: - Look
 
+    /// The card artwork cut from the design mockup, so each row on the Pro
+    /// page is the illustration itself rather than a rebuild of it.
+    var cardImageName: String? {
+        switch self {
+        case .timedChallenge: return "ProCardTimed"
+        case .lightningRound: return "ProCardLightning"
+        case .perfectRun:     return "ProCardPerfect"
+        case .jewelRush:      return "ProCardJewel"
+        case .categoryMaster: return "ProCardCategory"
+        case .dailyChallenge: return nil   // lives on the map, drawn there
+        }
+    }
+
     var palette: Island.Palette {
         switch self {
         case .dailyChallenge:
