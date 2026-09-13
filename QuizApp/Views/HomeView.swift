@@ -272,6 +272,12 @@ struct HomeView: View {
     }
 
     // MARK: - Tap targets over the painted buttons
+    //
+    // These sit over buttons that are part of the background picture, so they
+    // have nothing of their own to draw. Every one of them needs an explicit
+    // `contentShape`: SwiftUI does not hit-test fully transparent content, so
+    // without it the whole button is invisible to a finger as well as to the
+    // eye.
 
     @ViewBuilder
     private func tapTargets(width w: CGFloat, height h: CGFloat) -> some View {
@@ -280,7 +286,7 @@ struct HomeView: View {
 
         // Daily Challenge
         NavigationLink(value: ProRoute(mode: daily)) {
-            Rectangle().fill(.clear)
+            Color.clear
                 .overlay {
                     if doneToday {
                         // Dimmed with a tick, so the card still reads as the
@@ -296,6 +302,7 @@ struct HomeView: View {
                         .padding(8)
                     }
                 }
+                .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(doneToday)
@@ -309,7 +316,7 @@ struct HomeView: View {
 
         // Pro Challenge
         NavigationLink(value: ProHubRoute()) {
-            Rectangle().fill(.clear)
+            Color.clear.contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
         .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
@@ -324,7 +331,7 @@ struct HomeView: View {
             Haptics.play(.light)
             showStickerBook = true
         } label: {
-            Rectangle().fill(.clear)
+            Color.clear.contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
         .frame(width: w * (Self.bookRect.x1 - Self.bookRect.x0),

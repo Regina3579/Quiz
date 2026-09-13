@@ -145,6 +145,9 @@ struct ProHubView: View {
             .overlay(alignment: .bottomTrailing) {
                 if best > 0 { bestTag(best, of: mode.questionCount) }
             }
+            // The card art has soft, partly transparent corners; without this
+            // a tap near the edge of the row would fall through.
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleJewels) jewels")
