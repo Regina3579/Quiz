@@ -20,6 +20,14 @@ struct HomeView: View {
 
     private let rowHeight: CGFloat = 150
 
+    /// The Daily badge floats over the map in the top-left corner, so the
+    /// trail has to start below it or the first island lands underneath.
+    /// Measured down the left column: top inset + the jewel capsule +
+    /// the gap + the badge itself, plus a little breathing room.
+    private let dailyBadgeWidth: CGFloat = 118
+    private var dailyBadgeHeight: CGFloat { dailyBadgeWidth * 219 / 252 }
+    private var topAreaHeight: CGFloat { 6 + 44 + 8 + dailyBadgeHeight + 12 }
+
     /// Dark sepia ink that reads clearly on the aged-paper map.
     private let mapInk = Color(red: 0.30, green: 0.17, blue: 0.05)
 
@@ -39,6 +47,10 @@ struct HomeView: View {
                                 .padding(.trailing, 96)
                                 .padding(.top, 10)
                                 .padding(.bottom, 4)
+                                // Hold open at least as much room as the
+                                // floating badge needs, so the first island
+                                // always clears it.
+                                .frame(minHeight: topAreaHeight, alignment: .top)
 
                             trail(width: geo.size.width)
                         }
@@ -142,7 +154,7 @@ struct HomeView: View {
             Image("DailyBadge")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 118)
+                .frame(width: dailyBadgeWidth)
                 .saturation(doneToday ? 0.35 : 1)
                 .overlay {
                     if doneToday {
