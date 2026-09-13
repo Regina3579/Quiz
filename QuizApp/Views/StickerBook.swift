@@ -648,7 +648,7 @@ private struct StickerBookTipsCard: View {
         ("✋", "Move it",   "Drag a sticker or a text box anywhere you like"),
         ("✏️", "Write",     "Tap a text box to write in it, then tap Done"),
         ("🤏", "Resize",    "Pinch a sticker to make it bigger or smaller"),
-        ("❌", "Take it off", "Hold a sticker, or tap the little red cross"),
+        ("🗑", "Take it off", "Press and hold a sticker or a text box to remove it"),
         ("📖", "Turn over", "Swipe the page, or tap the arrows at the sides")
     ]
 
@@ -842,7 +842,6 @@ private struct PlacedNoteView: View {
 
         card
             .frame(width: boxWidth)
-            .overlay(alignment: .topTrailing) { closeButton }
             .position(x: baseX + dragOffset.width, y: baseY + dragOffset.height)
             // While typing, the box stays put so the drag can't fight the
             // keyboard or the text selection.
@@ -912,28 +911,6 @@ private struct PlacedNoteView: View {
                 editing = note.id
             }
         }
-    }
-
-    /// A little red cross on the corner that throws the text box away.
-    private var closeButton: some View {
-        Button {
-            Haptics.play(.light)
-            if isEditing { editing = nil }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                progress.removeNote(note.id)
-            }
-        } label: {
-            Image(systemName: "xmark")
-                .font(.system(size: 10, weight: .heavy))
-                .foregroundColor(.white)
-                .frame(width: 22, height: 22)
-                .background(Circle().fill(Theme.incorrect))
-                .overlay(Circle().stroke(.white, lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-        }
-        .buttonStyle(.plain)
-        .offset(x: 9, y: -9)
-        .accessibilityLabel("Delete this text box")
     }
 
     private func dragGesture(baseX: CGFloat, baseY: CGFloat) -> some Gesture {
