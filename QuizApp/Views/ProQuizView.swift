@@ -41,7 +41,14 @@ struct ProQuizView: View {
             }
 
             CorrectBurst(trigger: celebrateTrigger, origin: burstOrigin)
+
+            if explanationExpanded, let explanation = model.currentQuestion.explanation {
+                ExplanationSheet(text: explanation, accent: mode.palette.end) {
+                    withAnimation(.easeInOut(duration: 0.2)) { explanationExpanded = false }
+                }
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
         .onPreferenceChange(ProCorrectCenterKey.self) { correctCenter = $0 }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -76,45 +83,38 @@ struct ProQuizView: View {
 
     // MARK: - Gameplay
 
-    private var gameplay: some View {
-        VStack(spacing: 0) {
-            topBar
-                .padding(.horizontal, 20)
-                .padding(.top, 6)
-                .padding(.bottom, 10)
+    /// Mode name, clock and progress bar — plus the one-life warning in the
+    /// modes that have it.
+    private var topBarHeight: CGFloat { mode.endsOnWrongAnswer ? 86 : 52 }
 
-            ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 18) {
-                        Color.clear.frame(height: 1).id("top")
-                        questionBubble
-                        options
-                        if model.hasAnswered {
-                            explanationAndNext
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                        Color.clear.frame(height: 1).id("bottom")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.85), value: model.hasAnswered)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.currentIndex)
-                }
-                .onChange(of: model.hasAnswered) { answered in
-                    if answered {
-                        if model.selectedOption == model.currentQuestion.correctIndex {
-                            burstOrigin = correctCenter
-                            celebrateTrigger += 1
-                        }
-                        withAnimation(.easeOut(duration: 0.45)) {
-                            proxy.scrollTo("bottom", anchor: .bottom)
-                        }
-                    }
-                }
-                .onChange(of: model.currentIndex) { _ in
-                    withAnimation { proxy.scrollTo("top", anchor: .top) }
-                }
+    private var gameplay: some View {
+        GeometryReader { geo in
+            let layout = QuizScreenLayout(size: geo.size, topBarHeight: topBarHeight)
+
+            VStack(spacing: layout.gap) {
+                topBar
+                    .frame(height: topBarHeight)
+
+                questionBubble
+                    .frame(width: layout.panelWidth, height: layout.panelHeight)
+
+                options(spacing: layout.optionsSpacing)
+                    .frame(width: layout.optionsWidth)
+
+                explanationSlot
+                    .frame(height: layout.explanationHeight)
+
+                nextButton
+                    .frame(height: layout.nextHeight)
             }
+            .padding(.horizontal, 20)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.currentIndex)
+        }
+        .onChange(of: model.hasAnswered) { answered in
+            guard answered, model.selectedOption == model.currentQuestion.correctIndex else { return }
+            burstOrigin = correctCenter
+            celebrateTrigger += 1
         }
     }
 
@@ -187,8 +187,8 @@ struct ProQuizView: View {
                 removal: .move(edge: .leading).combined(with: .opacity)))
     }
 
-    private var options: some View {
-        VStack(spacing: 12) {
+    private func options(spacing: CGFloat) -> some View {
+        VStack(spacing: spacing) {
             ForEach(Array(model.currentQuestion.options.enumerated()), id: \.offset) { pair in
                 AnswerButton(
                     text: pair.element,
@@ -216,59 +216,21 @@ struct ProQuizView: View {
         }
     }
 
-    private var explanationAndNext: some View {
-        VStack(spacing: 14) {
-            if model.timedOut { timeUpNote }
-            if let explanation = model.currentQuestion.explanation { explanationCard(explanation) }
-            nextButton
+    /// Holds its height from the start so answering never shifts the pills.
+    /// When the clock won, the heading says so and the fact still follows.
+    @ViewBuilder
+    private var explanationSlot: some View {
+        if model.hasAnswered, let explanation = model.currentQuestion.explanation {
+            ExplanationCard(text: explanation,
+                            accent: model.timedOut ? Theme.incorrect : mode.palette.end,
+                            icon: model.timedOut ? "⏰" : "💡",
+                            title: model.timedOut ? "Time's up on that one!" : "Did you know?",
+                            expand: { explanationExpanded = true })
+                .transition(.opacity)
+                .animation(.easeOut(duration: 0.25), value: model.hasAnswered)
+        } else {
+            Color.clear
         }
-    }
-
-    private var timeUpNote: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "clock.badge.exclamationmark")
-            Text("Time's up on that one!")
-                .font(Theme.bold(15))
-        }
-        .foregroundColor(.white)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 11)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(Theme.incorrect.opacity(0.9)))
-    }
-
-    private func explanationCard(_ explanation: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button {
-                Haptics.play(.light)
-                withAnimation(.easeInOut(duration: 0.25)) { explanationExpanded.toggle() }
-            } label: {
-                HStack(spacing: 8) {
-                    Text("💡").font(.system(size: 20))
-                    Text("Did you know?")
-                        .font(Theme.bold(16))
-                        .foregroundColor(mode.palette.end)
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(Theme.bold(14))
-                        .foregroundColor(mode.palette.end)
-                        .rotationEffect(.degrees(explanationExpanded ? 180 : 0))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Text(explanation)
-                .font(Theme.medium(15))
-                .foregroundColor(Theme.ink)
-                .lineSpacing(4)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(explanationExpanded ? nil : 1)
-                .truncationMode(.tail)
-                .fixedSize(horizontal: false, vertical: explanationExpanded)
-        }
-        .padding(18)
-        .bubbleCard(cornerRadius: 18, fill: Theme.didYouKnow)
     }
 
     private var nextButton: some View {
@@ -286,18 +248,20 @@ struct ProQuizView: View {
             explanationExpanded = false
             withAnimation { model.next() }
         } label: {
-            HStack {
+            HStack(spacing: 8) {
                 Text(label).font(Theme.bold(18))
                 Image(systemName: "arrow.right.circle.fill").font(.title2)
             }
             .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Theme.nextButton))
             .shadow(color: .black.opacity(0.2), radius: 8, y: 5)
         }
         .buttonStyle(PressableButtonStyle())
+        .opacity(model.hasAnswered ? 1 : 0)
+        .disabled(!model.hasAnswered)
+        .animation(.easeOut(duration: 0.25), value: model.hasAnswered)
     }
 }
 
