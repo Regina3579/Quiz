@@ -40,7 +40,7 @@ struct ProHubView: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .scrollBounceBehavior(.basedOnSize)
+            .bounceOnlyWhenScrollable()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -437,6 +437,22 @@ struct ProBackground: View {
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
+        }
+    }
+}
+
+// MARK: - Bounce
+
+extension View {
+    /// Stops a short page from rubber-banding. `scrollBounceBehavior` only
+    /// arrived in iOS 16.4 and the app ships back to 16.0, so older phones
+    /// simply keep the standard bounce.
+    @ViewBuilder
+    func bounceOnlyWhenScrollable() -> some View {
+        if #available(iOS 16.4, *) {
+            self.scrollBounceBehavior(.basedOnSize)
+        } else {
+            self
         }
     }
 }
