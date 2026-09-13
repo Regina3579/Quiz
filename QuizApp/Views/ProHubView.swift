@@ -16,12 +16,13 @@ struct ProHubView: View {
     @State private var briefing: ProMode?
     @State private var appeared = false
 
-    /// The header artwork is 941 x 485 in the design, and the back button and
-    /// jewel pill sit at these fractions of it. Overlaying them here keeps
-    /// them live while the rest of the header stays the original picture.
-    private let headerAspect: CGFloat = 941.0 / 485.0
-    private let backButtonAt = CGPoint(x: 0.080, y: 0.100)
-    private let jewelPillAt  = CGPoint(x: 0.869, y: 0.100)
+    /// The header artwork is 941 x 534, cropped to include the whole crown,
+    /// and the back button and jewel pill sit at these fractions of it.
+    /// Overlaying them here keeps them live while the rest of the header
+    /// stays the original picture.
+    private let headerAspect: CGFloat = 941.0 / 534.0
+    private let backButtonAt = CGPoint(x: 0.080, y: 0.182)
+    private let jewelPillAt  = CGPoint(x: 0.869, y: 0.176)
 
     var body: some View {
         ZStack {
@@ -30,6 +31,7 @@ struct ProHubView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     headerArt
+                        .padding(.top, 8)
                     cards
                     Image("ProFooterArt")
                         .resizable()
