@@ -40,6 +40,7 @@ struct ProHubView: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
+            .scrollBounceBehavior(.basedOnSize)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -114,13 +115,14 @@ struct ProHubView: View {
     // MARK: - Mode cards
 
     private var cards: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             ForEach(Array(ProMode.proModes.enumerated()), id: \.element) { pair in
                 modeCard(pair.element, index: pair.offset)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 6)
+        .padding(.horizontal, 6)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
     }
 
     /// Each row is the card illustration itself. Everything on it — icon,
@@ -411,12 +413,15 @@ struct ProBackground: View {
 
     var body: some View {
         ZStack {
-            // Sampled from the design so the gaps between the card artwork
-            // and the page behind them are the same colour.
-            LinearGradient(colors: [
-                Color(red: 0.20, green: 0.12, blue: 0.45),
-                Color(red: 0.18, green: 0.10, blue: 0.47),
-                Color(red: 0.13, green: 0.13, blue: 0.34)
+            // Sampled from the artwork itself: the header's top edge, the
+            // colour between the cards, and the footer's bottom edge. The
+            // strips behind the status bar and home indicator then look like
+            // a continuation of the picture rather than a band around it.
+            LinearGradient(stops: [
+                .init(color: Color(red: 0.098, green: 0.078, blue: 0.404), location: 0.00),
+                .init(color: Color(red: 0.180, green: 0.102, blue: 0.475), location: 0.30),
+                .init(color: Color(red: 0.180, green: 0.102, blue: 0.475), location: 0.72),
+                .init(color: Color(red: 0.008, green: 0.129, blue: 0.165), location: 1.00)
             ], startPoint: .top, endPoint: .bottom)
             .ignoresSafeArea()
 
