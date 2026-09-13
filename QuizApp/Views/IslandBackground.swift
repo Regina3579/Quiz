@@ -60,11 +60,9 @@ struct IslandBackground: View {
 
 // MARK: - Quiz gameplay background
 
-/// The gameplay background for a quiz: the island's colour gradient with its
-/// topic-matched ambient effects (jungle leaves, galaxy stars, ocean bubbles,
-/// dino embers…) drifting gently on top. It deliberately never uses the scenic
-/// photo, so the white question and answer cards stay perfectly readable while
-/// each category still feels like its own little world.
+/// The gameplay background for a quiz: the island's own scene, darkened at
+/// the edges, with its topic-matched ambient effects (jungle leaves, galaxy
+/// stars, ocean bubbles, dino embers…) drifting gently on top.
 struct QuizBackground: View {
     let island: Island
 
@@ -72,7 +70,37 @@ struct QuizBackground: View {
 
     var body: some View {
         ZStack {
-            island.palette.gradient.ignoresSafeArea()
+            // The island's own scene, so a jungle level is played in the
+            // jungle and an ocean level under the sea. The painted question
+            // scroll and answer pills are opaque, so a picture behind them
+            // costs nothing in readability — which is why the flat gradient
+            // this used to draw is no longer needed.
+            GeometryReader { geo in
+                ZStack {
+                    island.palette.gradient
+
+                    if let bg = island.backgroundImageName {
+                        // Pinned and clipped: an unframed scaledToFill
+                        // reports a size bigger than the screen and shoves
+                        // everything around it out of place.
+                        Image(bg)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .clipped()
+                    }
+
+                    // Deepened towards the edges so the bright artwork on
+                    // top stays the thing your eye goes to.
+                    LinearGradient(colors: [.black.opacity(0.52),
+                                            .black.opacity(0.30),
+                                            .black.opacity(0.34),
+                                            .black.opacity(0.58)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .ignoresSafeArea()
 
             GeometryReader { geo in
                 TimelineView(.animation) { timeline in
