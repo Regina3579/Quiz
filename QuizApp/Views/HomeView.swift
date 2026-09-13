@@ -135,6 +135,18 @@ struct HomeView: View {
                 .padding(.vertical, 14)
         }
         .frame(width: ww, height: wh)
+        // The paper's own edge is where the trail has to stop, so soften the
+        // cut: islands dissolve into the parchment instead of being sliced
+        // through, which reads as "the map carries on" rather than "the map
+        // ends here".
+        .mask(
+            LinearGradient(stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black, location: 0.025),
+                .init(color: .black, location: 0.975),
+                .init(color: .clear, location: 1)
+            ], startPoint: .top, endPoint: .bottom)
+        )
         .offset(x: x0, y: y0)
     }
 
@@ -142,13 +154,15 @@ struct HomeView: View {
     /// so it scrolls; the dashed path is drawn in because this artwork leaves
     /// the parchment empty.
     ///
-    /// The row height is set so four islands land inside the parchment as
-    /// soon as the map opens, with the fifth peeking in to invite a scroll.
+    /// The pitch is set so five islands land whole inside the parchment as
+    /// soon as the map opens, with the sixth breaking into the bottom fade so
+    /// the trail is plainly still going. Checked at 375x667, 393x852 and
+    /// 430x932.
     private func trail(width: CGFloat) -> some View {
         let count = islands.count
-        let rowHeight = width * 0.48
+        let rowHeight = width * 0.384
         let contentHeight = CGFloat(count) * rowHeight + 30
-        let diameter = width * 0.30
+        let diameter = width * 0.283
 
         return ZStack {
             IslandPath(count: count, width: width, rowHeight: rowHeight)
