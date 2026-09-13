@@ -42,7 +42,7 @@ struct HomeView: View {
     /// The empty parchment the islands scroll inside — kept clear of the torn
     /// left edge, the painted galleon on the right, and the parrot at the
     /// bottom.
-    private static let window = (x0: 0.115, y0: 0.218, x1: 0.745, y1: 0.800)
+    private static let window = (x0: 0.115, y0: 0.215, x1: 0.745, y1: 0.803)
 
     /// The inside of the jewel purse, to the right of the painted gem.
     private static let jewelNumber = (x: 0.193, y: 0.084, w: 0.150, h: 0.027)
@@ -141,11 +141,14 @@ struct HomeView: View {
     /// The winding line of islands. It is taller than the parchment window,
     /// so it scrolls; the dashed path is drawn in because this artwork leaves
     /// the parchment empty.
+    ///
+    /// The row height is set so four islands land inside the parchment as
+    /// soon as the map opens, with the fifth peeking in to invite a scroll.
     private func trail(width: CGFloat) -> some View {
         let count = islands.count
-        let rowHeight = width * 0.68
+        let rowHeight = width * 0.48
         let contentHeight = CGFloat(count) * rowHeight + 30
-        let diameter = width * 0.32
+        let diameter = width * 0.30
 
         return ZStack {
             IslandPath(count: count, width: width, rowHeight: rowHeight)
@@ -383,10 +386,30 @@ private struct IslandBadge: View {
                     .overlay(Circle().stroke(island.palette.end.opacity(0.3), lineWidth: 1))
                     .offset(x: -diameter * 0.40, y: -diameter * 0.36)
 
+                // The star count rides on the island's rim rather than sitting
+                // in a row of its own, so more of the map fits on screen.
+                if unlocked {
+                    HStack(spacing: diameter * 0.035) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: diameter * 0.115))
+                            .foregroundColor(Theme.star)
+                        Text("\(earned)/\(maxStars)")
+                            .font(Theme.bold(diameter * 0.125))
+                            .foregroundColor(Theme.ink)
+                    }
+                    .padding(.horizontal, diameter * 0.10)
+                    .padding(.vertical, diameter * 0.045)
+                    .background(Capsule().fill(.white))
+                    .overlay(Capsule().stroke(Color(red: 0.60, green: 0.44, blue: 0.22),
+                                              lineWidth: 1))
+                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                    .offset(x: diameter * 0.31, y: diameter * 0.35)
+                }
+
                 if complete {
                     Text("👑")
-                        .font(.system(size: diameter * 0.27))
-                        .offset(y: -diameter * 0.56)
+                        .font(.system(size: diameter * 0.26))
+                        .offset(y: -diameter * 0.54)
                 }
             }
 
@@ -410,27 +433,8 @@ private struct IslandBadge: View {
                         .stroke(Color(red: 0.60, green: 0.44, blue: 0.22), lineWidth: 1.5)
                 )
                 .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
-
-            if unlocked {
-                HStack(spacing: 3) {
-                    Image(systemName: "star.fill").font(.system(size: diameter * 0.11))
-                    Text("\(earned)/\(maxStars)").font(Theme.bold(diameter * 0.12))
-                }
-                .foregroundColor(Theme.ink)
-                .padding(.horizontal, diameter * 0.10)
-                .padding(.vertical, diameter * 0.04)
-                .background(Capsule().fill(.white))
-                .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
-            } else {
-                Text("Locked")
-                    .font(Theme.bold(diameter * 0.12))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, diameter * 0.10)
-                    .padding(.vertical, diameter * 0.04)
-                    .background(Capsule().fill(Color.black.opacity(0.35)))
-            }
         }
-        .frame(width: diameter * 1.55)
+        .frame(width: diameter * 1.62)
     }
 }
 
