@@ -2,8 +2,9 @@
 //  HomeView.swift
 //  QuizApp
 //
-//  The Adventure Map — the app's home. Ten islands wind up a dotted trail
-//  over a bright ocean. Tap an unlocked island to dive into its levels.
+//  The Adventure Map — the app's home. A long painted treasure map scrolls
+//  past, with the ten islands dropped onto the circles left for them in the
+//  artwork. Tap an unlocked island to dive into its levels.
 //
 
 import SwiftUI
@@ -18,12 +19,11 @@ struct HomeView: View {
     @AppStorage(Player.nameKey) private var playerName = ""
     @AppStorage("quizspark.pro.visited") private var proVisited = false
 
-    private let rowHeight: CGFloat = 150
-
-    /// The Daily badge floats over the map in the top-left corner, so the
-    /// trail has to start below it or the first island lands underneath.
-    /// Measured down the left column: top inset + the jewel capsule +
-    /// the gap + the badge itself, plus a little breathing room.
+    /// The controls float over the map, so the parchment starts below them
+    /// or the painted banner ends up behind the Daily badge on the left and
+    /// the sticker book on the right. Measured down the left column: top
+    /// inset, jewel capsule, gap, the badge itself, and a little room — which
+    /// also clears the taller right-hand column.
     private let dailyBadgeWidth: CGFloat = 118
     private var dailyBadgeHeight: CGFloat { dailyBadgeWidth * 219 / 252 }
     private var topAreaHeight: CGFloat { 6 + 44 + 8 + dailyBadgeHeight + 12 }
@@ -39,20 +39,10 @@ struct HomeView: View {
                 GeometryReader { geo in
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            // Inset so the title sits between the Daily
-                            // badge on the left and the Pro crown on the
-                            // right, exactly as the design lays it out.
-                            mapHeader
-                                .padding(.leading, 132)
-                                .padding(.trailing, 96)
-                                .padding(.top, 10)
-                                .padding(.bottom, 4)
-                                // Hold open at least as much room as the
-                                // floating badge needs, so the first island
-                                // always clears it.
-                                .frame(minHeight: topAreaHeight, alignment: .top)
-
-                            trail(width: geo.size.width)
+                            // The painted banner has to clear the floating
+                            // controls, so the parchment starts below them.
+                            Color.clear.frame(height: topAreaHeight)
+                            mapBoard(width: geo.size.width)
                         }
                     }
                 }
@@ -87,57 +77,45 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Greeting
 
-    private var mapHeader: some View {
-        VStack(spacing: 6) {
-            Text("Adventure Map")
-                .font(Theme.display(26))
-                .foregroundColor(mapInk)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .shadow(color: .white.opacity(0.6), radius: 3, y: 1)
-
-            if playerName.isEmpty {
-                Text("Big adventures make brighter minds!")
-                    .font(Theme.medium(13))
-                    .foregroundColor(mapInk.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .shadow(color: .white.opacity(0.6), radius: 2, y: 1)
-            } else {
-                // Tapping the greeting lets the child change their name.
-                Button {
-                    Haptics.play(.light)
-                    showNameEntry = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("Hi, \(playerName)!")
-                            .font(Theme.bold(15))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 15))
-                    }
-                    .foregroundColor(mapInk)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(.white.opacity(0.65)))
-                    .overlay(Capsule().stroke(mapInk.opacity(0.25), lineWidth: 1))
+    /// The artwork paints its own "Adventure Map" banner, so only the
+    /// greeting is drawn — tucked just underneath it.
+    @ViewBuilder
+    private var greetingChip: some View {
+        if playerName.isEmpty {
+            Text("Big adventures make brighter minds!")
+                .font(Theme.medium(13))
+                .foregroundColor(mapInk.opacity(0.9))
+                .multilineTextAlignment(.center)
+                .shadow(color: .white.opacity(0.6), radius: 2, y: 1)
+                .opacity(appeared ? 1 : 0)
+                .animation(.easeOut(duration: 0.5), value: appeared)
+        } else {
+            Button {
+                Haptics.play(.light)
+                showNameEntry = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text("Hi, \(playerName)!")
+                        .font(Theme.bold(16))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 15))
                 }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityLabel("Change your name")
-
-                Text("Big adventures make brighter minds!")
-                    .font(Theme.medium(12))
-                    .foregroundColor(mapInk.opacity(0.85))
-                    .multilineTextAlignment(.center)
-                    .shadow(color: .white.opacity(0.6), radius: 2, y: 1)
+                .foregroundColor(mapInk)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(.white.opacity(0.82)))
+                .overlay(Capsule().stroke(mapInk.opacity(0.3), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
             }
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityLabel("Change your name")
+            .opacity(appeared ? 1 : 0)
+            .animation(.easeOut(duration: 0.5), value: appeared)
         }
-        .frame(maxWidth: .infinity)
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : -12)
-        .animation(.easeOut(duration: 0.5), value: appeared)
     }
 
     // MARK: - Daily Challenge (free for everyone)
@@ -262,39 +240,64 @@ struct HomeView: View {
         .padding(.top, 6)
     }
 
-    // MARK: - Winding trail of islands
+    // MARK: - The map board
 
-    private func trail(width: CGFloat) -> some View {
-        let count = islands.count
-        let contentHeight = CGFloat(count) * rowHeight + 40
+    /// Where each island sits on the artwork, as a fraction of one panel.
+    /// Measured from the dashed circles drawn into the two map halves.
+    private struct Spot { let x: Double; let y: Double; let lowerHalf: Bool }
+    private static let islandSpots: [Spot] = [
+        Spot(x: 0.365, y: 0.233, lowerHalf: false),
+        Spot(x: 0.676, y: 0.360, lowerHalf: false),
+        Spot(x: 0.365, y: 0.481, lowerHalf: false),
+        Spot(x: 0.675, y: 0.617, lowerHalf: false),
+        Spot(x: 0.369, y: 0.740, lowerHalf: false),
+        Spot(x: 0.352, y: 0.134, lowerHalf: true),
+        Spot(x: 0.656, y: 0.278, lowerHalf: true),
+        Spot(x: 0.352, y: 0.426, lowerHalf: true),
+        Spot(x: 0.664, y: 0.573, lowerHalf: true),
+        Spot(x: 0.367, y: 0.716, lowerHalf: true)
+    ]
 
-        return ZStack {
-            // Dashed path connecting the islands.
-            IslandPath(count: count, width: width, rowHeight: rowHeight)
-                .stroke(
-                    mapInk.opacity(0.55),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round, dash: [2, 16])
-                )
+    /// Each half of the artwork is 852 x 1846.
+    private static let panelRatio: CGFloat = 1846.0 / 852.0
+
+    /// The dashed circles are about 15.5% of the width across; the badge is a
+    /// touch larger so it covers the dashes rather than sitting inside them.
+    private func islandDiameter(width: CGFloat) -> CGFloat { width * 0.185 }
+
+    private func panelHeight(width: CGFloat) -> CGFloat { width * Self.panelRatio }
+
+    /// The two painted halves stacked into one long map, with the islands
+    /// dropped onto the circles left for them.
+    private func mapBoard(width: CGFloat) -> some View {
+        let panelH = panelHeight(width: width)
+        let total = panelH * 2
+
+        return ZStack(alignment: .topLeading) {
+            VStack(spacing: 0) {
+                Image("BgMapTop").resizable().scaledToFit()
+                Image("BgMapBottom").resizable().scaledToFit()
+            }
+            .frame(width: width, height: total)
+
+            // The greeting sits just under the painted banner.
+            greetingChip
+                .frame(width: width * 0.62)
+                .position(x: width * 0.5, y: panelH * 0.165)
 
             ForEach(Array(islands.enumerated()), id: \.element.id) { pair in
-                let index = pair.offset
-                let island = pair.element
-                let pos = nodePosition(index: index, width: width)
-                islandNode(island: island, index: index)
-                    .position(x: pos.x, y: pos.y)
+                let spot = Self.islandSpots[min(pair.offset, Self.islandSpots.count - 1)]
+                let y = (spot.lowerHalf ? panelH : 0) + panelH * spot.y
+                islandNode(island: pair.element, index: pair.offset,
+                           diameter: islandDiameter(width: width))
+                    .position(x: width * spot.x, y: y)
             }
         }
-        .frame(width: width, height: contentHeight)
-    }
-
-    private func nodePosition(index: Int, width: CGFloat) -> CGPoint {
-        let x = index.isMultiple(of: 2) ? width * 0.32 : width * 0.68
-        let y = CGFloat(index) * rowHeight + rowHeight / 2
-        return CGPoint(x: x, y: y)
+        .frame(width: width, height: total)
     }
 
     @ViewBuilder
-    private func islandNode(island: Island, index: Int) -> some View {
+    private func islandNode(island: Island, index: Int, diameter: CGFloat) -> some View {
         let unlocked = progress.isIslandUnlocked(island: island, allIslands: islands)
         let earned = progress.totalStars(for: island)
         let maxStars = progress.maxStars(for: island)
@@ -305,19 +308,21 @@ struct HomeView: View {
                 NavigationLink(value: island) {
                     IslandBadge(island: island, number: index + 1,
                                 unlocked: true, complete: complete,
-                                earned: earned, maxStars: maxStars)
+                                earned: earned, maxStars: maxStars,
+                                diameter: diameter)
                 }
                 .buttonStyle(PressableButtonStyle())
                 .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
             } else {
                 IslandBadge(island: island, number: index + 1,
                             unlocked: false, complete: false,
-                            earned: 0, maxStars: maxStars)
+                            earned: 0, maxStars: maxStars,
+                            diameter: diameter)
             }
         }
         .opacity(appeared ? 1 : 0)
         .scaleEffect(appeared ? 1 : 0.7)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(index) * 0.06),
+        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(index) * 0.05),
                    value: appeared)
     }
 }
@@ -399,6 +404,8 @@ private struct IslandBadge: View {
     let complete: Bool
     let earned: Int
     let maxStars: Int
+    /// Matched to the dashed circle painted on the map.
+    let diameter: CGFloat
 
     var body: some View {
         VStack(spacing: 8) {
@@ -408,9 +415,9 @@ private struct IslandBadge: View {
                     Image(imageName)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 96, height: 96)
+                        .frame(width: diameter, height: diameter)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(.white, lineWidth: 5))
+                        .overlay(Circle().stroke(.white, lineWidth: diameter * 0.055))
                         .grayscale(unlocked ? 0 : 1)
                         .opacity(unlocked ? 1 : 0.55)
                         .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
@@ -418,17 +425,17 @@ private struct IslandBadge: View {
                     Circle()
                         .fill(unlocked ? AnyShapeStyle(island.palette.gradient)
                                        : AnyShapeStyle(Color.gray.opacity(0.55)))
-                        .frame(width: 96, height: 96)
-                        .overlay(Circle().stroke(.white, lineWidth: 5))
+                        .frame(width: diameter, height: diameter)
+                        .overlay(Circle().stroke(.white, lineWidth: diameter * 0.055))
                         .shadow(color: .black.opacity(0.25), radius: 8, y: 5)
                     if unlocked {
-                        Text(island.emoji).font(.system(size: 46))
+                        Text(island.emoji).font(.system(size: diameter * 0.48))
                     }
                 }
 
                 if !unlocked {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 34, weight: .bold))
+                        .font(.system(size: diameter * 0.36, weight: .bold))
                         .foregroundColor(.white)
                         .shadow(color: .black.opacity(0.5), radius: 3)
                 }
@@ -440,12 +447,12 @@ private struct IslandBadge: View {
                     .frame(width: 28, height: 28)
                     .background(Circle().fill(.white))
                     .overlay(Circle().stroke(island.palette.end.opacity(0.3), lineWidth: 1))
-                    .offset(x: -40, y: -34)
+                    .offset(x: -diameter * 0.42, y: -diameter * 0.36)
 
                 if complete {
                     Text("👑")
-                        .font(.system(size: 26))
-                        .offset(y: -52)
+                        .font(.system(size: diameter * 0.28))
+                        .offset(y: -diameter * 0.56)
                 }
             }
 
@@ -491,60 +498,18 @@ private struct IslandBadge: View {
                 }
             }
         }
-        .frame(width: 150)
+        .frame(width: diameter * 1.75)
     }
 }
 
-// MARK: - Connecting path shape
+// MARK: - Behind the map
 
-/// A dashed zig-zag path linking the island nodes.
-private struct IslandPath: Shape {
-    let count: Int
-    let width: CGFloat
-    let rowHeight: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        for i in 0..<count {
-            let x = i.isMultiple(of: 2) ? width * 0.32 : width * 0.68
-            let y = CGFloat(i) * rowHeight + rowHeight / 2
-            let pt = CGPoint(x: x, y: y)
-            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
-        }
-        return p
-    }
-}
-
-// MARK: - Adventure map background
-
-/// The vintage treasure-map parchment fills the whole screen. A soft warm
-/// vignette around the edges adds depth and gently frames the island trail,
-/// while the aged-paper artwork carries the "adventure" feeling on its own.
+/// The map artwork has a leafy border painted around it, so the page behind
+/// it is the same deep jungle green. It only shows in the strip above the
+/// parchment, where the floating controls sit.
 private struct MapBackground: View {
     var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = geo.size.height
-
-            ZStack {
-                // Warm paper tone behind, in case the image doesn't fully cover.
-                Color(red: 0.80, green: 0.68, blue: 0.44)
-
-                // The treasure-map parchment, filling the screen.
-                Image("BgAdventureMap")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: w, height: h)
-                    .clipped()
-
-                // Soft warm vignette to add depth around the edges.
-                RadialGradient(
-                    colors: [.clear, Color(red: 0.28, green: 0.16, blue: 0.05).opacity(0.28)],
-                    center: .center, startRadius: h * 0.28, endRadius: h * 0.62)
-            }
-            .ignoresSafeArea()
-        }
-        .ignoresSafeArea()
+        Color(red: 0.173, green: 0.252, blue: 0.141).ignoresSafeArea()
     }
 }
 
