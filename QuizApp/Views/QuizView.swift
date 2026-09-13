@@ -138,32 +138,13 @@ struct QuizView: View {
         }
     }
 
-    /// The question sits on the painted scroll. Its parchment area is inset
-    /// from the gold frame, and the star topper takes up the top of the
-    /// picture, so the text is placed inside that opening rather than
-    /// centred on the whole image.
     private var questionBubble: some View {
-        Image("QuizPanel")
-            .resizable()
-            .scaledToFit()
-            .overlay {
-                GeometryReader { geo in
-                    Text(model.currentQuestion.prompt)
-                        .font(Theme.bold(min(23, geo.size.height * 0.115)))
-                        .foregroundColor(Theme.ink)
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.6)
-                        .frame(width: geo.size.width * 0.76,
-                               height: geo.size.height * 0.56)
-                        .position(x: geo.size.width * 0.5,
-                                  y: geo.size.height * 0.60)
-                }
-            }
+        QuestionPanel(prompt: model.currentQuestion.prompt)
             .id(model.currentIndex)
-        .transition(.asymmetric(
-            insertion: .move(edge: .trailing).combined(with: .opacity),
-            removal: .move(edge: .leading).combined(with: .opacity)
-        ))
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            ))
     }
 
     private var options: some View {

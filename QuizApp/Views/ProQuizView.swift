@@ -180,21 +180,11 @@ struct ProQuizView: View {
     }
 
     private var questionBubble: some View {
-        VStack(spacing: 14) {
-            Text(mode.emoji).font(.system(size: 38))
-            Text(model.currentQuestion.prompt)
-                .font(Theme.bold(22))
-                .foregroundColor(Theme.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(22)
-        .bubbleCard()
-        .id(model.currentIndex)
-        .transition(.asymmetric(
-            insertion: .move(edge: .trailing).combined(with: .opacity),
-            removal: .move(edge: .leading).combined(with: .opacity)))
+        QuestionPanel(prompt: model.currentQuestion.prompt)
+            .id(model.currentIndex)
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)))
     }
 
     private var options: some View {
