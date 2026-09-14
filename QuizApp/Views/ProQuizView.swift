@@ -224,7 +224,7 @@ struct ProQuizView: View {
             ExplanationCard(text: explanation,
                             accent: model.timedOut ? Theme.incorrect : mode.palette.end,
                             icon: model.timedOut ? "⏰" : "💡",
-                            title: model.timedOut ? "Time's up on that one!" : "Did you know?",
+                            title: model.timedOut ? "Time's up!" : "Did you know?",
                             expand: { explanationExpanded = true })
                 .transition(.opacity)
                 .animation(.easeOut(duration: 0.25), value: model.hasAnswered)

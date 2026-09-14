@@ -216,9 +216,10 @@ struct QuizView: View {
 
 // MARK: - Did you know?
 
-/// The compact "Did you know?" strip. It shows as much of the fact as its
-/// slot allows and offers the rest on a tap, rather than growing and pushing
-/// the answers around.
+/// The "Did you know?" strip: the heading, a one-line taste of the fact, and
+/// a "Read it" nudge. Keeping it to one line leaves the question and the
+/// answers properly big; the whole fact opens on a card over the round rather
+/// than growing in place and pushing the answers around.
 struct ExplanationCard: View {
     let text: String
     let accent: Color
@@ -233,27 +234,31 @@ struct ExplanationCard: View {
             Haptics.play(.light)
             expand()
         }) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 7) {
-                    Text(icon).font(.system(size: 16))
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(icon).font(.system(size: 14))
                     Text(title)
-                        .font(Theme.bold(15))
+                        .font(Theme.bold(14))
                         .foregroundColor(accent)
+                        .lineLimit(1)
                     Spacer(minLength: 4)
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    Text("Read it")
                         .font(Theme.bold(11))
-                        .foregroundColor(accent.opacity(0.7))
+                        .foregroundColor(accent.opacity(0.85))
+                    Image(systemName: "chevron.right")
+                        .font(Theme.bold(9))
+                        .foregroundColor(accent.opacity(0.85))
                 }
 
                 Text(text)
-                    .font(Theme.medium(13))
+                    .font(Theme.medium(12.5))
                     .foregroundColor(Theme.ink)
-                    .lineSpacing(1)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .bubbleCard(cornerRadius: 16, fill: Theme.didYouKnow)
         }

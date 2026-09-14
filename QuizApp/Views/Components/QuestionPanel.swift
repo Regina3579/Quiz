@@ -77,7 +77,9 @@ struct QuizScreenLayout {
     init(size: CGSize, topBarHeight: CGFloat) {
         let maxWidth = max(120, size.width - 40)
         let next: CGFloat = 50
-        let explanation: CGFloat = 98
+        // Just the heading and one line of the fact. The rest opens on a card
+        // over the round, which buys the question and answers real size.
+        let explanation: CGFloat = 56
         let spacing: CGFloat = 8
         let assumedGaps: CGFloat = 48
 
