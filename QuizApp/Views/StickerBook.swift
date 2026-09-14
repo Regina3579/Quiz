@@ -330,7 +330,12 @@ enum StickerCatalog {
             brainSticker(2),  // crowned tower of number blocks
             brainSticker(3),  // smiling abacus, "Small Steps Big Minds"
             brainSticker(4),  // caterpillar counting one to ten
-            brainSticker(5)   // geometry shapes on a stack of books
+            brainSticker(5),  // geometry shapes on a stack of books
+            brainSticker(6),  // crowned star with a trophy, "You Did It!"
+            brainSticker(7),  // fraction pizza, "Share Divide Learn"
+            brainSticker(8),  // alarm clock, "Time to Learn!"
+            brainSticker(9),  // heart jigsaw, "Math Is Fun!"
+            brainSticker(10)  // balance scales weighing number blocks
         ],
         epic: []
     )
