@@ -276,10 +276,31 @@ enum StickerCatalog {
         ]
     )
 
+    private static func scienceSticker(_ n: Int) -> Sticker {
+        Sticker(id: "science_c\(n)", emoji: "🔬", cost: cuteCost,
+                imageName: String(format: "StickerS%02d", n))
+    }
+
+    /// 🔬 Science Lab — bubbling experiments and cheerful little scientists.
+    /// No Epic tier yet; the shop leaves a tier out until it has stickers.
+    static let scienceLab = StickerCategory(
+        id: "science",
+        name: "Science Lab",
+        emoji: "🔬",
+        cute: [
+            scienceSticker(1),  // bubbling volcano with flasks
+            scienceSticker(2),  // rainbow DNA helix
+            scienceSticker(3),  // lab mouse at the Mini Lab
+            scienceSticker(4),  // robot holding a pink flask
+            scienceSticker(5)   // smiling atom
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
     static let categories: [StickerCategory] = [
         animalKingdom, galaxyQuest, dinoValley, oceanParadise, explorersTrail,
-        blossomGarden
+        blossomGarden, scienceLab
     ]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
