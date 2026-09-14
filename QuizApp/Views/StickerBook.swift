@@ -266,7 +266,12 @@ enum StickerCatalog {
             blossomEpicSticker(2),  // wisteria gazebo with golden lanterns
             blossomEpicSticker(3),  // crowned golden songbird
             blossomEpicSticker(4),  // fawn with blossoming antlers
-            blossomEpicSticker(5)   // moonlit blossom tree over the water
+            blossomEpicSticker(5),  // moonlit blossom tree over the water
+            blossomEpicSticker(6),  // crowned butterfly with heart wings
+            blossomEpicSticker(7),  // lantern-lit gazebo with pink curtains
+            blossomEpicSticker(8),  // jewelled golden butterfly
+            blossomEpicSticker(9),  // hummingbird at a sparkling lotus
+            blossomEpicSticker(10)  // smiling blossom with golden stamens
         ]
     )
 
