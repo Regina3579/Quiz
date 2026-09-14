@@ -313,10 +313,32 @@ enum StickerCatalog {
         ]
     )
 
+    /// "BC" rather than "B", which Blossom Garden already uses.
+    private static func brainSticker(_ n: Int) -> Sticker {
+        Sticker(id: "brain_c\(n)", emoji: "🏰", cost: cuteCost,
+                imageName: String(format: "StickerBC%02d", n))
+    }
+
+    /// 🏰 Brain Castle — numbers, shapes and puzzles to think with.
+    /// No Epic tier yet; the shop leaves a tier out until it has stickers.
+    static let brainCastle = StickerCategory(
+        id: "brain",
+        name: "Brain Castle",
+        emoji: "🏰",
+        cute: [
+            brainSticker(1),  // graduate brain with a pencil and sums
+            brainSticker(2),  // crowned tower of number blocks
+            brainSticker(3),  // smiling abacus, "Small Steps Big Minds"
+            brainSticker(4),  // caterpillar counting one to ten
+            brainSticker(5)   // geometry shapes on a stack of books
+        ],
+        epic: []
+    )
+
     /// All categories shown in the shop (more will be added over time).
     static let categories: [StickerCategory] = [
         animalKingdom, galaxyQuest, dinoValley, oceanParadise, explorersTrail,
-        blossomGarden, scienceLab
+        blossomGarden, scienceLab, brainCastle
     ]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
