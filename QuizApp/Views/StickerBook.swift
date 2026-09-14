@@ -281,8 +281,13 @@ enum StickerCatalog {
                 imageName: String(format: "StickerS%02d", n))
     }
 
-    /// 🔬 Science Lab — bubbling experiments and cheerful little scientists.
-    /// No Epic tier yet; the shop leaves a tier out until it has stickers.
+    private static func scienceEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "science_e\(n)", emoji: "⚗️", cost: epicCost,
+                imageName: String(format: "StickerSE%02d", n))
+    }
+
+    /// 🔬 Science Lab — bubbling experiments and cheerful little scientists,
+    /// with a grander laboratory in the Epic tier.
     static let scienceLab = StickerCategory(
         id: "science",
         name: "Science Lab",
@@ -299,7 +304,13 @@ enum StickerCatalog {
             scienceSticker(9),  // galaxy flask holding a test tube
             scienceSticker(10)  // rack of five bubbling test tubes
         ],
-        epic: []
+        epic: [
+            scienceEpicSticker(1),  // golden DNA chamber among the crystals
+            scienceEpicSticker(2),  // rocket on its gantry at the crystal pad
+            scienceEpicSticker(3),  // glass observatory dome with telescopes
+            scienceEpicSticker(4),  // bench of galaxy flasks under the planets
+            scienceEpicSticker(5)   // golden telescope full of stars
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
