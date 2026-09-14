@@ -165,9 +165,10 @@ struct ProResultView: View {
         .padding(.horizontal, 18)
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .fill(Color.white.opacity(0.16)))
+            .fill(Color.black.opacity(0.45)))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .stroke(.white.opacity(0.35), lineWidth: 1))
+            .stroke(.white.opacity(0.40), lineWidth: 1.5))
+        .shadow(color: .black.opacity(0.35), radius: 10, y: 5)
     }
 
     private func line(_ icon: String, _ label: String, _ amount: Int?) -> some View {

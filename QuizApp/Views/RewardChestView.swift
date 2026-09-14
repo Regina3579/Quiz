@@ -39,7 +39,7 @@ struct RewardChestView: View {
         .padding(16)
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .fill(.black.opacity(0.30)))
+            .fill(.black.opacity(0.52)))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
             .stroke(Theme.star.opacity(opened || prized.isEmpty ? 0.55 : 0.85),
                     lineWidth: 2))

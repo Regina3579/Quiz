@@ -57,6 +57,8 @@ struct ResultView: View {
 
     var body: some View {
         ZStack {
+            scrim
+
             VStack(spacing: 20) {
                 Spacer(minLength: 0)
 
@@ -65,17 +67,21 @@ struct ResultView: View {
                     .scaleEffect(showContent ? 1 : 0.3)
                     .animation(.spring(response: 0.5, dampingFraction: 0.5), value: showContent)
 
+                // These two sit straight on the scene with no card under them,
+                // so they carry their own shadow to lift them off it.
                 Text(headline)
                     .font(Theme.display(34))
                     .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.75), radius: 6, y: 2)
                     .opacity(showContent ? 1 : 0)
 
                 stars
 
                 Text(subtitle)
                     .font(Theme.bold(18))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                    .shadow(color: .black.opacity(0.75), radius: 5, y: 2)
                     .padding(.horizontal, 20)
                     .opacity(showContent ? 1 : 0)
 
@@ -99,6 +105,21 @@ struct ResultView: View {
             }
         }
         .onAppear { animateIn() }
+    }
+
+    /// The island's own scene is behind this screen, and a reef or a castle is
+    /// far too busy to read a score off. This lays a deep wash over it: dark
+    /// enough through the middle, where the numbers are, that white type and a
+    /// pink jewel count stand clear, but lighter at the very top and bottom so
+    /// the scene still shows and the screen keeps the island's colour.
+    private var scrim: some View {
+        LinearGradient(stops: [
+            .init(color: .black.opacity(0.55), location: 0.00),
+            .init(color: .black.opacity(0.74), location: 0.22),
+            .init(color: .black.opacity(0.76), location: 0.72),
+            .init(color: .black.opacity(0.58), location: 1.00)
+        ], startPoint: .top, endPoint: .bottom)
+        .ignoresSafeArea()
     }
 
     private var stars: some View {
@@ -159,14 +180,18 @@ struct ResultView: View {
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 18)
+                // A dark surface rather than a pale translucent one: white
+                // type and the pink jewel count need something solid behind
+                // them, and a lightened card only lets the reef through.
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.16))
+                        .fill(Color.black.opacity(0.45))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(.white.opacity(0.35), lineWidth: 1)
+                        .stroke(.white.opacity(0.40), lineWidth: 1.5)
                 )
+                .shadow(color: .black.opacity(0.35), radius: 10, y: 5)
             }
         }
     }
@@ -222,12 +247,14 @@ struct ResultView: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(filled ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.white.opacity(0.22)))
+                .fill(filled ? AnyShapeStyle(Color.white)
+                             : AnyShapeStyle(Color.black.opacity(0.45)))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(filled ? Color.clear : Color.white.opacity(0.6), lineWidth: 2)
+                .stroke(filled ? Color.clear : Color.white.opacity(0.75), lineWidth: 2)
         )
+        .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
     }
 
     // MARK: - Animation & saving
