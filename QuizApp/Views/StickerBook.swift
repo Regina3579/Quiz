@@ -292,7 +292,12 @@ enum StickerCatalog {
             scienceSticker(2),  // rainbow DNA helix
             scienceSticker(3),  // lab mouse at the Mini Lab
             scienceSticker(4),  // robot holding a pink flask
-            scienceSticker(5)   // smiling atom
+            scienceSticker(5),  // smiling atom
+            scienceSticker(6),  // microscope reading "Explore Learn Grow"
+            scienceSticker(7),  // three flasks on a stack of science books
+            scienceSticker(8),  // light bulb in goggles with "Bright Ideas"
+            scienceSticker(9),  // galaxy flask holding a test tube
+            scienceSticker(10)  // rack of five bubbling test tubes
         ],
         epic: []
     )
