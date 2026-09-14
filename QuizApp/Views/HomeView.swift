@@ -74,8 +74,12 @@ struct HomeView: View {
     /// The sound toggle sits low on the left jungle border, out of the way.
     private static let muteAt   = (x: 0.085, y: 0.930)
     /// The trophy room sits under the painted sticker book, third in the
-    /// right-hand column of buttons.
-    private static let trophyAt = (x: 0.866, y: 0.312)
+    /// right-hand column of buttons. Its artwork is 583 x 600 and carries its
+    /// own "Trophy Room" banner, so nothing is drawn over it but the count.
+    /// Sized to the painted sticker book above it, so the two read as a pair.
+    private static let trophyAt = (x: 0.866, y: 0.326)
+    private static let trophyWidth: CGFloat = 0.195
+    private static let trophyAspect: CGFloat = 583.0 / 600.0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -352,56 +356,39 @@ struct HomeView: View {
             .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
     }
 
-    /// Opens the Trophy Room, sitting under the painted sticker book. Drawn as
-    /// a little golden plaque rather than a bare circle, so it reads as one of
-    /// the map's buttons rather than something dropped on top of the picture.
+    /// Opens the Trophy Room, sitting under the painted sticker book. The
+    /// artwork carries its own banner, so the only thing laid over it is the
+    /// count of awards won — the map shows the child's haul without them
+    /// having to go and look.
     private func trophyButton(width w: CGFloat, height h: CGFloat) -> some View {
-        let plaqueW = w * 0.185
-        let plaqueH = h * 0.062
+        let iconW = w * Self.trophyWidth
+        let iconH = iconW / Self.trophyAspect
         let won = progress.trophyCount
 
-        return VStack(spacing: plaqueH * 0.04) {
-            Text("🏆").font(.system(size: plaqueH * 0.40))
-            Text("Trophy Room")
-                .font(Theme.bold(plaqueH * 0.185))
-                .foregroundColor(Color(red: 0.32, green: 0.18, blue: 0.05))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-        }
-        .frame(width: plaqueW, height: plaqueH)
-        .background(
-            RoundedRectangle(cornerRadius: plaqueH * 0.22, style: .continuous)
-                .fill(LinearGradient(colors: [
-                    Color(red: 1.00, green: 0.93, blue: 0.72),
-                    Color(red: 0.96, green: 0.80, blue: 0.45)
-                ], startPoint: .top, endPoint: .bottom))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: plaqueH * 0.22, style: .continuous)
-                .stroke(Color(red: 0.72, green: 0.50, blue: 0.16), lineWidth: 2.5)
-        )
-        // The count sits on the corner, so the map shows the child's haul
-        // without them having to go and look.
-        .overlay(alignment: .topTrailing) {
-            if won > 0 {
-                Text("\(won)")
-                    .font(Theme.bold(plaqueH * 0.21))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, plaqueH * 0.14)
-                    .padding(.vertical, plaqueH * 0.05)
-                    .background(Capsule().fill(Color(red: 0.85, green: 0.24, blue: 0.42)))
-                    .overlay(Capsule().stroke(.white, lineWidth: 1.5))
-                    .offset(x: plaqueH * 0.18, y: -plaqueH * 0.16)
+        return Image("TrophyRoomIcon")
+            .resizable()
+            .scaledToFit()
+            .frame(width: iconW, height: iconH)
+            .overlay(alignment: .topTrailing) {
+                if won > 0 {
+                    Text("\(won)")
+                        .font(Theme.bold(iconH * 0.135))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, iconH * 0.085)
+                        .padding(.vertical, iconH * 0.030)
+                        .background(Capsule().fill(Color(red: 0.85, green: 0.24, blue: 0.42)))
+                        .overlay(Capsule().stroke(.white, lineWidth: 1.5))
+                        .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+                        .offset(x: iconH * 0.02, y: iconH * 0.06)
+                }
             }
-        }
-        .shadow(color: .black.opacity(0.35), radius: 4, y: 3)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            Haptics.play(.light)
-            showTrophyRoom = true
-        }
-        .position(x: w * Self.trophyAt.x, y: h * Self.trophyAt.y)
-        .accessibilityLabel("My trophy room, \(won) award\(won == 1 ? "" : "s") won")
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                showTrophyRoom = true
+            }
+            .position(x: w * Self.trophyAt.x, y: h * Self.trophyAt.y)
+            .accessibilityLabel("My trophy room, \(won) award\(won == 1 ? "" : "s") won")
     }
 
     // MARK: - Tap targets over the painted buttons
