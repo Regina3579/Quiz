@@ -250,7 +250,11 @@ enum StickerCatalog {
             blossomSticker(2),  // glitter butterfly on a pink daisy
             blossomSticker(3),  // watering can full of blossom
             blossomSticker(4),  // cherry tree shedding petals
-            blossomSticker(5)   // ladybird resting on a daisy
+            blossomSticker(5),  // ladybird resting on a daisy
+            blossomSticker(6),  // toadstool cottage in the flower bed
+            blossomSticker(7),  // blossom tree with a swing and a bluebird
+            blossomSticker(8),  // garden gate, "Good Things Grow Here"
+            blossomSticker(9)   // bluebird on a flowering birdhouse
         ],
         epic: []
     )
