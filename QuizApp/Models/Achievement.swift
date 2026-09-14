@@ -2,24 +2,35 @@
 //  Achievement.swift
 //  QuizApp
 //
-//  Everything the child can win and keep in the Trophy Room: the four cups,
-//  which climb with the number of questions answered correctly over the whole
-//  journey, and the badges, each for one particular feat.
+//  Everything the child can win and keep in the Trophy Room.
 //
-//  An achievement is only ever a description — what it is called, what has to
-//  be done, and which tally that is counted against. GameProgress keeps the
-//  tallies and decides when one has been earned, so nothing here has to know
-//  about saving or about the rest of the game.
+//  There are three kinds. Each adventure has its own ladder — bronze, silver
+//  and gold badges as its hundred questions are answered right, an Explorer
+//  Cup for clearing all ten levels, and a Master Crown for getting every
+//  question in it right. The Grand Cups climb with correct answers across the
+//  whole game. The badges are one-off feats. And at the end of it all stands
+//  the Ultimate Adventurer Trophy, for filling every pedestal.
+//
+//  An achievement is only ever a description: what it is called, what has to
+//  be done, and which running total that is counted against. GameProgress
+//  keeps the totals and decides when one has been earned, so nothing here has
+//  to know about saving or about the rest of the game, and adding an award is
+//  adding one entry to a list.
 //
 
 import SwiftUI
 
 struct Achievement: Identifiable, Hashable {
 
-    /// The cups are the main ladder; badges sit beside them for one-off feats.
     enum Kind: Hashable {
-        case cup
+        /// One rung of a single adventure's ladder.
+        case adventure(islandID: Int)
+        /// The game-wide cups.
+        case grandCup
+        /// A one-off feat.
         case badge
+        /// The one at the end.
+        case ultimate
     }
 
     /// Which running total an achievement is measured against.
@@ -37,6 +48,10 @@ struct Achievement: Identifiable, Hashable {
         /// Perfect Runs that went all the way without a wrong answer.
         case perfectRunWins
         case islandsComplete
+        /// Best-ever correct answers within one adventure, out of its 100.
+        case islandCorrect(islandID: Int)
+        /// Levels cleared within one adventure.
+        case islandLevelsCleared(islandID: Int)
     }
 
     let id: String
@@ -53,56 +68,152 @@ struct Achievement: Identifiable, Hashable {
     /// A keepsake sticker handed over with it, by sticker id.
     var stickerReward: String? = nil
 
-    /// A short line for the award card: what it pays.
-    var rewardLine: String? {
-        var parts: [String] = []
-        if jewelReward > 0 { parts.append("+\(jewelReward) jewels") }
-        if stickerReward != nil { parts.append("a keepsake sticker") }
-        return parts.isEmpty ? nil : parts.joined(separator: " and ")
+    /// True when this is worth opening a treasure chest for.
+    var opensChest: Bool { jewelReward > 0 || stickerReward != nil }
+
+    /// The rewards as lines for the chest.
+    var rewardLines: [String] {
+        var lines: [String] = []
+        if jewelReward > 0 { lines.append("+\(jewelReward) 💎") }
+        if stickerReward != nil { lines.append("+1 rare sticker") }
+        lines.append(title)
+        return lines
+    }
+
+    /// The island this belongs to, if it is part of an adventure ladder.
+    var islandID: Int? {
+        if case .adventure(let id) = kind { return id }
+        return nil
     }
 }
 
 /// The full list, in the order the Trophy Room shows them.
 enum AchievementCatalog {
 
-    /// The ladder. Every correct answer anywhere in the game counts, so the
-    /// cups keep climbing whether the child plays the map or the Pro room.
-    static let cups: [Achievement] = [
+    // MARK: - Adventure ladders
+
+    /// What each adventure's cup and crown are called. The rest of the rungs
+    /// are the same everywhere, so only these two need naming.
+    private struct Titles {
+        let cup: String
+        let crown: String
+    }
+
+    /// The keepsake sticker each Master Crown comes with — one that belongs to
+    /// that adventure, so ten crowns are ten different prizes rather than the
+    /// same one ten times.
+    private static let crownSticker: [Int: String] = [
+        0: "animal_e19",    // gold lion
+        1: "galaxy_e3",     // star wizard juggling planets
+        2: "dino_e6",       // crowned crystal T. rex
+        3: "ocean_e4",      // angelfish queen
+        4: "explorer_e3",   // golden globe and world landmarks
+        5: "blossom_c4",    // cherry tree
+        6: "animal_e21",    // crowned unicorn
+        7: "dino_e1",       // crystal ankylosaurus
+        8: "ocean_e3",      // jewelled lobster by a treasure chest
+        9: "galaxy_e6"      // robot astronaut hugging a star
+    ]
+
+    private static let titles: [Int: Titles] = [
+        0: Titles(cup: "Jungle Explorer Cup",  crown: "Jungle Master Crown"),
+        1: Titles(cup: "Galaxy Explorer Cup",  crown: "Galaxy Master Crown"),
+        2: Titles(cup: "Dino Explorer Cup",    crown: "Dino Master Crown"),
+        3: Titles(cup: "Ocean Explorer Cup",   crown: "Ocean Master Crown"),
+        4: Titles(cup: "Trail Explorer Cup",   crown: "Trail Master Crown"),
+        5: Titles(cup: "Garden Explorer Cup",  crown: "Garden Master Crown"),
+        6: Titles(cup: "Junior Scientist Cup", crown: "Science Master Crown"),
+        7: Titles(cup: "Brain Knight Cup",     crown: "Brain Champion Crown"),
+        8: Titles(cup: "Ancient Explorer Cup", crown: "Crown of the Ancients"),
+        9: Titles(cup: "Summit Explorer Cup",  crown: "Ultimate Champion Cup")
+    ]
+
+    /// The five rungs of one adventure's ladder, smallest first.
+    static func ladder(for island: Island) -> [Achievement] {
+        let id = island.id
+        let name = titles[id] ?? Titles(cup: "\(island.name) Cup",
+                                        crown: "\(island.name) Crown")
+        let kind = Achievement.Kind.adventure(islandID: id)
+
+        return [
+            Achievement(id: "adv.\(id).bronze", emoji: "🥉",
+                        title: "Bronze Badge",
+                        detail: "25 right in \(island.name)",
+                        kind: kind, measure: .islandCorrect(islandID: id), target: 25,
+                        jewelReward: 15),
+            Achievement(id: "adv.\(id).silver", emoji: "🥈",
+                        title: "Silver Badge",
+                        detail: "50 right in \(island.name)",
+                        kind: kind, measure: .islandCorrect(islandID: id), target: 50,
+                        jewelReward: 25),
+            Achievement(id: "adv.\(id).gold", emoji: "🥇",
+                        title: "Gold Badge",
+                        detail: "75 right in \(island.name)",
+                        kind: kind, measure: .islandCorrect(islandID: id), target: 75,
+                        jewelReward: 40),
+            Achievement(id: "adv.\(id).cup", emoji: "🏆",
+                        title: name.cup,
+                        detail: "Finish all 10 levels of \(island.name)",
+                        kind: kind, measure: .islandLevelsCleared(islandID: id), target: 10,
+                        jewelReward: 60),
+            Achievement(id: "adv.\(id).crown", emoji: "👑",
+                        title: name.crown,
+                        detail: "Get all 100 questions right in \(island.name)",
+                        kind: kind, measure: .islandCorrect(islandID: id), target: 100,
+                        jewelReward: 100, stickerReward: crownSticker[id])
+        ]
+    }
+
+    static let adventure: [Achievement] = QuizData.islands.flatMap { ladder(for: $0) }
+
+    // MARK: - Grand cups
+
+    /// Every correct answer anywhere in the game counts towards these, so they
+    /// keep climbing whether the child plays the map or the Pro room.
+    static let grandCups: [Achievement] = [
         Achievement(id: "cup.bronze", emoji: "🥉", title: "Bronze Cup",
                     detail: "Answer 50 questions correctly",
-                    kind: .cup, measure: .correctAnswers, target: 50,
+                    kind: .grandCup, measure: .correctAnswers, target: 50,
                     jewelReward: 25),
         Achievement(id: "cup.silver", emoji: "🥈", title: "Silver Cup",
                     detail: "Answer 150 questions correctly",
-                    kind: .cup, measure: .correctAnswers, target: 150,
+                    kind: .grandCup, measure: .correctAnswers, target: 150,
                     jewelReward: 50),
         Achievement(id: "cup.gold", emoji: "🥇", title: "Gold Cup",
                     detail: "Answer 300 questions correctly",
-                    kind: .cup, measure: .correctAnswers, target: 300,
+                    kind: .grandCup, measure: .correctAnswers, target: 300,
                     jewelReward: 75),
         Achievement(id: "cup.diamond", emoji: "💎", title: "Diamond Trophy",
                     detail: "Answer 750 questions correctly",
-                    kind: .cup, measure: .correctAnswers, target: 750,
-                    stickerReward: "explorer_e1")
+                    kind: .grandCup, measure: .correctAnswers, target: 750,
+                    jewelReward: 100, stickerReward: "explorer_e1")
     ]
 
-    /// One badge for each particular feat.
+    // MARK: - Special achievements
+
     static let badges: [Achievement] = [
         Achievement(id: "badge.perfectStar", emoji: "⭐️", title: "Perfect Star",
                     detail: "Get 10 out of 10 in one level",
                     kind: .badge, measure: .perfectLevels, target: 1),
+        Achievement(id: "badge.perfectMaster", emoji: "🌟", title: "Perfect Master",
+                    detail: "Get 10 perfect levels",
+                    kind: .badge, measure: .perfectLevels, target: 10,
+                    jewelReward: 50),
         Achievement(id: "badge.streakMaster", emoji: "🔥", title: "Streak Master",
                     detail: "Get 10 correct answers in a row",
                     kind: .badge, measure: .bestStreak, target: 10),
         Achievement(id: "badge.lightningHero", emoji: "⚡️", title: "Lightning Hero",
                     detail: "Finish 10 Lightning Rounds",
-                    kind: .badge, measure: .proRounds(.lightningRound), target: 10),
+                    kind: .badge, measure: .proRounds(.lightningRound), target: 10,
+                    jewelReward: 40),
         Achievement(id: "badge.speedChampion", emoji: "⏱️", title: "Speed Champion",
                     detail: "Finish 10 Timed Challenges",
-                    kind: .badge, measure: .proRounds(.timedChallenge), target: 10),
+                    kind: .badge, measure: .proRounds(.timedChallenge), target: 10,
+                    jewelReward: 40),
         Achievement(id: "badge.perfectRunner", emoji: "🎯", title: "Perfect Runner",
                     detail: "Win 5 Perfect Runs",
-                    kind: .badge, measure: .perfectRunWins, target: 5),
+                    kind: .badge, measure: .perfectRunWins, target: 5,
+                    jewelReward: 40),
         Achievement(id: "badge.jewelHunter", emoji: "💎", title: "Jewel Hunter",
                     detail: "Earn 1,000 jewels altogether",
                     kind: .badge, measure: .jewelsEarned, target: 1000),
@@ -111,13 +222,19 @@ enum AchievementCatalog {
                     kind: .badge, measure: .questionsAnswered, target: 100),
         Achievement(id: "badge.quizMaster", emoji: "👑", title: "Quiz Master",
                     detail: "Answer 500 questions",
-                    kind: .badge, measure: .questionsAnswered, target: 500),
-        Achievement(id: "badge.grandChampion", emoji: "🏆", title: "Grand Champion",
-                    detail: "Finish all 10 adventures",
-                    kind: .badge, measure: .islandsComplete, target: 10)
+                    kind: .badge, measure: .questionsAnswered, target: 500,
+                    jewelReward: 50)
     ]
 
-    static let all: [Achievement] = cups + badges
+    // MARK: - The one at the end
+
+    static let ultimate = Achievement(
+        id: "ultimate.adventurer", emoji: "✨", title: "Ultimate Adventurer",
+        detail: "Finish all 10 adventures",
+        kind: .ultimate, measure: .islandsComplete, target: 10,
+        jewelReward: 250, stickerReward: "ocean_e2")
+
+    static let all: [Achievement] = adventure + grandCups + badges + [ultimate]
 }
 
 /// The running totals every achievement is judged against. Kept as one value

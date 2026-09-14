@@ -25,6 +25,12 @@ final class GameProgress: ObservableObject {
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
 
+    /// The best number of correct answers ever reached on each level, keyed
+    /// the same way. An adventure's "100 out of 100" is the sum of these, so
+    /// a child gets there by eventually mastering every level — not by
+    /// replaying one easy level over and over.
+    @Published private(set) var bestCorrect: [String: Int] = [:]
+
     /// The player's treasure chest — jewels earned for correct answers,
     /// perfect rounds and first-time level clears.
     @Published private(set) var jewels: Int = 0
@@ -62,6 +68,7 @@ final class GameProgress: ObservableObject {
     private let placedNotesKey = "quizspark.notes.placed.v1"
     private let proScoresKey = "quizspark.pro.best.v1"
     private let dailyPlayedKey = "quizspark.pro.daily.v1"
+    private let bestCorrectKey = "quizspark.bestCorrect.v1"
     private let tallyKey = "quizspark.tally.v1"
     private let achievementsKey = "quizspark.achievements.v1"
     /// The retired one-note-per-page store, read once so nothing is lost.
@@ -154,6 +161,13 @@ final class GameProgress: ObservableObject {
         jewels += reward.total
         saveJewels()
 
+        // Keep the best run on this level, for the adventure's own ladder.
+        let bestKey = key(islandID, level)
+        if correct > (bestCorrect[bestKey] ?? 0) {
+            bestCorrect[bestKey] = correct
+            saveBestCorrect()
+        }
+
         bank(results: results, correct: correct, total: total, earned: reward.total)
         // A "perfect level" is the whole level answered without a mistake —
         // the feat the Perfect Star badge is named for.
@@ -177,7 +191,44 @@ final class GameProgress: ObservableObject {
         case .perfectRunWins:    return tally.perfectRunWins
         case .proRounds(let mode): return tally.proRounds[mode.rawValue] ?? 0
         case .islandsComplete:   return QuizData.islands.filter { isIslandComplete($0) }.count
+        case .islandCorrect(let id):       return bestCorrect(inIsland: id)
+        case .islandLevelsCleared(let id): return levelsCleared(inIsland: id)
         }
+    }
+
+    /// The best-ever correct answers across one adventure's levels — its
+    /// score out of 100.
+    func bestCorrect(inIsland id: Int) -> Int {
+        guard let island = QuizData.island(id: id) else { return 0 }
+        return island.levels.reduce(0) { $0 + (bestCorrect[key(id, $1.number)] ?? 0) }
+    }
+
+    /// How many of an adventure's levels have been cleared.
+    func levelsCleared(inIsland id: Int) -> Int {
+        guard let island = QuizData.island(id: id) else { return 0 }
+        return island.levels.filter { isCleared(islandID: id, level: $0.number) }.count
+    }
+
+    /// The rungs of one adventure's ladder, and where the child is on it.
+    func ladder(for island: Island) -> [Achievement] {
+        AchievementCatalog.ladder(for: island)
+    }
+
+    /// The highest rung won on an adventure's ladder, if any.
+    func topRung(for island: Island) -> Achievement? {
+        ladder(for: island).last { hasWon($0) }
+    }
+
+    /// The next rung still to win on an adventure's ladder.
+    func nextRung(for island: Island) -> Achievement? {
+        ladder(for: island).first { !hasWon($0) }
+    }
+
+    /// How many adventures have their Explorer Cup — the pedestals filled.
+    var pedestalsFilled: Int {
+        QuizData.islands.filter { island in
+            ladder(for: island).first { $0.id.hasSuffix(".cup") }.map { hasWon($0) } ?? false
+        }.count
     }
 
     func hasWon(_ achievement: Achievement) -> Bool {
@@ -189,9 +240,9 @@ final class GameProgress: ObservableObject {
         AchievementCatalog.all.filter { hasWon($0) }.count
     }
 
-    /// The best cup won so far, for the little badge on the map button.
+    /// The best grand cup won so far, for the little badge on the map button.
     var topCup: Achievement? {
-        AchievementCatalog.cups.last { hasWon($0) }
+        AchievementCatalog.grandCups.last { hasWon($0) }
     }
 
     /// Adds a finished round to the running totals.
@@ -387,6 +438,7 @@ final class GameProgress: ObservableObject {
         placedNotes = []
         proBestScores = [:]
         dailyPlayedOn = nil
+        bestCorrect = [:]
         tally = LifetimeTally()
         unlockedAchievements = []
         recentlyUnlocked = []
@@ -396,6 +448,7 @@ final class GameProgress: ObservableObject {
         saveStickers()
         saveNotes()
         saveProScores()
+        saveBestCorrect()
         saveTally()
         saveAchievements()
     }
@@ -434,6 +487,10 @@ final class GameProgress: ObservableObject {
             proBestScores = decoded
         }
         dailyPlayedOn = UserDefaults.standard.object(forKey: dailyPlayedKey) as? Date
+        if let data = UserDefaults.standard.data(forKey: bestCorrectKey),
+           let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
+            bestCorrect = decoded
+        }
         if let data = UserDefaults.standard.data(forKey: tallyKey),
            let decoded = try? JSONDecoder().decode(LifetimeTally.self, from: data) {
             tally = decoded
@@ -472,6 +529,12 @@ final class GameProgress: ObservableObject {
     private func saveProScores() {
         if let data = try? JSONEncoder().encode(proBestScores) {
             UserDefaults.standard.set(data, forKey: proScoresKey)
+        }
+    }
+
+    private func saveBestCorrect() {
+        if let data = try? JSONEncoder().encode(bestCorrect) {
+            UserDefaults.standard.set(data, forKey: bestCorrectKey)
         }
     }
 

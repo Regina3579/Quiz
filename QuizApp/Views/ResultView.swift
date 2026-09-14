@@ -84,7 +84,7 @@ struct ResultView: View {
                 jewelReward.opacity(showContent ? 1 : 0)
 
                 if !awardsWon.isEmpty {
-                    AwardWonCard(awards: awardsWon)
+                    RewardChestView(awards: awardsWon)
                         .opacity(showContent ? 1 : 0)
                 }
 
