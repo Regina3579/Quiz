@@ -42,7 +42,11 @@ struct HomeView: View {
     /// The empty parchment the islands scroll inside — kept clear of the torn
     /// left edge, the painted galleon on the right, and the parrot at the
     /// bottom.
-    private static let window = (x0: 0.115, y0: 0.215, x1: 0.745, y1: 0.803)
+    /// The bottom is where the sea, the leaves and the stones actually start
+    /// in the columns the islands sit in — measured by walking down each one
+    /// rather than by eye, because the paper is shadowed near the tear and
+    /// looks like it ends higher than it does.
+    private static let window = (x0: 0.115, y0: 0.215, x1: 0.745, y1: 0.828)
 
     /// The inside of the jewel purse, to the right of the painted gem.
     private static let jewelNumber = (x: 0.193, y: 0.084, w: 0.150, h: 0.027)
@@ -154,15 +158,17 @@ struct HomeView: View {
     /// so it scrolls; the dashed path is drawn in because this artwork leaves
     /// the parchment empty.
     ///
-    /// The pitch is set so five islands land whole inside the parchment as
-    /// soon as the map opens, with the sixth breaking into the bottom fade so
-    /// the trail is plainly still going. Checked at 375x667, 393x852 and
-    /// 430x932.
+    /// The pitch is set so six islands land whole on the paper as soon as the
+    /// map opens, reaching right down to the water, with the seventh breaking
+    /// into the bottom fade so the trail is plainly still going. Rows sit
+    /// close together, which the zig-zag absorbs: neighbours are on opposite
+    /// sides of the paper, so they never actually meet.
+    /// Checked at 375x667, 393x852 and 430x932.
     private func trail(width: CGFloat) -> some View {
         let count = islands.count
-        let rowHeight = width * 0.384
+        let rowHeight = width * 0.332
         let contentHeight = CGFloat(count) * rowHeight + 30
-        let diameter = width * 0.283
+        let diameter = width * 0.243
 
         return ZStack {
             IslandPath(count: count, width: width, rowHeight: rowHeight)
@@ -410,16 +416,16 @@ private struct IslandBadge: View {
                 // The star count rides on the island's rim rather than sitting
                 // in a row of its own, so more of the map fits on screen.
                 if unlocked {
-                    HStack(spacing: diameter * 0.035) {
+                    HStack(spacing: diameter * 0.04) {
                         Image(systemName: "star.fill")
-                            .font(.system(size: diameter * 0.115))
+                            .font(.system(size: diameter * 0.13))
                             .foregroundColor(Theme.star)
                         Text("\(earned)/\(maxStars)")
-                            .font(Theme.bold(diameter * 0.125))
+                            .font(Theme.bold(diameter * 0.14))
                             .foregroundColor(Theme.ink)
                     }
                     .padding(.horizontal, diameter * 0.10)
-                    .padding(.vertical, diameter * 0.045)
+                    .padding(.vertical, diameter * 0.04)
                     .background(Capsule().fill(.white))
                     .overlay(Capsule().stroke(Color(red: 0.60, green: 0.44, blue: 0.22),
                                               lineWidth: 1))
@@ -434,14 +440,17 @@ private struct IslandBadge: View {
                 }
             }
 
-            // Name on a little parchment banner so it reads on the map.
+            // Name on a little parchment banner so it reads on the map. The
+            // type is a larger share of a smaller island, so packing the rows
+            // tighter costs the islands some size but barely touches the
+            // names — which are the part a child has to read.
             Text(island.name)
-                .font(Theme.bold(diameter * 0.16))
+                .font(Theme.bold(diameter * 0.18))
                 .foregroundColor(Color(red: 0.28, green: 0.15, blue: 0.04))
                 .lineLimit(1)
-                .minimumScaleFactor(0.65)
+                .minimumScaleFactor(0.6)
                 .padding(.horizontal, diameter * 0.10)
-                .padding(.vertical, diameter * 0.05)
+                .padding(.vertical, diameter * 0.045)
                 .background(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
                         .fill(LinearGradient(colors: [
