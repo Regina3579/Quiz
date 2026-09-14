@@ -21,6 +21,19 @@ struct HomeView: View {
     @State private var appeared = false
     @State private var showStickerBook = false
     @State private var showNameEntry = false
+
+    /// How far the trail has been pulled up, and how far the finger has moved
+    /// since it went down. The two are kept apart so the map can follow a
+    /// drag live and then carry the flick on when it lifts.
+    @State private var scrollY: CGFloat = 0
+    @GestureState private var dragY: CGFloat = 0
+
+    /// Navigation is driven by hand rather than by NavigationLink, because the
+    /// map is dragged with a gesture of its own. A link would still fire when
+    /// a swipe that began on an island ended there — a real ScrollView cancels
+    /// the touches underneath it, and our gesture cannot. A tap gesture fails
+    /// as soon as the finger travels, which is exactly the behaviour wanted.
+    @State private var path = NavigationPath()
     @AppStorage(Sound.muteKey) private var isMuted = false
     @AppStorage(Player.nameKey) private var playerName = ""
 
@@ -61,7 +74,7 @@ struct HomeView: View {
     private static let muteAt    = (x: 0.085, y: 0.930)
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             GeometryReader { geo in
                 let fit = Self.fittedSize(in: geo.size)
 
@@ -79,6 +92,11 @@ struct HomeView: View {
                     .frame(width: fit.width, height: fit.height)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
+                // The drag lives out here, on the whole screen, rather than on
+                // the paper: a child swiping over the jungle border or down by
+                // the parrot is still trying to move the map.
+                .contentShape(Rectangle())
+                .simultaneousGesture(mapDrag(maxScroll: maxScroll(fit: fit)))
             }
             .ignoresSafeArea()
             .navigationDestination(for: Island.self) { island in
@@ -134,24 +152,65 @@ struct HomeView: View {
         let ww = w * (Self.window.x1 - Self.window.x0)
         let wh = h * (Self.window.y1 - Self.window.y0)
 
-        return ScrollView(showsIndicators: false) {
-            trail(width: ww)
-                .padding(.vertical, 14)
-        }
-        .frame(width: ww, height: wh)
-        // The paper's own edge is where the trail has to stop, so soften the
-        // cut: islands dissolve into the parchment instead of being sliced
-        // through, which reads as "the map carries on" rather than "the map
-        // ends here".
-        .mask(
-            LinearGradient(stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black, location: 0.025),
-                .init(color: .black, location: 0.975),
-                .init(color: .clear, location: 1)
-            ], startPoint: .top, endPoint: .bottom)
-        )
-        .offset(x: x0, y: y0)
+        let contentH = trailHeight(windowWidth: ww)
+        let limit = max(0, contentH - wh)
+        let y = min(0, max(-limit, scrollY + dragY))
+
+        return trail(width: ww)
+            .padding(.vertical, Self.trailPad)
+            .frame(width: ww, height: contentH, alignment: .top)
+            .offset(y: y)
+            .frame(width: ww, height: wh, alignment: .top)
+            .clipped()
+            .contentShape(Rectangle())
+            // The paper's own edge is where the trail has to stop, so soften
+            // the cut: islands dissolve into the parchment instead of being
+            // sliced through, which reads as "the map carries on" rather than
+            // "the map ends here".
+            .mask(
+                LinearGradient(stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.025),
+                    .init(color: .black, location: 0.975),
+                    .init(color: .clear, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+            )
+            .offset(x: x0, y: y0)
+    }
+
+    /// Padding above the first island and below the last.
+    private static let trailPad: CGFloat = 14
+    private static let rowFactor: CGFloat = 0.397
+    private static let islandFactor: CGFloat = 0.291
+
+    private func trailHeight(windowWidth ww: CGFloat) -> CGFloat {
+        CGFloat(islands.count) * ww * Self.rowFactor + 30 + Self.trailPad * 2
+    }
+
+    /// How far up the trail can be pulled before its end reaches the water.
+    private func maxScroll(fit: CGSize) -> CGFloat {
+        let ww = fit.width * (Self.window.x1 - Self.window.x0)
+        let wh = fit.height * (Self.window.y1 - Self.window.y0)
+        return max(0, trailHeight(windowWidth: ww) - wh)
+    }
+
+    /// Follows the finger while it is down, then carries the flick on and
+    /// settles inside the paper. `minimumDistance` is what keeps taps on the
+    /// islands and the painted buttons working — a tap never becomes a drag.
+    private func mapDrag(maxScroll limit: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 8)
+            .updating($dragY) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                // Take over from the live drag at exactly where the finger
+                // left, so nothing jumps as dragY falls back to zero.
+                scrollY = min(0, max(-limit, scrollY + value.translation.height))
+                let carry = value.predictedEndTranslation.height - value.translation.height
+                withAnimation(.easeOut(duration: 0.5)) {
+                    scrollY = min(0, max(-limit, scrollY + carry))
+                }
+            }
     }
 
     /// The winding line of islands. It is taller than the parchment window,
@@ -168,9 +227,9 @@ struct HomeView: View {
     /// Checked at 375x667, 375x812, 393x852 and 430x932.
     private func trail(width: CGFloat) -> some View {
         let count = islands.count
-        let rowHeight = width * 0.397
+        let rowHeight = width * Self.rowFactor
         let contentHeight = CGFloat(count) * rowHeight + 30
-        let diameter = width * 0.291
+        let diameter = width * Self.islandFactor
 
         return ZStack {
             IslandPath(count: count, width: width, rowHeight: rowHeight)
@@ -198,25 +257,20 @@ struct HomeView: View {
         let maxStars = progress.maxStars(for: island)
         let complete = progress.isIslandComplete(island)
 
-        Group {
-            if unlocked {
-                NavigationLink(value: island) {
-                    IslandBadge(island: island, number: index + 1,
-                                unlocked: true, complete: complete,
-                                earned: earned, maxStars: maxStars, diameter: diameter)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
-            } else {
-                IslandBadge(island: island, number: index + 1,
-                            unlocked: false, complete: false,
-                            earned: 0, maxStars: maxStars, diameter: diameter)
+        IslandBadge(island: island, number: index + 1,
+                    unlocked: unlocked, complete: unlocked && complete,
+                    earned: unlocked ? earned : 0,
+                    maxStars: maxStars, diameter: diameter)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard unlocked else { return }
+                Haptics.play(.light)
+                path.append(island)
             }
-        }
-        .opacity(appeared ? 1 : 0)
-        .scaleEffect(appeared ? 1 : 0.75)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(index) * 0.05),
-                   value: appeared)
+            .opacity(appeared ? 1 : 0)
+            .scaleEffect(appeared ? 1 : 0.75)
+            .animation(.spring(response: 0.5, dampingFraction: 0.7)
+                .delay(Double(index) * 0.05), value: appeared)
     }
 
     // MARK: - The live bits laid over the painted ones
@@ -249,57 +303,57 @@ struct HomeView: View {
     private func liveName(width w: CGFloat, height h: CGFloat) -> some View {
         let box = CGSize(width: w * Self.nameText.w, height: h * Self.nameText.h)
 
-        return Button {
-            Haptics.play(.light)
-            showNameEntry = true
-        } label: {
-            Text(playerName.isEmpty ? "Hi there!" : "Hi, \(playerName)!")
-                .font(Theme.display(min(23, box.height * 0.86)))
-                .foregroundColor(mapInk)
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .frame(width: box.width, height: box.height)
-                .background(
-                    Rectangle()
-                        .fill(Color(red: 0.992, green: 0.980, blue: 0.955))
-                        .blur(radius: 1.5)
-                )
-                // Reaches across to the painted pencil so tapping it works.
-                .frame(width: box.width * 1.35, height: box.height * 1.6)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .position(x: w * Self.nameText.x, y: h * Self.nameText.y)
-        .accessibilityLabel("Change your name")
+        return Text(playerName.isEmpty ? "Hi there!" : "Hi, \(playerName)!")
+            .font(Theme.display(min(23, box.height * 0.86)))
+            .foregroundColor(mapInk)
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .frame(width: box.width, height: box.height)
+            .background(
+                Rectangle()
+                    .fill(Color(red: 0.992, green: 0.980, blue: 0.955))
+                    .blur(radius: 1.5)
+            )
+            // Reaches across to the painted pencil so tapping it works.
+            .frame(width: box.width * 1.35, height: box.height * 1.6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                showNameEntry = true
+            }
+            .position(x: w * Self.nameText.x, y: h * Self.nameText.y)
+            .accessibilityLabel("Change your name")
     }
 
     private func muteToggle(width w: CGFloat, height h: CGFloat) -> some View {
         let side = min(46, w * 0.105)
 
-        return Button {
-            isMuted.toggle()
-            Haptics.play(.light)
-        } label: {
-            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                .font(.system(size: side * 0.44, weight: .bold))
-                .foregroundColor(mapInk)
-                .frame(width: side, height: side)
-                .background(Circle().fill(Color(red: 0.99, green: 0.94, blue: 0.80)))
-                .overlay(Circle().stroke(Color(red: 0.60, green: 0.44, blue: 0.22), lineWidth: 2))
-                .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
-        }
-        .buttonStyle(PressableButtonStyle())
-        .position(x: w * Self.muteAt.x, y: h * Self.muteAt.y)
-        .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
+        return Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+            .font(.system(size: side * 0.44, weight: .bold))
+            .foregroundColor(mapInk)
+            .frame(width: side, height: side)
+            .background(Circle().fill(Color(red: 0.99, green: 0.94, blue: 0.80)))
+            .overlay(Circle().stroke(Color(red: 0.60, green: 0.44, blue: 0.22), lineWidth: 2))
+            .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
+            .contentShape(Circle())
+            .onTapGesture {
+                isMuted.toggle()
+                Haptics.play(.light)
+            }
+            .position(x: w * Self.muteAt.x, y: h * Self.muteAt.y)
+            .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
     }
 
     // MARK: - Tap targets over the painted buttons
     //
     // These sit over buttons that are part of the background picture, so they
-    // have nothing of their own to draw. Every one of them needs an explicit
+    // have nothing of their own to draw. Every one needs an explicit
     // `contentShape`: SwiftUI does not hit-test fully transparent content, so
-    // without it the whole button is invisible to a finger as well as to the
-    // eye.
+    // without it the button is invisible to a finger as well as to the eye.
+    //
+    // They answer to a tap gesture rather than a Button for the same reason
+    // the islands do — a swipe of the map that happens to start here must
+    // move the map, not open the page.
 
     @ViewBuilder
     private func tapTargets(width w: CGFloat, height h: CGFloat) -> some View {
@@ -307,60 +361,60 @@ struct HomeView: View {
         let doneToday = progress.isPlayedToday(daily)
 
         // Daily Challenge
-        NavigationLink(value: ProRoute(mode: daily)) {
-            Color.clear
-                .overlay {
-                    if doneToday {
-                        // Dimmed with a tick, so the card still reads as the
-                        // Daily Challenge once today's round is done.
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(.black.opacity(0.42))
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: min(34, h * 0.038)))
-                                .foregroundColor(.white)
-                                .shadow(color: .black.opacity(0.5), radius: 3)
-                        }
-                        .padding(8)
+        Color.clear
+            .overlay {
+                if doneToday {
+                    // Dimmed with a tick, so the card still reads as the
+                    // Daily Challenge once today's round is done.
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(.black.opacity(0.42))
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: min(34, h * 0.038)))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 3)
                     }
+                    .padding(8)
                 }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .disabled(doneToday)
-        .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
-        .frame(width: w * (Self.dailyRect.x1 - Self.dailyRect.x0),
-               height: h * (Self.dailyRect.y1 - Self.dailyRect.y0))
-        .position(x: w * (Self.dailyRect.x0 + Self.dailyRect.x1) / 2,
-                  y: h * (Self.dailyRect.y0 + Self.dailyRect.y1) / 2)
-        .accessibilityLabel(doneToday ? "Daily Challenge, already played today"
-                                      : "Play today's Daily Challenge")
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard !doneToday else { return }
+                Haptics.play(.light)
+                path.append(ProRoute(mode: daily))
+            }
+            .frame(width: w * (Self.dailyRect.x1 - Self.dailyRect.x0),
+                   height: h * (Self.dailyRect.y1 - Self.dailyRect.y0))
+            .position(x: w * (Self.dailyRect.x0 + Self.dailyRect.x1) / 2,
+                      y: h * (Self.dailyRect.y0 + Self.dailyRect.y1) / 2)
+            .accessibilityLabel(doneToday ? "Daily Challenge, already played today"
+                                          : "Play today's Daily Challenge")
 
         // Pro Challenge
-        NavigationLink(value: ProHubRoute()) {
-            Color.clear.contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
-        .frame(width: w * (Self.proRect.x1 - Self.proRect.x0),
-               height: h * (Self.proRect.y1 - Self.proRect.y0))
-        .position(x: w * (Self.proRect.x0 + Self.proRect.x1) / 2,
-                  y: h * (Self.proRect.y0 + Self.proRect.y1) / 2)
-        .accessibilityLabel("Open the Pro Challenge")
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                path.append(ProHubRoute())
+            }
+            .frame(width: w * (Self.proRect.x1 - Self.proRect.x0),
+                   height: h * (Self.proRect.y1 - Self.proRect.y0))
+            .position(x: w * (Self.proRect.x0 + Self.proRect.x1) / 2,
+                      y: h * (Self.proRect.y0 + Self.proRect.y1) / 2)
+            .accessibilityLabel("Open the Pro Challenge")
 
         // Sticker book
-        Button {
-            Haptics.play(.light)
-            showStickerBook = true
-        } label: {
-            Color.clear.contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .frame(width: w * (Self.bookRect.x1 - Self.bookRect.x0),
-               height: h * (Self.bookRect.y1 - Self.bookRect.y0))
-        .position(x: w * (Self.bookRect.x0 + Self.bookRect.x1) / 2,
-                  y: h * (Self.bookRect.y0 + Self.bookRect.y1) / 2)
-        .accessibilityLabel("Open my sticker book")
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                showStickerBook = true
+            }
+            .frame(width: w * (Self.bookRect.x1 - Self.bookRect.x0),
+                   height: h * (Self.bookRect.y1 - Self.bookRect.y0))
+            .position(x: w * (Self.bookRect.x0 + Self.bookRect.x1) / 2,
+                      y: h * (Self.bookRect.y0 + Self.bookRect.y1) / 2)
+            .accessibilityLabel("Open my sticker book")
     }
 }
 
