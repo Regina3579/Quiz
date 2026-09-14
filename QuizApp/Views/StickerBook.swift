@@ -254,7 +254,9 @@ enum StickerCatalog {
             blossomSticker(6),  // toadstool cottage in the flower bed
             blossomSticker(7),  // blossom tree with a swing and a bluebird
             blossomSticker(8),  // garden gate, "Good Things Grow Here"
-            blossomSticker(9)   // bluebird on a flowering birdhouse
+            blossomSticker(9),  // bluebird on a flowering birdhouse
+            blossomSticker(10), // kitten hugging a star
+            blossomSticker(11)  // bluebird singing on a blossom branch
         ],
         epic: []
     )
