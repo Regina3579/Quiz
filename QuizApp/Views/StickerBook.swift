@@ -238,9 +238,12 @@ enum StickerCatalog {
         Sticker(id: "blossom_c\(n)", emoji: "🌺", cost: cuteCost,
                 imageName: String(format: "StickerB%02d", n))
     }
-    /// 🌺 Blossom Garden — spring in the flower beds. No Epic tier yet; the
-    /// shop leaves a tier out until it has stickers in it, and an Epic helper
-    /// can go in beside the Cute one the moment there is artwork for it.
+    private static func blossomEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "blossom_e\(n)", emoji: "🌸", cost: epicCost,
+                imageName: String(format: "StickerBE%02d", n))
+    }
+
+    /// 🌺 Blossom Garden — spring in the flower beds.
     static let blossomGarden = StickerCategory(
         id: "blossom",
         name: "Blossom Garden",
@@ -258,7 +261,13 @@ enum StickerCatalog {
             blossomSticker(10), // kitten hugging a star
             blossomSticker(11)  // bluebird singing on a blossom branch
         ],
-        epic: []
+        epic: [
+            blossomEpicSticker(1),  // rainbow unicorn in the blossom
+            blossomEpicSticker(2),  // wisteria gazebo with golden lanterns
+            blossomEpicSticker(3),  // crowned golden songbird
+            blossomEpicSticker(4),  // fawn with blossoming antlers
+            blossomEpicSticker(5)   // moonlit blossom tree over the water
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
