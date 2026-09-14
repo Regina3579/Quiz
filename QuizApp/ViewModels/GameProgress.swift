@@ -44,6 +44,17 @@ final class GameProgress: ObservableObject {
     /// When the Daily Challenge was last completed.
     @Published private(set) var dailyPlayedOn: Date?
 
+    /// Running totals over the whole journey, which the Trophy Room's cups
+    /// and badges are measured against.
+    @Published private(set) var tally = LifetimeTally()
+
+    /// The ids of every award already won.
+    @Published private(set) var unlockedAchievements: Set<String> = []
+
+    /// Awards won by the round that has just finished, for the result screen
+    /// to celebrate. Cleared when the next round starts.
+    @Published private(set) var recentlyUnlocked: [Achievement] = []
+
     private let defaultsKey = "quizspark.progress.v1"
     private let jewelsKey = "quizspark.jewels.v1"
     private let ownedStickersKey = "quizspark.stickers.owned.v1"
@@ -51,6 +62,8 @@ final class GameProgress: ObservableObject {
     private let placedNotesKey = "quizspark.notes.placed.v1"
     private let proScoresKey = "quizspark.pro.best.v1"
     private let dailyPlayedKey = "quizspark.pro.daily.v1"
+    private let tallyKey = "quizspark.tally.v1"
+    private let achievementsKey = "quizspark.achievements.v1"
     /// The retired one-note-per-page store, read once so nothing is lost.
     private let pageNotesKey = "quizspark.stickers.notes.v1"
 
@@ -140,7 +153,89 @@ final class GameProgress: ObservableObject {
                                        total: total)
         jewels += reward.total
         saveJewels()
+
+        bank(results: results, correct: correct, total: total, earned: reward.total)
+        // A "perfect level" is the whole level answered without a mistake —
+        // the feat the Perfect Star badge is named for.
+        if total > 0, correct == total { tally.perfectLevels += 1 }
+        saveTally()
+        awardEarnedAchievements()
+
         return reward
+    }
+
+    // MARK: - Trophy Room
+
+    /// Where the child currently stands against one award.
+    func standing(_ achievement: Achievement) -> Int {
+        switch achievement.measure {
+        case .correctAnswers:    return tally.correctAnswers
+        case .questionsAnswered: return tally.questionsAnswered
+        case .jewelsEarned:      return tally.jewelsEarned
+        case .bestStreak:        return tally.bestStreak
+        case .perfectLevels:     return tally.perfectLevels
+        case .perfectRunWins:    return tally.perfectRunWins
+        case .proRounds(let mode): return tally.proRounds[mode.rawValue] ?? 0
+        case .islandsComplete:   return QuizData.islands.filter { isIslandComplete($0) }.count
+        }
+    }
+
+    func hasWon(_ achievement: Achievement) -> Bool {
+        unlockedAchievements.contains(achievement.id)
+    }
+
+    /// How many awards have been won out of all there are.
+    var trophyCount: Int {
+        AchievementCatalog.all.filter { hasWon($0) }.count
+    }
+
+    /// The best cup won so far, for the little badge on the map button.
+    var topCup: Achievement? {
+        AchievementCatalog.cups.last { hasWon($0) }
+    }
+
+    /// Adds a finished round to the running totals.
+    private func bank(results: [Bool], correct: Int, total: Int, earned: Int) {
+        tally.questionsAnswered += total
+        tally.correctAnswers += correct
+        tally.jewelsEarned += earned
+        tally.bestStreak = max(tally.bestStreak, JewelRules.longestStreak(results))
+    }
+
+    /// Hands over every award now earned and records what was new, so the
+    /// result screen can show it.
+    ///
+    /// This loops because an award can pay jewels, and paying jewels can be
+    /// what wins the next one — Jewel Hunter falling out of a cup, say. It
+    /// settles as soon as a pass finds nothing new.
+    private func awardEarnedAchievements() {
+        var fresh: [Achievement] = []
+        var found = true
+
+        while found {
+            found = false
+            for award in AchievementCatalog.all where !unlockedAchievements.contains(award.id) {
+                guard standing(award) >= award.target else { continue }
+                unlockedAchievements.insert(award.id)
+                if award.jewelReward > 0 {
+                    jewels += award.jewelReward
+                    tally.jewelsEarned += award.jewelReward
+                }
+                if let sticker = award.stickerReward { ownedStickers.insert(sticker) }
+                fresh.append(award)
+                found = true
+            }
+        }
+
+        // Always replaced, empty included — so a result screen reading this
+        // right after banking its round can never pick up the last one's.
+        recentlyUnlocked = fresh
+
+        guard !fresh.isEmpty else { return }
+        saveJewels()
+        saveStickers()
+        saveTally()
+        saveAchievements()
     }
 
     // MARK: - Sticker book
@@ -216,15 +311,30 @@ final class GameProgress: ObservableObject {
         UserDefaults.standard.set(dailyPlayedOn, forKey: dailyPlayedKey)
     }
 
-    /// Banks the jewels from a finished Pro round and remembers the best
-    /// score. Returns true when this run beat the previous best.
+    /// Banks the jewels from a finished Pro round, remembers the best score
+    /// and adds the round to the Trophy Room's tallies. Returns true when this
+    /// run beat the previous best.
+    ///
+    /// `results` is the per-question record; `endedEarly` says the round was
+    /// cut short by a wrong answer, which is what separates a Perfect Run that
+    /// was won from one that was merely played.
     @discardableResult
-    func finishProRound(mode: ProMode, score: Int, jewels earned: Int) -> Bool {
+    func finishProRound(mode: ProMode, score: Int, jewels earned: Int,
+                        results: [Bool] = [], endedEarly: Bool = false) -> Bool {
         if earned > 0 {
             jewels += earned
             saveJewels()
         }
         if mode.isOncePerDay { markPlayedToday() }
+
+        bank(results: results, correct: score, total: results.count, earned: earned)
+        tally.proRounds[mode.rawValue, default: 0] += 1
+        if mode == .perfectRun, !endedEarly, !results.isEmpty, !results.contains(false) {
+            tally.perfectRunWins += 1
+        }
+        saveTally()
+        awardEarnedAchievements()
+
         let isBest = score > proBest(mode)
         if isBest {
             proBestScores[mode.rawValue] = score
@@ -277,12 +387,17 @@ final class GameProgress: ObservableObject {
         placedNotes = []
         proBestScores = [:]
         dailyPlayedOn = nil
+        tally = LifetimeTally()
+        unlockedAchievements = []
+        recentlyUnlocked = []
         UserDefaults.standard.removeObject(forKey: dailyPlayedKey)
         save()
         saveJewels()
         saveStickers()
         saveNotes()
         saveProScores()
+        saveTally()
+        saveAchievements()
     }
 
     // MARK: - Persistence
@@ -319,6 +434,14 @@ final class GameProgress: ObservableObject {
             proBestScores = decoded
         }
         dailyPlayedOn = UserDefaults.standard.object(forKey: dailyPlayedKey) as? Date
+        if let data = UserDefaults.standard.data(forKey: tallyKey),
+           let decoded = try? JSONDecoder().decode(LifetimeTally.self, from: data) {
+            tally = decoded
+        }
+        if let data = UserDefaults.standard.data(forKey: achievementsKey),
+           let decoded = try? JSONDecoder().decode(Set<String>.self, from: data) {
+            unlockedAchievements = decoded
+        }
     }
 
     private func save() {
@@ -349,6 +472,18 @@ final class GameProgress: ObservableObject {
     private func saveProScores() {
         if let data = try? JSONEncoder().encode(proBestScores) {
             UserDefaults.standard.set(data, forKey: proScoresKey)
+        }
+    }
+
+    private func saveTally() {
+        if let data = try? JSONEncoder().encode(tally) {
+            UserDefaults.standard.set(data, forKey: tallyKey)
+        }
+    }
+
+    private func saveAchievements() {
+        if let data = try? JSONEncoder().encode(unlockedAchievements) {
+            UserDefaults.standard.set(data, forKey: achievementsKey)
         }
     }
 }

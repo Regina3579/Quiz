@@ -20,6 +20,8 @@ struct ProResultView: View {
     @State private var recorded = false
     @State private var isNewBest = false
     @State private var jewelsShown = 0
+    /// Trophy Room awards this round won, snapshotted as it was banked.
+    @State private var awardsWon: [Achievement] = []
 
     private var mode: ProMode { model.mode }
 
@@ -78,6 +80,11 @@ struct ProResultView: View {
                     recapRow.opacity(showContent ? 1 : 0)
 
                     jewelCard.opacity(showContent ? 1 : 0)
+
+                    if !awardsWon.isEmpty {
+                        AwardWonCard(awards: awardsWon)
+                            .opacity(showContent ? 1 : 0)
+                    }
 
                     actions.opacity(showContent ? 1 : 0)
                 }
@@ -245,7 +252,10 @@ struct ProResultView: View {
         if !recorded {
             isNewBest = progress.finishProRound(mode: mode,
                                                 score: model.score,
-                                                jewels: model.totalJewels)
+                                                jewels: model.totalJewels,
+                                                results: model.results,
+                                                endedEarly: model.endedEarly)
+            awardsWon = progress.recentlyUnlocked
             recorded = true
         }
 

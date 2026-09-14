@@ -21,6 +21,8 @@ struct ResultView: View {
     @State private var recorded = false
     @State private var reward: JewelReward?
     @State private var jewelsShown = 0
+    /// Trophy Room awards this level won, snapshotted as it was banked.
+    @State private var awardsWon: [Achievement] = []
 
     private var earned: Int { model.starsEarned }
 
@@ -80,6 +82,11 @@ struct ResultView: View {
                 recapRow.opacity(showContent ? 1 : 0)
 
                 jewelReward.opacity(showContent ? 1 : 0)
+
+                if !awardsWon.isEmpty {
+                    AwardWonCard(awards: awardsWon)
+                        .opacity(showContent ? 1 : 0)
+                }
 
                 Spacer(minLength: 0)
 
@@ -234,6 +241,9 @@ struct ResultView: View {
                                             total: model.totalQuestions,
                                             earned: earned,
                                             results: model.results)
+            // Whatever the level just won, captured before anything else can
+            // change it.
+            awardsWon = progress.recentlyUnlocked
             recorded = true
         }
 

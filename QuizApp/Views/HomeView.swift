@@ -21,6 +21,7 @@ struct HomeView: View {
     @State private var appeared = false
     @State private var showStickerBook = false
     @State private var showNameEntry = false
+    @State private var showTrophyRoom = false
 
     /// How far the trail has been pulled up, and how far the finger has moved
     /// since it went down. The two are kept apart so the map can follow a
@@ -70,8 +71,10 @@ struct HomeView: View {
     private static let dailyRect = (x0: 0.029, y0: 0.106, x1: 0.294, y1: 0.209)
     private static let proRect   = (x0: 0.752, y0: 0.092, x1: 0.958, y1: 0.166)
     private static let bookRect  = (x0: 0.764, y0: 0.184, x1: 0.969, y1: 0.255)
-    /// The sound toggle sits low on the jungle border, out of the map's way.
-    private static let muteAt    = (x: 0.085, y: 0.930)
+    /// The sound toggle and the trophy room sit low on the jungle borders,
+    /// one on each side, out of the map's way.
+    private static let muteAt   = (x: 0.085, y: 0.930)
+    private static let trophyAt = (x: 0.915, y: 0.930)
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -88,6 +91,7 @@ struct HomeView: View {
                         liveName(width: fit.width, height: fit.height)
                         tapTargets(width: fit.width, height: fit.height)
                         muteToggle(width: fit.width, height: fit.height)
+                        trophyButton(width: fit.width, height: fit.height)
                     }
                     .frame(width: fit.width, height: fit.height)
                 }
@@ -117,6 +121,9 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showNameEntry) {
             NameEntryView(isEditing: !playerName.isEmpty)
+        }
+        .fullScreenCover(isPresented: $showTrophyRoom) {
+            TrophyRoomView().environmentObject(progress)
         }
         .onAppear {
             appeared = true
@@ -342,6 +349,34 @@ struct HomeView: View {
             }
             .position(x: w * Self.muteAt.x, y: h * Self.muteAt.y)
             .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
+    }
+
+    /// Opens the Trophy Room. The best cup won so far rides on the corner, so
+    /// the map shows off the child's rank without them having to go and look.
+    private func trophyButton(width w: CGFloat, height h: CGFloat) -> some View {
+        let side = min(46, w * 0.105)
+        let won = progress.trophyCount
+
+        return Text("🏆")
+            .font(.system(size: side * 0.50))
+            .frame(width: side, height: side)
+            .background(Circle().fill(Color(red: 0.99, green: 0.94, blue: 0.80)))
+            .overlay(Circle().stroke(Color(red: 0.60, green: 0.44, blue: 0.22), lineWidth: 2))
+            .overlay(alignment: .topTrailing) {
+                if let cup = progress.topCup {
+                    Text(cup.emoji)
+                        .font(.system(size: side * 0.36))
+                        .offset(x: side * 0.16, y: -side * 0.12)
+                }
+            }
+            .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
+            .contentShape(Circle())
+            .onTapGesture {
+                Haptics.play(.light)
+                showTrophyRoom = true
+            }
+            .position(x: w * Self.trophyAt.x, y: h * Self.trophyAt.y)
+            .accessibilityLabel("My trophy room, \(won) award\(won == 1 ? "" : "s") won")
     }
 
     // MARK: - Tap targets over the painted buttons

@@ -22,6 +22,8 @@
 		AB000000000000000000005A /* ProResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000005B /* ProResultView.swift */; };
 		AB000000000000000000005C /* DailyChallenge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000005D /* DailyChallenge.swift */; };
 		AB000000000000000000005E /* QuestionPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000005F /* QuestionPanel.swift */; };
+		AB0000000000000000000062 /* TrophyRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000063 /* TrophyRoomView.swift */; };
+		AB0000000000000000000060 /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000061 /* Achievement.swift */; };
 		AB0000000000000000000044 /* StickerBook.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000045 /* StickerBook.swift */; };
 		AB000000000000000000004A /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000004B /* NameEntryView.swift */; };
 		AB000000000000000000000A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000009 /* HomeView.swift */; };
@@ -59,6 +61,8 @@
 		AB000000000000000000005B /* ProResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProResultView.swift; sourceTree = "<group>"; };
 		AB000000000000000000005D /* DailyChallenge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyChallenge.swift; sourceTree = "<group>"; };
 		AB000000000000000000005F /* QuestionPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionPanel.swift; sourceTree = "<group>"; };
+		AB0000000000000000000063 /* TrophyRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrophyRoomView.swift; sourceTree = "<group>"; };
+		AB0000000000000000000061 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
 		AB0000000000000000000045 /* StickerBook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickerBook.swift; sourceTree = "<group>"; };
 		AB000000000000000000004B /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000009 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -131,6 +135,7 @@
 				AB0000000000000000000003 /* Question.swift */,
 				AB0000000000000000000005 /* Quiz.swift */,
 				AB0000000000000000000051 /* ProMode.swift */,
+				AB0000000000000000000061 /* Achievement.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -158,6 +163,7 @@
 				AB000000000000000000005B /* ProResultView.swift */,
 				AB0000000000000000000059 /* ProQuizView.swift */,
 				AB0000000000000000000057 /* ProHubView.swift */,
+				AB0000000000000000000063 /* TrophyRoomView.swift */,
 				AB0000000000000000000026 /* Components */,
 			);
 			path = Views;
@@ -293,6 +299,8 @@
 				AB0000000000000000000058 /* ProQuizView.swift in Sources */,
 				AB000000000000000000005A /* ProResultView.swift in Sources */,
 				AB000000000000000000005C /* DailyChallenge.swift in Sources */,
+				AB0000000000000000000062 /* TrophyRoomView.swift in Sources */,
+				AB0000000000000000000060 /* Achievement.swift in Sources */,
 				AB000000000000000000005E /* QuestionPanel.swift in Sources */,
 				AB0000000000000000000044 /* StickerBook.swift in Sources */,
 				AB000000000000000000004A /* NameEntryView.swift in Sources */,
