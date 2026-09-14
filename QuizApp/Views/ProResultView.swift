@@ -199,7 +199,9 @@ struct ProResultView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color.white.opacity(0.18)))
+                    .fill(Color.black.opacity(0.40)))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(.white.opacity(0.40), lineWidth: 1.5))
             } else {
                 Button {
                     Haptics.play(.light)
@@ -241,9 +243,10 @@ struct ProResultView: View {
         .padding(.vertical, 16)
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous)
             .fill(filled ? AnyShapeStyle(Color.white)
-                         : AnyShapeStyle(Color.white.opacity(0.22))))
+                         : AnyShapeStyle(Color.black.opacity(0.45))))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .stroke(filled ? Color.clear : Color.white.opacity(0.6), lineWidth: 2))
+            .stroke(filled ? Color.clear : Color.white.opacity(0.75), lineWidth: 2))
+        .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
     }
 
     // MARK: - Animation & saving
