@@ -391,10 +391,33 @@ enum StickerCatalog {
         ]
     )
 
-    /// All categories shown in the shop (more will be added over time).
+    /// "CS" rather than "C", which Animal Kingdom already uses.
+    private static func championSticker(_ n: Int) -> Sticker {
+        Sticker(id: "champion_c\(n)", emoji: "🏆", cost: cuteCost,
+                imageName: String(format: "StickerCS%02d", n))
+    }
+
+    /// 🏆 Champion's Summit — the last adventure gathers friends from all the
+    /// others. No Epic tier yet; the shop leaves a tier out until it has
+    /// stickers in it.
+    static let championsSummit = StickerCategory(
+        id: "champion",
+        name: "Champion's Summit",
+        emoji: "🏆",
+        cute: [
+            championSticker(1),  // lion cub in a jewelled crown
+            championSticker(2),  // baby elephant sitting up
+            championSticker(3),  // penguin with its flippers out
+            championSticker(4),  // dolphin leaping from the splash
+            championSticker(5)   // smiling globe on a golden stand
+        ],
+        epic: []
+    )
+
+    /// All ten adventures now have a shelf of their own.
     static let categories: [StickerCategory] = [
         animalKingdom, galaxyQuest, dinoValley, oceanParadise, explorersTrail,
-        blossomGarden, scienceLab, brainCastle, ancientKingdom
+        blossomGarden, scienceLab, brainCastle, ancientKingdom, championsSummit
     ]
 
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
