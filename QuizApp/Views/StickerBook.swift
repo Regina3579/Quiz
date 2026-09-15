@@ -409,7 +409,12 @@ enum StickerCatalog {
             championSticker(2),  // baby elephant sitting up
             championSticker(3),  // penguin with its flippers out
             championSticker(4),  // dolphin leaping from the splash
-            championSticker(5)   // smiling globe on a golden stand
+            championSticker(5),  // smiling globe on a golden stand
+            championSticker(6),  // astronaut child waving
+            championSticker(7),  // fox cub with a bushy tail
+            championSticker(8),  // owl in a mortarboard, reading
+            championSticker(9),  // lion cub with a full mane
+            championSticker(10)  // baby elephant, trunk raised
         ],
         epic: []
     )
