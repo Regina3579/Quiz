@@ -319,8 +319,13 @@ enum StickerCatalog {
                 imageName: String(format: "StickerBC%02d", n))
     }
 
-    /// 🏰 Brain Castle — numbers, shapes and puzzles to think with.
-    /// No Epic tier yet; the shop leaves a tier out until it has stickers.
+    private static func brainEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "brain_e\(n)", emoji: "👑", cost: epicCost,
+                imageName: String(format: "StickerBCE%02d", n))
+    }
+
+    /// 🏰 Brain Castle — numbers, shapes and puzzles to think with, and a
+    /// grander realm of them in the Epic tier.
     static let brainCastle = StickerCategory(
         id: "brain",
         name: "Brain Castle",
@@ -337,7 +342,13 @@ enum StickerCatalog {
             brainSticker(9),  // heart jigsaw, "Math Is Fun!"
             brainSticker(10)  // balance scales weighing number blocks
         ],
-        epic: []
+        epic: [
+            brainEpicSticker(1),  // the Infinity Gateway of numbers
+            brainEpicSticker(2),  // explorer girl and her dragon at the chest
+            brainEpicSticker(3),  // crowned brain among the formulas
+            brainEpicSticker(4),  // astronaut girl riding a rocket past Earth
+            brainEpicSticker(5)   // Brain Castle itself, "Knowledge Lives Here!"
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
