@@ -356,9 +356,13 @@ enum StickerCatalog {
                 imageName: String(format: "StickerA%02d", n))
     }
 
+    private static func ancientEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "ancient_e\(n)", emoji: "🏛️", cost: epicCost,
+                imageName: String(format: "StickerAE%02d", n))
+    }
+
     /// 👑 Ancient Kingdom — Greece, Egypt and Rome, and the treasures they
-    /// left behind. No Epic tier yet; the shop leaves a tier out until it has
-    /// stickers in it.
+    /// left behind, with grander relics in the Epic tier.
     static let ancientKingdom = StickerCategory(
         id: "ancient",
         name: "Ancient Kingdom",
@@ -375,7 +379,12 @@ enum StickerCatalog {
             ancientSticker(9),  // camel in festival tassels
             ancientSticker(10)  // desert tent with a lantern and maps
         ],
-        epic: []
+        epic: [
+            ancientEpicSticker(1),  // pharaoh kitten among the treasure
+            ancientEpicSticker(2),  // the Sphinx between two braziers
+            ancientEpicSticker(3),  // Horus falcon over the pyramids
+            ancientEpicSticker(4)   // treasure chest of ankhs and jewels
+        ]
     )
 
     /// All categories shown in the shop (more will be added over time).
