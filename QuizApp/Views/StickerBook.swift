@@ -368,7 +368,12 @@ enum StickerCatalog {
             ancientSticker(2),  // camel resting at the pyramid
             ancientSticker(3),  // laurel-crowned girl at a Greek temple
             ancientSticker(4),  // Egyptian cat in a golden collar
-            ancientSticker(5)   // Roman shield, helmet and sword
+            ancientSticker(5),  // Roman shield, helmet and sword
+            ancientSticker(6),  // kitten in a pharaoh's headdress
+            ancientSticker(7),  // lion of the Ishtar Gate
+            ancientSticker(8),  // Aztec sun temple with a toucan
+            ancientSticker(9),  // camel in festival tassels
+            ancientSticker(10)  // desert tent with a lantern and maps
         ],
         epic: []
     )
