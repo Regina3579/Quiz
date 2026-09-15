@@ -383,7 +383,11 @@ enum StickerCatalog {
             ancientEpicSticker(1),  // pharaoh kitten among the treasure
             ancientEpicSticker(2),  // the Sphinx between two braziers
             ancientEpicSticker(3),  // Horus falcon over the pyramids
-            ancientEpicSticker(4)   // treasure chest of ankhs and jewels
+            ancientEpicSticker(4),  // treasure chest of ankhs and jewels
+            ancientEpicSticker(5),  // Anubis gateway onto the pyramids
+            ancientEpicSticker(6),  // hanging gardens of Babylon
+            ancientEpicSticker(7),  // golden temple valley at sunrise
+            ancientEpicSticker(8)   // palace floating on the clouds
         ]
     )
 
