@@ -413,10 +413,13 @@ enum StickerCatalog {
             championSticker(6),  // astronaut child waving
             championSticker(7),  // fox cub with a bushy tail
             championSticker(8),  // owl in a mortarboard, reading
-            championSticker(9)   // lion cub with a full mane
+            championSticker(9),  // lion cub with a full mane
             // 10 was a second baby elephant, near enough to championSticker(2)
             // that the pair read as a repeat. Removed; the number is not
             // reused, so nothing a child already placed shifts under them.
+            championSticker(11), // winking star with little stars around it
+            championSticker(12), // fluffy kitten in a pink heart collar
+            championSticker(13)  // winking sun with pointed rays
         ],
         epic: []
     )
