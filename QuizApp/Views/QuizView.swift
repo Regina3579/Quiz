@@ -80,6 +80,8 @@ struct QuizView: View {
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.isFinished)
+        // The same tune as the map, played on this island's instruments.
+        .onAppear { Music.shared.play(Music.track(forIsland: model.island.id)) }
     }
 
     // MARK: - Gameplay

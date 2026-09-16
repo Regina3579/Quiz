@@ -1,0 +1,213 @@
+//
+//  Music.swift
+//  QuizApp
+//
+//  The background score: one gentle theme that follows the child around the
+//  app, changing instruments as they move from one adventure to the next so
+//  the whole game still sounds like one place.
+//
+//  Two things shape how this is built.
+//
+//  It has to loop without a seam. AVAudioPlayer's own looping leaves a gap on
+//  anything compressed, because AAC carries a few silent frames of encoder
+//  padding at each end. So the file is decoded once into a buffer and the
+//  engine is told to loop *the buffer*, which is sample-accurate and leaves
+//  the tracks small enough to ship.
+//
+//  And it has to stay underneath. A child is reading a question; the music is
+//  there to settle them, not to compete. It plays at a fraction of the sound
+//  effects, and it never ducks for them — a reward chime simply rings over the
+//  top, which is what makes the chime feel like a reward.
+//
+
+import AVFoundation
+import SwiftUI
+
+@MainActor
+final class Music {
+    static let shared = Music()
+
+    /// Roughly a fifth of a sound effect, which sits under a question without
+    /// disappearing entirely.
+    static let level: Float = 0.18
+
+    /// Long enough not to jolt, short enough not to feel like a mistake.
+    private static let fade: TimeInterval = 0.9
+
+    private let engine = AVAudioEngine()
+    /// Two voices so one theme can fade out under the next rather than
+    /// stopping first and leaving a hole.
+    private let voices = [AVAudioPlayerNode(), AVAudioPlayerNode()]
+    private var active = 0
+
+    private var playing: String?
+    /// Both sides of a crossfade run at once, so one slot is not enough —
+    /// keeping only the last would leave the other still nudging a stopped
+    /// node's volume after the app is paused.
+    private var faders: [Timer] = []
+    private var started = false
+
+    private init() {}
+
+    // MARK: - What plays where
+
+    /// The shared theme, heard on the map and anywhere without one of its own.
+    static let mapTrack = "music_map"
+
+    /// Each adventure keeps the tune and changes the instruments.
+    static func track(forIsland id: Int) -> String {
+        switch id {
+        case 0: return "music_jungle"
+        case 1: return "music_galaxy"
+        case 2: return "music_dino"
+        case 3: return "music_ocean"
+        case 4: return "music_explorer"
+        case 5: return "music_blossom"
+        case 6: return "music_science"
+        case 7: return "music_brain"
+        case 8: return "music_ancient"
+        case 9: return "music_champion"
+        default: return mapTrack
+        }
+    }
+
+    static let proTrack = "music_pro"
+    static let bookTrack = "music_book"
+
+    // MARK: - Playing
+
+    /// Fades over to a track. A track with no file falls back to the shared
+    /// theme, so the app can ship with one piece of music and gain the rest
+    /// later without a line of this changing.
+    func play(_ name: String) {
+        let resolved = url(for: name) != nil ? name : Self.mapTrack
+        guard resolved != playing else { return }
+        guard !Sound.isMuted else { playing = resolved; return }
+        guard let file = url(for: resolved) else { return }
+
+        guard start() else { return }
+        crossfade(to: file, named: resolved)
+    }
+
+    /// Called when the sound toggle changes, so music follows it.
+    func applyMute() {
+        if Sound.isMuted {
+            fadeOutAndStop()
+        } else if let wanted = playing {
+            playing = nil          // force play() to act
+            play(wanted)
+        }
+    }
+
+    /// Leaving the app: stop cleanly rather than being cut off.
+    func pause() {
+        faders.forEach { $0.invalidate() }
+        faders.removeAll()
+        voices.forEach { $0.pause() }
+    }
+
+    func resume() {
+        guard started, !Sound.isMuted, playing != nil else { return }
+        try? engine.start()
+        voices.forEach { if $0.isPlaying == false { $0.play() } }
+    }
+
+    // MARK: - Engine
+
+    private func url(for name: String) -> URL? {
+        for ext in ["m4a", "mp3", "wav", "caf"] {
+            if let u = Bundle.main.url(forResource: name, withExtension: ext) { return u }
+        }
+        return nil
+    }
+
+    private func start() -> Bool {
+        guard !started else { return true }
+        // .ambient: mixes with whatever the family already has playing and
+        // stays silent when the ring switch is off.
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
+        try? AVAudioSession.sharedInstance().setActive(true)
+
+        // Attached now, connected later: a player node has to be wired up with
+        // the format of the buffer it is about to play, and that is not known
+        // until a track has been decoded. Connecting with a guessed format is
+        // what makes scheduleBuffer fail on a file that turns out to be mono,
+        // or recorded at a different rate from the mixer.
+        for voice in voices {
+            engine.attach(voice)
+            voice.volume = 0
+        }
+        do {
+            try engine.start()
+        } catch {
+            return false        // no music; the game is unaffected
+        }
+        started = true
+        return true
+    }
+
+    private func crossfade(to file: URL, named: String) {
+        guard let buffer = buffer(from: file) else { return }
+
+        let outgoing = voices[active]
+        active = 1 - active
+        let incoming = voices[active]
+
+        incoming.stop()
+        incoming.volume = 0
+        engine.connect(incoming, to: engine.mainMixerNode, format: buffer.format)
+        incoming.scheduleBuffer(buffer, at: nil, options: [.loops])
+        incoming.play()
+        playing = named
+
+        ramp(outgoing, to: 0, andThen: { outgoing.stop() })
+        ramp(incoming, to: Self.level, andThen: nil)
+    }
+
+    /// Decodes the whole track once. Looping a decoded buffer is what makes
+    /// the join seamless — the file's own framing never comes into it.
+    private func buffer(from file: URL) -> AVAudioPCMBuffer? {
+        guard let audio = try? AVAudioFile(forReading: file) else { return nil }
+        let frames = AVAudioFrameCount(audio.length)
+        guard frames > 0,
+              let buffer = AVAudioPCMBuffer(pcmFormat: audio.processingFormat,
+                                            frameCapacity: frames) else { return nil }
+        do {
+            try audio.read(into: buffer)
+        } catch {
+            return nil
+        }
+        return buffer
+    }
+
+    private func ramp(_ node: AVAudioPlayerNode, to target: Float,
+                      andThen done: (() -> Void)?) {
+        let from = node.volume
+        let steps = 30
+        var step = 0
+        let timer = Timer.scheduledTimer(withTimeInterval: Self.fade / Double(steps),
+                                         repeats: true) { t in
+            step += 1
+            let progress = Float(step) / Float(steps)
+            Task { @MainActor in
+                node.volume = from + (target - from) * progress
+                if step >= steps {
+                    t.invalidate()
+                    node.volume = target
+                    done?()
+                }
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        faders.append(timer)
+        faders.removeAll { !$0.isValid }
+    }
+
+    private func fadeOutAndStop() {
+        let voice = voices[active]
+        ramp(voice, to: 0) { [weak self] in
+            voice.stop()
+            self?.engine.pause()
+        }
+    }
+}

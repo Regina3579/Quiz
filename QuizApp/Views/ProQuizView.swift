@@ -56,7 +56,10 @@ struct ProQuizView: View {
                 if !model.isFinished { quitButton }
             }
         }
-        .onAppear { model.startClock() }
+        .onAppear {
+            model.startClock()
+            Music.shared.play(Music.proTrack)
+        }
         .onDisappear { model.abandon() }
         .alert("Leave the challenge?", isPresented: $showQuitAlert) {
             Button("Keep playing", role: .cancel) { model.startClock() }

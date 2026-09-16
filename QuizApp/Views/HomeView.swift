@@ -133,6 +133,8 @@ struct HomeView: View {
         .onAppear {
             appeared = true
             if playerName.isEmpty { showNameEntry = true }
+            // Back on the map, whichever adventure they came from.
+            Music.shared.play(Music.mapTrack)
         }
     }
 
@@ -350,6 +352,7 @@ struct HomeView: View {
             .contentShape(Circle())
             .onTapGesture {
                 isMuted.toggle()
+                Music.shared.applyMute()
                 Haptics.play(.light)
             }
             .position(x: w * Self.muteAt.x, y: h * Self.muteAt.y)

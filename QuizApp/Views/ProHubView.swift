@@ -48,7 +48,10 @@ struct ProHubView: View {
             ProBriefingSheet(mode: mode)
                 .environmentObject(progress)
         }
-        .onAppear { appeared = true }
+        .onAppear {
+            appeared = true
+            Music.shared.play(Music.proTrack)
+        }
     }
 
     // MARK: - Header

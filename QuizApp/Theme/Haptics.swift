@@ -48,10 +48,17 @@ enum Sound {
         play("correct")
     }
 
-    /// Wrong answer: buzzer + an error vibration.
+    /// Wrong answer. A harsh buzzer tells a child off for thinking, so this
+    /// prefers a soft "oops" tone when one is bundled, and otherwise plays the
+    /// old sound quietly rather than at full blast. The vibration is a light
+    /// tap, not the error pattern, for the same reason.
     static func wrong() {
-        Haptics.play(.error)
-        play("wrong")
+        Haptics.play(.light)
+        if Bundle.main.url(forResource: "oops", withExtension: "wav") != nil {
+            play("oops")
+        } else {
+            play("wrong", volume: 0.45)
+        }
     }
 
     /// Soft paper swish when a sticker-book page is turned.
@@ -60,11 +67,12 @@ enum Sound {
     /// Cheery pop when a sticker is placed in the book.
     static func stickerPop() { play("stickerpop") }
 
-    static func play(_ name: String) {
+    static func play(_ name: String, volume: Float = 1) {
         // Respect the in-app mute button — skip all sound when muted.
         guard !isMuted else { return }
         prepareSession()
         if let existing = players[name] {
+            existing.volume = volume
             existing.currentTime = 0
             existing.play()
             return
@@ -72,6 +80,7 @@ enum Sound {
         guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else { return }
         do {
             let player = try AVAudioPlayer(contentsOf: url)
+            player.volume = volume
             player.prepareToPlay()
             players[name] = player
             player.play()
