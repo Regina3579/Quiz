@@ -76,10 +76,10 @@ enum Sound {
     private static var players: [String: AVAudioPlayer] = [:]
     private static var sessionReady = false
 
-    /// Kept as the storage key the sound-effects switch writes to, so existing
-    /// `@AppStorage` bindings keep working.
-    static let muteKey = AudioSettings.effectsKey
-
+    /// Deliberately no `muteKey` here any more. It used to name a key where
+    /// true meant "muted"; the key it would now have to point at means the
+    /// opposite, so anything still binding to it would read backwards.
+    /// Use `AudioSettings.effectsKey` and its true-means-on sense instead.
     static var isMuted: Bool { !AudioSettings.effectsOn }
 
     /// Correct answer: happy chime + a success vibration.
