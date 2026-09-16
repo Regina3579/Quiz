@@ -20,7 +20,9 @@
 //  top, which is what makes the chime feel like a reward.
 //
 
-import AVFoundation
+// @preconcurrency: AVFoundation's node classes predate Sendable checking and
+// are not marked, but every use of them here is already on the main actor.
+@preconcurrency import AVFoundation
 import SwiftUI
 import UIKit
 
@@ -55,10 +57,10 @@ final class Music {
     private var active = 0
 
     private var playing: String?
-    /// Both sides of a crossfade run at once, so one slot is not enough —
-    /// keeping only the last would leave the other still nudging a stopped
-    /// node's volume after the app is paused.
-    private var faders: [Timer] = []
+    /// One slot per voice. Both sides of a crossfade run at once, so a single
+    /// slot is not enough — keeping only the last would leave the other still
+    /// nudging a stopped node's volume after the app is paused.
+    private var fades: [Task<Void, Never>?] = [nil, nil]
     private var started = false
     private var watching = false
 
@@ -139,7 +141,7 @@ final class Music {
             playing = nil          // force play() to act
             play(wanted)
         } else {
-            ramp(voices[active], to: targetLevel, andThen: nil)
+            ramp(voice: active, to: targetLevel)
         }
     }
 
@@ -149,7 +151,7 @@ final class Music {
         guard ducking != on else { return }
         ducking = on
         guard AudioSettings.musicOn, voices[active].isPlaying else { return }
-        ramp(voices[active], to: targetLevel, andThen: nil)
+        ramp(voice: active, to: targetLevel)
     }
 
     /// Starts watching for the things that should quieten the music: VoiceOver
@@ -177,16 +179,27 @@ final class Music {
     }
 
     /// Leaving the app: stop cleanly rather than being cut off.
+    ///
+    /// A crossfade caught halfway is finished by hand rather than frozen where
+    /// it stood. Left alone it would come back as two themes playing together,
+    /// each stuck at part volume, with nothing still running to separate them.
     func pause() {
-        faders.forEach { $0.invalidate() }
-        faders.removeAll()
-        voices.forEach { $0.pause() }
+        for index in fades.indices {
+            fades[index]?.cancel()
+            fades[index] = nil
+        }
+        for index in voices.indices where index != active {
+            voices[index].stop()
+            voices[index].volume = 0
+        }
+        voices[active].volume = targetLevel
+        voices[active].pause()
     }
 
     func resume() {
         guard started, AudioSettings.musicOn, playing != nil else { return }
         try? engine.start()
-        voices.forEach { if $0.isPlaying == false { $0.play() } }
+        if !voices[active].isPlaying { voices[active].play() }
     }
 
     // MARK: - Engine
@@ -243,7 +256,7 @@ final class Music {
     private func crossfade(to file: URL, named: String) {
         guard let buffer = buffer(from: file) else { return }
 
-        let outgoing = voices[active]
+        let outgoing = active
         active = 1 - active
         let incoming = voices[active]
 
@@ -254,8 +267,8 @@ final class Music {
         incoming.play()
         playing = named
 
-        ramp(outgoing, to: 0, andThen: { outgoing.stop() })
-        ramp(incoming, to: targetLevel, andThen: nil)
+        ramp(voice: outgoing, to: 0) { [weak self] in self?.voices[outgoing].stop() }
+        ramp(voice: active, to: targetLevel)
     }
 
     /// Decodes the whole track once. Looping a decoded buffer is what makes
@@ -274,34 +287,43 @@ final class Music {
         return buffer
     }
 
-    private func ramp(_ node: AVAudioPlayerNode, to target: Float,
-                      andThen done: (() -> Void)?) {
-        let from = node.volume
+    /// Eases one voice's volume across to `target`, then runs `done`.
+    ///
+    /// The voice is named by index rather than passed in. A player node is not
+    /// Sendable, and handing one to something that runs later would mean
+    /// promising the compiler something about it that is not true; an index is
+    /// just a number, and the node is only ever touched from here, on the main
+    /// actor, which is the thing that actually makes it safe.
+    private func ramp(voice index: Int, to target: Float,
+                      andThen done: (@MainActor () -> Void)? = nil) {
+        // One fade per voice: a new one on the same voice supersedes the old,
+        // which would otherwise carry on nudging the volume somewhere else.
+        fades[index]?.cancel()
+
         let steps = 30
-        var step = 0
-        let timer = Timer.scheduledTimer(withTimeInterval: Self.fade / Double(steps),
-                                         repeats: true) { t in
-            step += 1
-            let progress = Float(step) / Float(steps)
-            Task { @MainActor in
-                node.volume = from + (target - from) * progress
-                if step >= steps {
-                    t.invalidate()
-                    node.volume = target
-                    done?()
-                }
+        let interval = UInt64(Self.fade / Double(steps) * 1_000_000_000)
+        let from = voices[index].volume
+
+        fades[index] = Task { @MainActor [weak self] in
+            for step in 1...steps {
+                try? await Task.sleep(nanoseconds: interval)
+                guard !Task.isCancelled, let self else { return }
+                self.voices[index].volume =
+                    from + (target - from) * Float(step) / Float(steps)
             }
+            guard let self else { return }
+            self.voices[index].volume = target
+            self.fades[index] = nil
+            done?()
         }
-        RunLoop.main.add(timer, forMode: .common)
-        faders.append(timer)
-        faders.removeAll { !$0.isValid }
     }
 
     private func fadeOutAndStop() {
-        let voice = voices[active]
-        ramp(voice, to: 0) { [weak self] in
-            voice.stop()
-            self?.engine.pause()
+        let index = active
+        ramp(voice: index, to: 0) { [weak self] in
+            guard let self else { return }
+            self.voices[index].stop()
+            self.engine.pause()
         }
     }
 }
