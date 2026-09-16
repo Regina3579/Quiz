@@ -22,14 +22,28 @@
 
 import AVFoundation
 import SwiftUI
+import UIKit
 
 @MainActor
 final class Music {
     static let shared = Music()
 
     /// Roughly a fifth of a sound effect, which sits under a question without
-    /// disappearing entirely.
+    /// disappearing entirely. The slider in Settings scales this rather than
+    /// replacing it, so even at the top the music stays under the questions.
     static let level: Float = 0.18
+
+    /// How far the music drops while something is being spoken. Not silence:
+    /// cutting out entirely is more noticeable than easing back.
+    private static let duckedFraction: Float = 0.25
+
+    /// What the active voice should be playing at right now.
+    private var targetLevel: Float {
+        let chosen = Self.level * Float(AudioSettings.musicVolume)
+        return ducking ? chosen * Self.duckedFraction : chosen
+    }
+
+    private var ducking = false
 
     /// Long enough not to jolt, short enough not to feel like a mistake.
     private static let fade: TimeInterval = 0.9
@@ -46,6 +60,7 @@ final class Music {
     /// node's volume after the app is paused.
     private var faders: [Timer] = []
     private var started = false
+    private var watching = false
 
     private init() {}
 
@@ -54,7 +69,18 @@ final class Music {
     /// The shared theme, heard on the map and anywhere without one of its own.
     static let mapTrack = "music_map"
 
-    /// Each adventure keeps the tune and changes the instruments.
+    /// Each adventure keeps the tune and changes the instruments:
+    ///
+    ///   Jungle Kingdom     marimba, flute, soft hand percussion
+    ///   Galaxy Quest       celesta, soft synth, magical chimes
+    ///   Dino Valley        marimba, playful low pizzicato strings
+    ///   Ocean Paradise     harp, bells, gentle watery ambience
+    ///   Explorer's Trail   ukulele and plucked strings, flute
+    ///   Blossom Garden     piano, harp, soft birds and chimes
+    ///   Science Lab        marimba, playful electronic plucks
+    ///   Brain Castle       celesta, strings, magical bells
+    ///   Ancient Kingdom    soft flute, harp, gentle hand drum
+    ///   Champion's Summit  light orchestral, uplifting but calm
     static func track(forIsland id: Int) -> String {
         switch id {
         case 0: return "music_jungle"
@@ -71,6 +97,22 @@ final class Music {
         }
     }
 
+    /// The Pro room lifts the energy a little without ever getting tense:
+    /// a light ticking pulse under the clock, something bouncier for
+    /// Lightning, a thread of suspense for Perfect Run, sparkle for Jewel
+    /// Rush. Any of these with no file of its own falls back to the room's
+    /// theme, and that to the map's.
+    static func track(for mode: ProMode) -> String {
+        switch mode {
+        case .timedChallenge: return "music_timed"
+        case .lightningRound: return "music_lightning"
+        case .perfectRun:     return "music_perfect"
+        case .jewelRush:      return "music_jewel"
+        case .categoryMaster: return "music_category"
+        case .dailyChallenge: return "music_daily"
+        }
+    }
+
     static let proTrack = "music_pro"
     static let bookTrack = "music_book"
 
@@ -80,22 +122,57 @@ final class Music {
     /// theme, so the app can ship with one piece of music and gain the rest
     /// later without a line of this changing.
     func play(_ name: String) {
-        let resolved = url(for: name) != nil ? name : Self.mapTrack
+        let resolved = resolve(name)
         guard resolved != playing else { return }
-        guard !Sound.isMuted else { playing = resolved; return }
+        guard AudioSettings.musicOn else { playing = resolved; return }
         guard let file = url(for: resolved) else { return }
 
         guard start() else { return }
         crossfade(to: file, named: resolved)
     }
 
-    /// Called when the sound toggle changes, so music follows it.
-    func applyMute() {
-        if Sound.isMuted {
+    /// Called when the music switch or the volume slider changes.
+    func applySettings() {
+        if !AudioSettings.musicOn {
             fadeOutAndStop()
-        } else if let wanted = playing {
+        } else if let wanted = playing, !voices[active].isPlaying {
             playing = nil          // force play() to act
             play(wanted)
+        } else {
+            ramp(voices[active], to: targetLevel, andThen: nil)
+        }
+    }
+
+    /// Eases the music back while speech is playing, and lifts it again after.
+    /// Used for VoiceOver, and for anything the app reads aloud later.
+    func setDucked(_ on: Bool) {
+        guard ducking != on else { return }
+        ducking = on
+        guard AudioSettings.musicOn, voices[active].isPlaying else { return }
+        ramp(voices[active], to: targetLevel, andThen: nil)
+    }
+
+    /// Starts watching for the things that should quieten the music: VoiceOver
+    /// reading the screen, and another app taking over the audio.
+    func beginWatchingForSpeech() {
+        guard !watching else { return }
+        watching = true
+        setDucked(UIAccessibility.isVoiceOverRunning)
+
+        let centre = NotificationCenter.default
+        centre.addObserver(forName: UIAccessibility.voiceOverStatusDidChangeNotification,
+                           object: nil, queue: .main) { _ in
+            Task { @MainActor in
+                Music.shared.setDucked(UIAccessibility.isVoiceOverRunning)
+            }
+        }
+        centre.addObserver(forName: AVAudioSession.silenceSecondaryAudioHintNotification,
+                           object: nil, queue: .main) { note in
+            let raw = note.userInfo?[AVAudioSessionSilenceSecondaryAudioHintTypeKey] as? UInt
+            let began = raw == AVAudioSession.SilenceSecondaryAudioHintType.begin.rawValue
+            Task { @MainActor in
+                Music.shared.setDucked(began)
+            }
         }
     }
 
@@ -107,12 +184,29 @@ final class Music {
     }
 
     func resume() {
-        guard started, !Sound.isMuted, playing != nil else { return }
+        guard started, AudioSettings.musicOn, playing != nil else { return }
         try? engine.start()
         voices.forEach { if $0.isPlaying == false { $0.play() } }
     }
 
     // MARK: - Engine
+
+    /// A Pro mode with no track of its own drops to the Pro room's theme, and
+    /// anything still missing to the map's, so one file is enough to start.
+    private func resolve(_ name: String) -> String {
+        if url(for: name) != nil { return name }
+        if name.hasPrefix("music_"), url(for: Self.proTrack) != nil,
+           name != Self.mapTrack, name != Self.bookTrack,
+           Self.proFallbacks.contains(name) {
+            return Self.proTrack
+        }
+        return Self.mapTrack
+    }
+
+    private static let proFallbacks: Set<String> = [
+        "music_timed", "music_lightning", "music_perfect",
+        "music_jewel", "music_category", "music_daily"
+    ]
 
     private func url(for name: String) -> URL? {
         for ext in ["m4a", "mp3", "wav", "caf"] {
@@ -161,7 +255,7 @@ final class Music {
         playing = named
 
         ramp(outgoing, to: 0, andThen: { outgoing.stop() })
-        ramp(incoming, to: Self.level, andThen: nil)
+        ramp(incoming, to: targetLevel, andThen: nil)
     }
 
     /// Decodes the whole track once. Looping a decoded buffer is what makes

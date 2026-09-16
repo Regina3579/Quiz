@@ -29,18 +29,58 @@ enum Haptics {
     }
 }
 
-/// Plays short bundled sound effects (cheery for correct, buzzer for wrong).
-/// Players are cached and reused so repeat taps are instant.
+/// What a parent can turn on and off. Music and sound effects are separate,
+/// because they are answers to different complaints: one child is distracted
+/// by a tune, another is in a quiet room and only wants the chimes gone.
+enum AudioSettings {
+    static let musicKey = "quizspark.music.on"
+    static let effectsKey = "quizspark.effects.on"
+    static let musicVolumeKey = "quizspark.music.volume"
+    /// The single toggle these replaced, read once so nobody's choice is lost.
+    static let legacyMuteKey = "quizspark.muted"
+
+    static var musicOn: Bool {
+        get { defaults.object(forKey: musicKey) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: musicKey) }
+    }
+
+    static var effectsOn: Bool {
+        get { defaults.object(forKey: effectsKey) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: effectsKey) }
+    }
+
+    /// 0…1, scaling the music's own quiet level rather than replacing it —
+    /// so even at the top of the slider the music stays under the questions.
+    static var musicVolume: Double {
+        get { defaults.object(forKey: musicVolumeKey) as? Double ?? 1.0 }
+        set { defaults.set(min(1, max(0, newValue)), forKey: musicVolumeKey) }
+    }
+
+    private static var defaults: UserDefaults { .standard }
+
+    /// Carries the old single mute switch over to the two new ones. Runs once:
+    /// after it, the legacy key is gone and the new keys are authoritative.
+    static func migrateLegacyMute() {
+        guard let wasMuted = defaults.object(forKey: legacyMuteKey) as? Bool else { return }
+        if wasMuted {
+            musicOn = false
+            effectsOn = false
+        }
+        defaults.removeObject(forKey: legacyMuteKey)
+    }
+}
+
+/// Plays short bundled sound effects (cheery for correct, a soft oops for
+/// wrong). Players are cached and reused so repeat taps are instant.
 enum Sound {
     private static var players: [String: AVAudioPlayer] = [:]
     private static var sessionReady = false
 
-    /// Shared key for the in-app mute toggle. When true, no sound effects play.
-    static let muteKey = "quizspark.muted"
+    /// Kept as the storage key the sound-effects switch writes to, so existing
+    /// `@AppStorage` bindings keep working.
+    static let muteKey = AudioSettings.effectsKey
 
-    static var isMuted: Bool {
-        UserDefaults.standard.bool(forKey: muteKey)
-    }
+    static var isMuted: Bool { !AudioSettings.effectsOn }
 
     /// Correct answer: happy chime + a success vibration.
     static func correct() {

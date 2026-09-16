@@ -58,7 +58,7 @@ struct ProQuizView: View {
         }
         .onAppear {
             model.startClock()
-            Music.shared.play(Music.proTrack)
+            Music.shared.play(Music.track(for: mode))
         }
         .onDisappear { model.abandon() }
         .alert("Leave the challenge?", isPresented: $showQuitAlert) {

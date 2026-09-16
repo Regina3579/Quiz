@@ -25,6 +25,7 @@
 		AB0000000000000000000062 /* TrophyRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000063 /* TrophyRoomView.swift */; };
 		AB0000000000000000000064 /* RewardChestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000065 /* RewardChestView.swift */; };
 		AB0000000000000000000066 /* Music.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000067 /* Music.swift */; };
+		AB0000000000000000000068 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000069 /* SettingsView.swift */; };
 		AB0000000000000000000060 /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000061 /* Achievement.swift */; };
 		AB0000000000000000000044 /* StickerBook.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000045 /* StickerBook.swift */; };
 		AB000000000000000000004A /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000004B /* NameEntryView.swift */; };
@@ -66,6 +67,7 @@
 		AB0000000000000000000063 /* TrophyRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrophyRoomView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000065 /* RewardChestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardChestView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000067 /* Music.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Music.swift; sourceTree = "<group>"; };
+		AB0000000000000000000069 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000061 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
 		AB0000000000000000000045 /* StickerBook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickerBook.swift; sourceTree = "<group>"; };
 		AB000000000000000000004B /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				AB0000000000000000000059 /* ProQuizView.swift */,
 				AB0000000000000000000057 /* ProHubView.swift */,
 				AB0000000000000000000063 /* TrophyRoomView.swift */,
+				AB0000000000000000000069 /* SettingsView.swift */,
 				AB0000000000000000000065 /* RewardChestView.swift */,
 				AB0000000000000000000026 /* Components */,
 			);
@@ -308,6 +311,7 @@
 				AB0000000000000000000062 /* TrophyRoomView.swift in Sources */,
 				AB0000000000000000000064 /* RewardChestView.swift in Sources */,
 				AB0000000000000000000066 /* Music.swift in Sources */,
+				AB0000000000000000000068 /* SettingsView.swift in Sources */,
 				AB0000000000000000000060 /* Achievement.swift in Sources */,
 				AB000000000000000000005E /* QuestionPanel.swift in Sources */,
 				AB0000000000000000000044 /* StickerBook.swift in Sources */,

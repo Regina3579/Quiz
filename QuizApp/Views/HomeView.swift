@@ -22,6 +22,7 @@ struct HomeView: View {
     @State private var showStickerBook = false
     @State private var showNameEntry = false
     @State private var showTrophyRoom = false
+    @State private var showSettings = false
 
     /// How far the trail has been pulled up, and how far the finger has moved
     /// since it went down. The two are kept apart so the map can follow a
@@ -35,7 +36,6 @@ struct HomeView: View {
     /// the touches underneath it, and our gesture cannot. A tap gesture fails
     /// as soon as the finger travels, which is exactly the behaviour wanted.
     @State private var path = NavigationPath()
-    @AppStorage(Sound.muteKey) private var isMuted = false
     @AppStorage(Player.nameKey) private var playerName = ""
 
     /// Dark sepia ink that reads on the aged paper.
@@ -95,7 +95,7 @@ struct HomeView: View {
                         liveJewelCount(width: fit.width, height: fit.height)
                         liveName(width: fit.width, height: fit.height)
                         tapTargets(width: fit.width, height: fit.height)
-                        muteToggle(width: fit.width, height: fit.height)
+                        settingsButton(width: fit.width, height: fit.height)
                         trophyButton(width: fit.width, height: fit.height)
                     }
                     .frame(width: fit.width, height: fit.height)
@@ -130,9 +130,16 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showTrophyRoom) {
             TrophyRoomView().environmentObject(progress)
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
         .onAppear {
             appeared = true
             if playerName.isEmpty { showNameEntry = true }
+            // One switch used to mute everything; split it in two without
+            // losing whatever the family had already chosen.
+            AudioSettings.migrateLegacyMute()
+            Music.shared.beginWatchingForSpeech()
             // Back on the map, whichever adventure they came from.
             Music.shared.play(Music.mapTrack)
         }
@@ -339,10 +346,12 @@ struct HomeView: View {
             .accessibilityLabel("Change your name")
     }
 
-    private func muteToggle(width w: CGFloat, height h: CGFloat) -> some View {
+    /// Opens the sound settings. This was a single mute button; music and
+    /// effects now have a switch each, which is more than one icon can say.
+    private func settingsButton(width w: CGFloat, height h: CGFloat) -> some View {
         let side = min(46, w * 0.105)
 
-        return Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+        return Image(systemName: "slider.horizontal.3")
             .font(.system(size: side * 0.44, weight: .bold))
             .foregroundColor(mapInk)
             .frame(width: side, height: side)
@@ -351,12 +360,11 @@ struct HomeView: View {
             .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
             .contentShape(Circle())
             .onTapGesture {
-                isMuted.toggle()
-                Music.shared.applyMute()
                 Haptics.play(.light)
+                showSettings = true
             }
             .position(x: w * Self.muteAt.x, y: h * Self.muteAt.y)
-            .accessibilityLabel(isMuted ? "Unmute sounds" : "Mute sounds")
+            .accessibilityLabel("Sound settings")
     }
 
     /// Opens the Trophy Room, sitting under the painted sticker book. The
