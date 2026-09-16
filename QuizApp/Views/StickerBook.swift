@@ -153,7 +153,9 @@ enum StickerCatalog {
             dinoSticker(2),  // brachiosaurus munching leaves
             dinoSticker(3),  // triceratops with a flower crown
             dinoSticker(4),  // stegosaurus with sunset plates
-            dinoSticker(5)   // hatchling in a cracked egg
+            dinoSticker(5),  // hatchling in a cracked egg
+            dinoSticker(6),  // blue pterodactyl gliding, wings spread
+            dinoSticker(7)   // teal triceratops with a spotted frill
         ],
         epic: [
             dinoEpicSticker(1),  // crystal ankylosaurus with a gem club
@@ -162,7 +164,8 @@ enum StickerCatalog {
             dinoEpicSticker(4),  // crystal triceratops in blossom
             dinoEpicSticker(5),  // roaring T. rex at sunset
             dinoEpicSticker(6),  // crowned crystal T. rex by a waterfall
-            dinoEpicSticker(7)   // chef triceratops with a burger
+            dinoEpicSticker(7),  // chef triceratops with a burger
+            dinoEpicSticker(8)   // pterodactyl trailing a ribbon of sparkles
         ]
     )
 
