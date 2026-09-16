@@ -397,9 +397,13 @@ enum StickerCatalog {
                 imageName: String(format: "StickerCS%02d", n))
     }
 
+    private static func championEpicSticker(_ n: Int) -> Sticker {
+        Sticker(id: "champion_e\(n)", emoji: "✨", cost: epicCost,
+                imageName: String(format: "StickerCSE%02d", n))
+    }
+
     /// 🏆 Champion's Summit — the last adventure gathers friends from all the
-    /// others. No Epic tier yet; the shop leaves a tier out until it has
-    /// stickers in it.
+    /// others.
     static let championsSummit = StickerCategory(
         id: "champion",
         name: "Champion's Summit",
@@ -421,7 +425,13 @@ enum StickerCatalog {
             championSticker(12), // fluffy kitten in a pink heart collar
             championSticker(13)  // winking sun with pointed rays
         ],
-        epic: []
+        epic: [
+            championEpicSticker(1),  // purple butterfly with heart-patterned wings
+            championEpicSticker(2),  // rainbow arch between two smiling clouds
+            championEpicSticker(3),  // crowned heart trailing sparkles
+            championEpicSticker(4),  // jewelled magic book ringed with light
+            championEpicSticker(5)   // erupting volcano under a starry ash cloud
+        ]
     )
 
     /// All ten adventures now have a shelf of their own.
