@@ -430,7 +430,12 @@ enum StickerCatalog {
             championEpicSticker(2),  // rainbow arch between two smiling clouds
             championEpicSticker(3),  // crowned heart trailing sparkles
             championEpicSticker(4),  // jewelled magic book ringed with light
-            championEpicSticker(5)   // erupting volcano under a starry ash cloud
+            championEpicSticker(5),  // erupting volcano under a starry ash cloud
+            championEpicSticker(6),  // gold cup set with pink hearts
+            championEpicSticker(7),  // rainbow diamond in a ring of sparkles
+            championEpicSticker(8),  // pink spellbook with a jewelled heart
+            championEpicSticker(9),  // winking pink flower on green leaves
+            championEpicSticker(10)  // winking gold crown of hearts and gems
         ]
     )
 
