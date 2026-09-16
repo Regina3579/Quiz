@@ -130,7 +130,12 @@ enum StickerCatalog {
             galaxyEpicSticker(3),  // star wizard juggling planets
             galaxyEpicSticker(4),  // unicorn astronaut on a cloud
             galaxyEpicSticker(5),  // alien flying a saucer
-            galaxyEpicSticker(6)   // robot astronaut hugging a star
+            galaxyEpicSticker(6),   // robot astronaut hugging a star
+            galaxyEpicSticker(7),   // smiling sun with wavy flame rays
+            galaxyEpicSticker(8),   // planet Earth, Americas facing out
+            galaxyEpicSticker(9),   // ringed gas giant among sparkles
+            galaxyEpicSticker(10),  // cratered asteroid studded with gems
+            galaxyEpicSticker(11)   // shooting star with a glittering tail
         ]
     )
 
