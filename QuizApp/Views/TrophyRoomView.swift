@@ -835,56 +835,105 @@ private struct AdventureNiche: View {
     /// The lit recess: the adventure's own artwork set back into the wall,
     /// behind a gold arch. Unlit until the first trophy, so the room visibly
     /// wakes up one alcove at a time.
+    /// The carved frame's size on screen, and where its hole is inside it.
+    /// The hole was measured off the artwork: it is the one transparent
+    /// region that does not reach the edge of the plate.
+    private static let frameSize = CGSize(width: 104, height: 119)
+    private static let opening = CGRect(x: 0.2217, y: 0.1544,
+                                        width: 0.5558, height: 0.7718)
+
+    /// The picture behind is cut a little larger than the hole. Two reasons,
+    /// both visible the moment it is not: a square picture pokes its top
+    /// corners out beside the dome, and an ordinary semicircle falls short of
+    /// this frame's slightly pointed one, leaving a sliver of nothing at the
+    /// apex. Oversized, both ends of the problem tuck under the gold.
+    private static let overlap: CGFloat = 1.08
+
+    /// The drawn frame's size, kept smaller — it has no carving to show off.
+    private static let drawnSize = CGSize(width: 74, height: 84)
+
+    @ViewBuilder
     private var alcove: some View {
-        ZStack {
+        if VaultArt.has(VaultArt.arch) { paintedAlcove } else { drawnAlcove }
+    }
+
+    private var paintedAlcove: some View {
+        let f = Self.frameSize
+        let o = Self.opening
+
+        return ZStack {
+            ZStack {
+                RadialGradient(colors: [Vault.gold.opacity(lit ? 0.42 : 0.26),
+                                        Vault.night],
+                               center: .center, startRadius: 2, endRadius: 70)
+                islandPicture
+            }
+            .frame(width: f.width * o.width * Self.overlap,
+                   height: f.height * o.height * Self.overlap)
+            .clipShape(ArchShape(foot: 7))
+            // The hole sits a little below the plate's middle.
+            .offset(y: (o.midY - 0.5) * f.height)
+
+            Image(VaultArt.arch)
+                .resizable()
+                .frame(width: f.width, height: f.height)
+
+            cornerBadge.offset(x: f.width * 0.36, y: f.height * 0.33)
+        }
+        .frame(width: f.width, height: f.height)
+    }
+
+    private var drawnAlcove: some View {
+        let f = Self.drawnSize
+
+        return ZStack {
             ArchShape()
                 .fill(RadialGradient(
                     colors: [Vault.gold.opacity(lit ? 0.42 : 0.26), Vault.night],
                     center: .center, startRadius: 2, endRadius: 58))
 
-            // Always at full colour. An adventure the child has not scored in
-            // yet is still a place they can see; draining it grey says the
-            // artwork is switched off, and with nothing won that is the whole
-            // room. Won and unwon are told apart by the frame, the padlock
-            // and the pips — none of which cost the picture its colour.
-            if let name = island.imageName {
-                Image(name)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 74, height: 84)
-                    .clipShape(ArchShape())
-            } else {
-                Text(island.emoji).font(.system(size: 34))
-            }
+            islandPicture
+                .frame(width: f.width, height: f.height)
+                .clipShape(ArchShape())
 
-            if VaultArt.has(VaultArt.arch) {
-                Image(VaultArt.arch)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 74, height: 84)
-            } else {
-                ArchShape()
-                    .strokeBorder(Vault.metal, lineWidth: lit ? 3.5 : 2.5)
-                    .opacity(lit ? 1 : 0.8)
-            }
+            ArchShape()
+                .strokeBorder(Vault.metal, lineWidth: lit ? 3.5 : 2.5)
+                .opacity(lit ? 1 : 0.8)
 
-            // The best rung so far rides on the corner of the arch.
-            if let top {
-                Text(top.emoji)
-                    .font(.system(size: 23))
-                    .shadow(color: .black.opacity(0.55), radius: 2)
-                    .offset(x: 30, y: 30)
-            } else {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Vault.goldPale.opacity(0.85))
-                    .padding(5)
-                    .background(Circle().fill(Vault.woodDeep))
-                    .overlay(Circle().strokeBorder(Vault.goldDeep, lineWidth: 1))
-                    .offset(x: 30, y: 30)
-            }
+            cornerBadge.offset(x: 30, y: 30)
         }
-        .frame(width: 74, height: 84)
+        .frame(width: f.width, height: f.height)
+    }
+
+    /// Always at full colour. An adventure the child has not scored in yet is
+    /// still a place they can see; draining it grey says the artwork is
+    /// switched off, and with nothing won that is the whole room. Won and
+    /// unwon are told apart by the frame, the padlock and the pips — none of
+    /// which cost the picture its colour.
+    @ViewBuilder
+    private var islandPicture: some View {
+        if let name = island.imageName {
+            Image(name).resizable().scaledToFill()
+        } else {
+            Text(island.emoji).font(.system(size: 34))
+        }
+    }
+
+    /// The best rung so far rides on the corner of the arch.
+    @ViewBuilder
+    private var cornerBadge: some View {
+        if let top {
+            Text(top.emoji)
+                .font(.system(size: 23))
+                .shadow(color: .black.opacity(0.55), radius: 2)
+        } else {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(Vault.goldPale.opacity(0.85))
+                .padding(5)
+                .background(Circle().fill(Vault.woodDeep))
+                .overlay(Circle().strokeBorder(Vault.goldDeep, lineWidth: 1))
+        }
     }
 
     private var nameplate: some View {
