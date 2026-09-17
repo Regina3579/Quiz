@@ -25,10 +25,10 @@ import SwiftUI
 /// Warm stone, gold and lamplight. Kept in one place so the hall, the alcoves
 /// and the plaques are lit by the same fire.
 enum Vault {
-    static let night     = Color(red: 0.15, green: 0.09, blue: 0.27)
-    static let stone     = Color(red: 0.36, green: 0.21, blue: 0.24)
-    static let stoneDeep = Color(red: 0.21, green: 0.11, blue: 0.16)
-    static let carpet    = Color(red: 0.52, green: 0.11, blue: 0.20)
+    static let night     = Color(red: 0.17, green: 0.11, blue: 0.31)
+    static let stone     = Color(red: 0.45, green: 0.26, blue: 0.27)
+    static let stoneDeep = Color(red: 0.27, green: 0.14, blue: 0.19)
+    static let carpet    = Color(red: 0.58, green: 0.13, blue: 0.23)
 
     static let gold     = Color(red: 1.00, green: 0.80, blue: 0.29)
     static let goldDeep = Color(red: 0.80, green: 0.51, blue: 0.11)
@@ -299,14 +299,14 @@ struct TrophyRoomView: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(LinearGradient(
-                    colors: won ? [Vault.goldDeep.opacity(0.55), Vault.stoneDeep]
-                                : [Vault.stone.opacity(0.85), Vault.stoneDeep],
+                    colors: won ? [Vault.goldDeep.opacity(0.70), Vault.stoneDeep]
+                                : [Vault.stone, Vault.stoneDeep],
                     startPoint: .top, endPoint: .bottom))
         )
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .strokeBorder(Vault.metal, lineWidth: won ? 3 : 2))
-        .shadow(color: won ? Vault.gold.opacity(0.5) : .black.opacity(0.4),
-                radius: won ? 14 : 6, y: 3)
+            .strokeBorder(Vault.metal, lineWidth: won ? 3.5 : 2.5))
+        .shadow(color: won ? Vault.gold.opacity(0.55) : .black.opacity(0.4),
+                radius: won ? 16 : 6, y: 3)
         .accessibilityElement(children: .combine)
     }
 
@@ -348,9 +348,9 @@ private struct VaultBackdrop: View {
                            startPoint: .top, endPoint: .bottom)
 
             // Lamplight, so the middle of the room is the bright part.
-            RadialGradient(colors: [Vault.gold.opacity(0.22), .clear],
+            RadialGradient(colors: [Vault.gold.opacity(0.34), .clear],
                            center: .init(x: 0.5, y: 0.34),
-                           startRadius: 8, endRadius: 420)
+                           startRadius: 8, endRadius: 460)
 
             HStack {
                 pillar
@@ -358,9 +358,11 @@ private struct VaultBackdrop: View {
                 pillar
             }
 
-            // Darkened edges pull the eye back to the shelves.
-            RadialGradient(colors: [.clear, .black.opacity(0.45)],
-                           center: .center, startRadius: 160, endRadius: 560)
+            // Edges settle a little so the shelves read as the lit part. Kept
+            // light: any more and it drags the colour out of the artwork,
+            // which is the one thing this room must not do.
+            RadialGradient(colors: [.clear, .black.opacity(0.26)],
+                           center: .center, startRadius: 200, endRadius: 600)
         }
         .ignoresSafeArea()
     }
@@ -518,14 +520,13 @@ struct TrophyCupIcon: View {
         }
     }
 
+    /// Always the real metal. A bronze cup is bronze whether or not it has
+    /// been won — washing it out only made a shelf of four look switched off,
+    /// which is exactly what it looked like with none of them won yet. What
+    /// winning adds is the halo underneath, not the colour.
     private var finish: LinearGradient {
-        LinearGradient(colors: lit ? shades : shades.map { dulled($0) },
+        LinearGradient(colors: shades,
                        startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-
-    /// Unwon cups are still there on the shelf, just not polished.
-    private func dulled(_ c: Color) -> Color {
-        c.opacity(0.42)
     }
 
     private var emblem: String {
@@ -558,7 +559,7 @@ struct TrophyCupIcon: View {
 
                 Image(systemName: emblem)
                     .font(.system(size: height * 0.20, weight: .bold))
-                    .foregroundColor(shadeLine.opacity(lit ? 0.7 : 0.3))
+                    .foregroundColor(shadeLine.opacity(0.7))
                     .offset(y: -height * 0.04)
             }
             .frame(width: w, height: height * 0.46)
@@ -576,7 +577,8 @@ struct TrophyCupIcon: View {
                 .frame(width: w * 0.66, height: height * 0.15)
         }
         .frame(height: height)
-        .shadow(color: lit ? shades[1].opacity(0.55) : .clear, radius: 8)
+        // Winning lights the cup from behind rather than colouring it in.
+        .shadow(color: shades[1].opacity(lit ? 0.75 : 0.30), radius: lit ? 12 : 5)
         .shadow(color: .black.opacity(0.35), radius: 2, y: 2)
     }
 
@@ -635,7 +637,7 @@ private struct GrandCup: View {
 
                 Text("\(standing) / \(award.target)")
                     .font(Theme.bold(11))
-                    .foregroundColor(won ? Vault.gold : Vault.goldPale.opacity(0.7))
+                    .foregroundColor(Vault.gold)
                     .contentTransition(.numericText())
             }
             .frame(maxWidth: .infinity)
@@ -686,13 +688,11 @@ private struct AdventureNiche: View {
         .padding(.vertical, 11)
         .padding(.horizontal, 8)
         .background(RoundedRectangle(cornerRadius: 17, style: .continuous)
-            .fill(LinearGradient(colors: [Vault.stone.opacity(lit ? 0.9 : 0.55),
-                                          Vault.stoneDeep],
+            .fill(LinearGradient(colors: [Vault.stone, Vault.stoneDeep],
                                  startPoint: .top, endPoint: .bottom)))
         .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous)
-            .strokeBorder(lit ? AnyShapeStyle(Vault.metal)
-                              : AnyShapeStyle(Vault.goldDeep.opacity(0.45)),
-                          lineWidth: lit ? 2 : 1.5))
+            .strokeBorder(Vault.metal, lineWidth: lit ? 2.5 : 1.8)
+            .opacity(lit ? 1 : 0.75))
         .shadow(color: .black.opacity(0.35), radius: 5, y: 3)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -706,29 +706,27 @@ private struct AdventureNiche: View {
         ZStack {
             ArchShape()
                 .fill(RadialGradient(
-                    colors: lit ? [Vault.gold.opacity(0.35), Vault.night]
-                                : [Vault.stoneDeep, Vault.night],
+                    colors: [Vault.gold.opacity(lit ? 0.42 : 0.26), Vault.night],
                     center: .center, startRadius: 2, endRadius: 58))
 
+            // Always at full colour. An adventure the child has not scored in
+            // yet is still a place they can see; draining it grey says the
+            // artwork is switched off, and with nothing won that is the whole
+            // room. Won and unwon are told apart by the frame, the padlock
+            // and the pips — none of which cost the picture its colour.
             if let name = island.imageName {
                 Image(name)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 74, height: 84)
                     .clipShape(ArchShape())
-                    .saturation(lit ? 1 : 0.15)
-                    .opacity(lit ? 1 : 0.5)
             } else {
-                Text(island.emoji)
-                    .font(.system(size: 34))
-                    .saturation(lit ? 1 : 0.15)
-                    .opacity(lit ? 1 : 0.5)
+                Text(island.emoji).font(.system(size: 34))
             }
 
             ArchShape()
-                .strokeBorder(lit ? AnyShapeStyle(Vault.metal)
-                                  : AnyShapeStyle(Vault.goldDeep.opacity(0.5)),
-                              lineWidth: lit ? 3 : 2)
+                .strokeBorder(Vault.metal, lineWidth: lit ? 3.5 : 2.5)
+                .opacity(lit ? 1 : 0.8)
 
             // The best rung so far rides on the corner of the arch.
             if let top {
@@ -768,12 +766,14 @@ private struct AdventureNiche: View {
     private var pips: some View {
         HStack(spacing: 5) {
             ForEach(rungs) { rung in
+                // An empty pip is a dim socket, not a black hole — it still
+                // has to look like a jewel waiting to be set.
                 Circle()
                     .fill(progress.hasWon(rung)
                           ? AnyShapeStyle(Vault.metal)
-                          : AnyShapeStyle(Color.black.opacity(0.35)))
+                          : AnyShapeStyle(Vault.goldDeep.opacity(0.40)))
                     .frame(width: 7, height: 7)
-                    .overlay(Circle().strokeBorder(Vault.goldDeep.opacity(0.7),
+                    .overlay(Circle().strokeBorder(Vault.gold.opacity(0.7),
                                                    lineWidth: 0.8))
             }
         }
@@ -899,7 +899,10 @@ struct AwardRow: View {
         .padding(.vertical, 11)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(LinearGradient(colors: [tint, tint.opacity(0.62)],
+                // The lower stop is only a shade down, not a fade to the wall.
+                // Taking it much further let the dark room through and turned
+                // every card muddy at the bottom.
+                .fill(LinearGradient(colors: [tint, tint.opacity(0.80)],
                                      startPoint: .top, endPoint: .bottom))
         )
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
