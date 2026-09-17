@@ -265,11 +265,8 @@ struct TrophyRoomView: View {
         let filled = progress.pedestalsFilled
 
         return VStack(spacing: 8) {
-            Text(won ? "✨" : "🏆")
-                .font(.system(size: won ? 52 : 44))
-                .saturation(won ? 1 : 0.25)
-                .opacity(won ? 1 : 0.75)
-                .shadow(color: won ? Vault.gold.opacity(0.9) : .clear, radius: 14)
+            TrophyCupIcon(metal: .gold, lit: won, height: 74)
+                .frame(height: 76)
 
             Text(award.title)
                 .font(Theme.display(20))
@@ -442,6 +439,162 @@ struct ProgressTrack: View {
     }
 }
 
+// MARK: - A drawn trophy cup
+
+/// The bowl: a wide rim falling away to a narrow foot.
+struct CupBowl: Shape {
+    func path(in rect: CGRect) -> Path {
+        let topHalf = rect.width / 2
+        let footHalf = rect.width * 0.19
+        let waist = rect.minY + rect.height * 0.58
+
+        var p = Path()
+        p.move(to: CGPoint(x: rect.midX - topHalf, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.midX + topHalf, y: rect.minY))
+        p.addCurve(to: CGPoint(x: rect.midX + footHalf, y: rect.maxY),
+                   control1: CGPoint(x: rect.midX + topHalf, y: waist),
+                   control2: CGPoint(x: rect.midX + footHalf * 1.7, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.midX - footHalf, y: rect.maxY))
+        p.addCurve(to: CGPoint(x: rect.midX - topHalf, y: rect.minY),
+                   control1: CGPoint(x: rect.midX - footHalf * 1.7, y: rect.maxY),
+                   control2: CGPoint(x: rect.midX - topHalf, y: waist))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// The plinth: a shallow trapezium, wider at the floor.
+struct CupBase: Shape {
+    func path(in rect: CGRect) -> Path {
+        let inset = rect.width * 0.17
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX + inset, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX - inset, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// A trophy cup, drawn rather than borrowed from the emoji font.
+///
+/// The emoji this replaced were medals, not cups, and they arrive in whatever
+/// shape the system font feels like — three different silhouettes in a row
+/// that is meant to read as one shelf of four. Drawing it means the four
+/// really are the same cup in four metals, and the gradient runs across all
+/// of them together, which is what makes them look cast rather than printed.
+struct TrophyCupIcon: View {
+    enum Metal { case bronze, silver, gold, diamond }
+
+    let metal: Metal
+    var lit: Bool = true
+    var height: CGFloat = 54
+
+    /// Pale highlight, body, shadow, body again — a metal reads as metal
+    /// because the light crosses it twice.
+    private var shades: [Color] {
+        switch metal {
+        case .bronze:
+            return [Color(red: 0.96, green: 0.79, blue: 0.58),
+                    Color(red: 0.81, green: 0.50, blue: 0.24),
+                    Color(red: 0.49, green: 0.26, blue: 0.10),
+                    Color(red: 0.86, green: 0.58, blue: 0.31)]
+        case .silver:
+            return [Color(red: 1.00, green: 1.00, blue: 1.00),
+                    Color(red: 0.84, green: 0.88, blue: 0.93),
+                    Color(red: 0.48, green: 0.54, blue: 0.62),
+                    Color(red: 0.90, green: 0.93, blue: 0.97)]
+        case .gold:
+            return [Color(red: 1.00, green: 0.96, blue: 0.72),
+                    Color(red: 1.00, green: 0.79, blue: 0.24),
+                    Color(red: 0.66, green: 0.44, blue: 0.05),
+                    Color(red: 1.00, green: 0.85, blue: 0.38)]
+        case .diamond:
+            return [Color(red: 0.94, green: 0.99, blue: 1.00),
+                    Color(red: 0.62, green: 0.89, blue: 1.00),
+                    Color(red: 0.24, green: 0.56, blue: 0.76),
+                    Color(red: 0.82, green: 0.96, blue: 1.00)]
+        }
+    }
+
+    private var finish: LinearGradient {
+        LinearGradient(colors: lit ? shades : shades.map { dulled($0) },
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    /// Unwon cups are still there on the shelf, just not polished.
+    private func dulled(_ c: Color) -> Color {
+        c.opacity(0.42)
+    }
+
+    private var emblem: String {
+        switch metal {
+        case .bronze, .silver: return "star.fill"
+        case .gold:            return "crown.fill"
+        case .diamond:         return "diamond.fill"
+        }
+    }
+
+    var body: some View {
+        let w = height * 0.74
+
+        VStack(spacing: 0) {
+            // Rim — a little wider than the bowl, which is what gives a cup
+            // its lip instead of a funnel's edge.
+            Capsule()
+                .fill(finish)
+                .frame(width: w * 1.08, height: height * 0.09)
+
+            ZStack {
+                handle(mirrored: false, w: w, h: height)
+                handle(mirrored: true,  w: w, h: height)
+
+                CupBowl()
+                    .fill(finish)
+                    .overlay(
+                        CupBowl().stroke(shadeLine.opacity(0.7), lineWidth: 1)
+                    )
+
+                Image(systemName: emblem)
+                    .font(.system(size: height * 0.20, weight: .bold))
+                    .foregroundColor(shadeLine.opacity(lit ? 0.7 : 0.3))
+                    .offset(y: -height * 0.04)
+            }
+            .frame(width: w, height: height * 0.46)
+
+            Rectangle()
+                .fill(finish)
+                .frame(width: w * 0.17, height: height * 0.13)
+
+            Capsule()
+                .fill(finish)
+                .frame(width: w * 0.40, height: height * 0.06)
+
+            CupBase()
+                .fill(finish)
+                .frame(width: w * 0.66, height: height * 0.15)
+        }
+        .frame(height: height)
+        .shadow(color: lit ? shades[1].opacity(0.55) : .clear, radius: 8)
+        .shadow(color: .black.opacity(0.35), radius: 2, y: 2)
+    }
+
+    private var shadeLine: Color { shades[2] }
+
+    /// Drawn behind the bowl so the inner half is hidden and the arc reads as
+    /// a handle looping out of the side.
+    private func handle(mirrored: Bool, w: CGFloat, h: CGFloat) -> some View {
+        Ellipse()
+            .strokeBorder(finish, lineWidth: max(2, h * 0.05))
+            .frame(width: w * 0.52, height: h * 0.34)
+            // Sits high on the bowl, where a handle is actually gripped —
+            // centred, it droops and the cup reads as a sugar bowl.
+            .offset(x: mirrored ? w * 0.42 : -w * 0.42,
+                    y: -h * 0.037)
+    }
+}
+
 // MARK: - One of the four great cups
 
 private struct GrandCup: View {
@@ -457,14 +610,21 @@ private struct GrandCup: View {
             .replacingOccurrences(of: " Cup", with: "")
     }
 
+    /// Which metal this cup is cast in. Driven off the award's own id so the
+    /// shelf cannot drift out of step with the catalogue.
+    private var metal: TrophyCupIcon.Metal {
+        switch award.id {
+        case "cup.bronze":  return .bronze
+        case "cup.silver":  return .silver
+        case "cup.diamond": return .diamond
+        default:            return .gold
+        }
+    }
+
     var body: some View {
         VStack(spacing: 6) {
-            Text(award.emoji)
-                .font(.system(size: 34))
-                .saturation(won ? 1 : 0.2)
-                .opacity(won ? 1 : 0.55)
-                .shadow(color: won ? Vault.gold.opacity(0.8) : .clear, radius: 10)
-                .frame(height: 40)
+            TrophyCupIcon(metal: metal, lit: won, height: 52)
+                .frame(height: 54)
 
             VStack(spacing: 1) {
                 Text(shortName)
