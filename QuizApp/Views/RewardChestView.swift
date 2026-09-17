@@ -60,8 +60,7 @@ struct RewardChestView: View {
                 .foregroundColor(Theme.star)
                 .multilineTextAlignment(.center)
 
-            Text("🧰")
-                .font(.system(size: 62))
+            chest
                 .rotationEffect(.degrees(wobble ? 5 : -5))
                 .shadow(color: Theme.star.opacity(0.8), radius: 14)
 
@@ -73,6 +72,21 @@ struct RewardChestView: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: open)
         .accessibilityLabel("Achievement chest. Tap to open")
+    }
+
+    /// The painted chest when it is bundled, the emoji otherwise. It was 🧰 —
+    /// a toolbox, which is what that character actually is on most keyboards,
+    /// and a poor thing to promise a child a prize in.
+    @ViewBuilder
+    private var chest: some View {
+        if VaultArt.has(VaultArt.chest) {
+            Image(VaultArt.chest)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 104)
+        } else {
+            Text("🎁").font(.system(size: 62))
+        }
     }
 
     private func open() {
