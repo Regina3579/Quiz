@@ -213,10 +213,8 @@ struct TrophyRoomView: View {
                         : "\(playerName)'s Trophy Room",
                         size: 23)
 
-            Text("\(progress.trophyCount) of \(AchievementCatalog.all.count) won")
-                .font(Theme.bold(14))
-                .foregroundColor(Vault.goldPale.opacity(0.9))
-                .shadow(color: .black.opacity(0.5), radius: 2)
+            floatingLine("\(progress.trophyCount) of \(AchievementCatalog.all.count) won",
+                         size: 14)
 
             HStack(spacing: 9) {
                 stat("✅", "\(progress.tally.correctAnswers)", "correct")
@@ -226,6 +224,10 @@ struct TrophyRoomView: View {
             .padding(.top, 4)
         }
         .padding(.top, 40)
+    }
+
+    private func floatingLine(_ text: String, size: CGFloat) -> some View {
+        HallLine(text: text, size: size)
     }
 
     private func stat(_ icon: String, _ value: String, _ label: String) -> some View {
@@ -269,10 +271,7 @@ struct TrophyRoomView: View {
         VStack(spacing: 13) {
             VaultBanner(text: "Adventure Trophies", size: 19)
 
-            Text("\(progress.pedestalsFilled) of 10 pedestals filled")
-                .font(Theme.bold(12))
-                .foregroundColor(Vault.goldPale.opacity(0.75))
-                .shadow(color: .black.opacity(0.5), radius: 2)
+            floatingLine("\(progress.pedestalsFilled) of 10 pedestals filled", size: 12)
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 11),
                                 GridItem(.flexible(), spacing: 11)], spacing: 11) {
@@ -383,24 +382,16 @@ private struct VaultBackdrop: View {
         }
     }
 
-    /// The painted hall. Pinned to the top and allowed to crop at the sides,
-    /// so the arched windows stay where they were painted; the stone colour
-    /// carries on underneath for however far the room scrolls.
+    /// The painted hall, filling the screen and cropping at whichever edge it
+    /// has to. It is behind the scroll view rather than inside it, so the room
+    /// holds still and the shelves travel past it — the way it would look to
+    /// someone walking along the hall, and the only way a single painting can
+    /// cover a page that scrolls much further than it is tall.
     private var painted: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .top) {
-                LinearGradient(colors: [Vault.stoneDeep, Vault.carpet.opacity(0.5)],
-                               startPoint: .top, endPoint: .bottom)
-
-                Image(VaultArt.background)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geo.size.width)
-                    .clipped()
-            }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
-        }
-        .ignoresSafeArea()
+        Image(VaultArt.background)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .ignoresSafeArea()
     }
 
     private var drawn: some View {
@@ -435,6 +426,29 @@ private struct VaultBackdrop: View {
                                 Vault.stoneDeep.opacity(0.0)],
                        startPoint: .leading, endPoint: .trailing)
             .frame(width: 26)
+    }
+}
+
+/// A line of text with nothing but the hall behind it.
+///
+/// The painted room is lit stone — a twentieth of it is brighter than the pale
+/// gold this text is written in, and a drop shadow does not save cream on
+/// cream. So the line carries its own small patch of shade. That is cheaper
+/// than darkening the whole painting, which is the mistake that made the room
+/// look switched off before.
+private struct HallLine: View {
+    let text: String
+    var size: CGFloat = 13
+
+    var body: some View {
+        Text(text)
+            .font(Theme.bold(size))
+            .foregroundColor(Vault.goldPale)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(.black.opacity(0.42)))
+            .overlay(Capsule().strokeBorder(Vault.goldDeep.opacity(0.55), lineWidth: 1))
     }
 }
 
@@ -492,7 +506,8 @@ private struct VaultBanner: View {
 private struct ShelfPlinth: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(LinearGradient(colors: [Vault.stone.opacity(0.9), Vault.stoneDeep],
+            .fill(LinearGradient(colors: [Vault.stone.opacity(0.92),
+                                          Vault.stoneDeep.opacity(0.94)],
                                  startPoint: .top, endPoint: .bottom))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Vault.metal, lineWidth: 2))
@@ -781,7 +796,11 @@ private struct AdventureNiche: View {
         .padding(.vertical, 11)
         .padding(.horizontal, 8)
         .background(RoundedRectangle(cornerRadius: 17, style: .continuous)
-            .fill(LinearGradient(colors: [Vault.stone, Vault.stoneDeep],
+            // Very slightly see-through, so the hall's lamplight comes up
+            // through the stone and the alcove sits in the room rather than
+            // on top of a picture of one.
+            .fill(LinearGradient(colors: [Vault.stone.opacity(0.92),
+                                          Vault.stoneDeep.opacity(0.94)],
                                  startPoint: .top, endPoint: .bottom)))
         .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous)
             .strokeBorder(Vault.metal, lineWidth: lit ? 2.5 : 1.8)
@@ -916,10 +935,7 @@ private struct AdventureLadderSheet: View {
 
                     VaultBanner(text: island.name, size: 21)
 
-                    Text("\(progress.bestCorrect(inIsland: island.id)) of 100 questions right")
-                        .font(Theme.bold(13))
-                        .foregroundColor(Vault.goldPale.opacity(0.8))
-                        .shadow(color: .black.opacity(0.5), radius: 2)
+                    HallLine(text: "\(progress.bestCorrect(inIsland: island.id)) of 100 questions right")
 
                     VStack(spacing: 10) {
                         ForEach(Array(progress.ladder(for: island).enumerated()),
