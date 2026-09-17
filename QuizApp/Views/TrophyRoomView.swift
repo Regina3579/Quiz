@@ -936,31 +936,56 @@ private struct AdventureNiche: View {
         }
     }
 
+    /// The painted plaque, cropped of its transparent margin, and the bare
+    /// wood inside its gold rail — both measured off the artwork.
+    private static let plateAspect: CGFloat = 4.38
+    private static let plateInner = CGRect(x: 0.075, y: 0.15,
+                                           width: 0.85, height: 0.70)
+
+    @ViewBuilder
     private var nameplate: some View {
+        if VaultArt.has(VaultArt.plate) { paintedPlate } else { drawnPlate }
+    }
+
+    /// Scaled whole rather than nine-sliced, even though this plaque — unlike
+    /// the big sign — has nothing in its middle to protect. A nine-slice keeps
+    /// its caps at a fixed point size, and the source is four times the size
+    /// this is drawn at, so the flared ends would arrive far too big for the
+    /// plank between them.
+    private var paintedPlate: some View {
+        Image(VaultArt.plate)
+            .resizable()
+            .aspectRatio(Self.plateAspect, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .overlay(
+                GeometryReader { geo in
+                    Text(island.name)
+                        .font(Theme.bold(12))
+                        .foregroundColor(Vault.goldPale)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
+                        .shadow(color: .black.opacity(0.5), radius: 1, y: 1)
+                        .frame(width: geo.size.width * Self.plateInner.width,
+                               height: geo.size.height * Self.plateInner.height)
+                        .position(x: geo.size.width * Self.plateInner.midX,
+                                  y: geo.size.height * Self.plateInner.midY)
+                }
+            )
+    }
+
+    private var drawnPlate: some View {
         Text(island.name)
             .font(Theme.bold(12))
             .foregroundColor(Vault.goldPale)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 8)
-            .padding(.vertical, VaultArt.has(VaultArt.plate) ? 7 : 4)
+            .padding(.vertical, 4)
             .frame(maxWidth: .infinity)
-            .background(plateBacking)
-    }
-
-    @ViewBuilder
-    private var plateBacking: some View {
-        if VaultArt.has(VaultArt.plate) {
-            Image(VaultArt.plate)
-                .resizable(capInsets: EdgeInsets(top: 12, leading: 30,
-                                                 bottom: 12, trailing: 30),
-                           resizingMode: .stretch)
-        } else {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(Vault.plaque)
-                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .strokeBorder(Vault.goldDeep, lineWidth: 1.2))
-        }
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Vault.plaque))
+            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .strokeBorder(Vault.goldDeep, lineWidth: 1.2))
     }
 
     /// Five little jewels: the ladder at a glance.
