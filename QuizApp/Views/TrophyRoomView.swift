@@ -269,7 +269,7 @@ struct TrophyRoomView: View {
 
     private var pedestalShelf: some View {
         VStack(spacing: 13) {
-            VaultBanner(text: "Adventure Trophies", size: 19)
+            VaultBanner(text: "Adventure Trophies", size: 19, maxWidth: 310)
 
             floatingLine("\(progress.pedestalsFilled) of 10 pedestals filled", size: 12)
 
@@ -347,7 +347,7 @@ struct TrophyRoomView: View {
 
     private var badgeShelf: some View {
         VStack(spacing: 13) {
-            VaultBanner(text: "Special Achievements", size: 19)
+            VaultBanner(text: "Special Achievements", size: 19, maxWidth: 310)
 
             VStack(spacing: 10) {
                 ForEach(Array(AchievementCatalog.badges.enumerated()), id: \.element.id) { pair in
@@ -457,13 +457,46 @@ private struct HallLine: View {
 private struct VaultBanner: View {
     let text: String
     var size: CGFloat = 20
+    var maxWidth: CGFloat = .infinity
+
+    /// The painted sign is 3:1 and can only ever be scaled whole. Its crown
+    /// and its bottom gem both sit in the middle, which is precisely the part
+    /// a nine-slice stretches — cap insets would have pulled the crown wide.
+    private static let aspect: CGFloat = 3.0
+
+    /// Where the bare wood is, as a fraction of the whole plate: inside the
+    /// gold rails, under the crown's overlap, clear of the gem below.
+    /// Measured off the artwork rather than guessed.
+    private static let inner = CGRect(x: 0.12, y: 0.34, width: 0.76, height: 0.38)
 
     var body: some View {
-        label.background(plank)
-             .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
+        if VaultArt.has(VaultArt.banner) { painted } else { drawn }
     }
 
-    private var label: some View {
+    private var painted: some View {
+        Image(VaultArt.banner)
+            .resizable()
+            .aspectRatio(Self.aspect, contentMode: .fit)
+            .frame(maxWidth: maxWidth)
+            .overlay(
+                GeometryReader { geo in
+                    Text(text)
+                        .font(Theme.display(size))
+                        .foregroundColor(Vault.goldPale)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(2)
+                        .shadow(color: .black.opacity(0.6), radius: 2, y: 1)
+                        .frame(width: geo.size.width * Self.inner.width,
+                               height: geo.size.height * Self.inner.height)
+                        .position(x: geo.size.width * Self.inner.midX,
+                                  y: geo.size.height * Self.inner.midY)
+                }
+            )
+            .shadow(color: .black.opacity(0.4), radius: 7, y: 4)
+    }
+
+    private var drawn: some View {
         Text(text)
             .font(Theme.display(size))
             .foregroundColor(Vault.goldPale)
@@ -471,27 +504,15 @@ private struct VaultBanner: View {
             .minimumScaleFactor(0.6)
             .lineLimit(2)
             .shadow(color: Vault.woodDeep, radius: 1, y: 1)
-            .padding(.horizontal, VaultArt.has(VaultArt.banner) ? 40 : 26)
-            .padding(.vertical, VaultArt.has(VaultArt.banner) ? 16 : 10)
-    }
-
-    @ViewBuilder
-    private var plank: some View {
-        if VaultArt.has(VaultArt.banner) {
-            // Stretched from the middle only, so the carved ends and their
-            // studs keep their proportions however long the title is.
-            Image(VaultArt.banner)
-                .resizable(capInsets: EdgeInsets(top: 26, leading: 74,
-                                                 bottom: 26, trailing: 74),
-                           resizingMode: .stretch)
-        } else {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Vault.plaque)
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Vault.metal, lineWidth: 3))
-                .overlay(alignment: .leading) { stud }
-                .overlay(alignment: .trailing) { stud }
-        }
+            .padding(.horizontal, 26)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Vault.plaque))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Vault.metal, lineWidth: 3))
+            .overlay(alignment: .leading) { stud }
+            .overlay(alignment: .trailing) { stud }
+            .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
     }
 
     private var stud: some View {
@@ -933,7 +954,7 @@ private struct AdventureLadderSheet: View {
                         .font(.system(size: 42))
                         .padding(.top, 8)
 
-                    VaultBanner(text: island.name, size: 21)
+                    VaultBanner(text: island.name, size: 21, maxWidth: 320)
 
                     HallLine(text: "\(progress.bestCorrect(inIsland: island.id)) of 100 questions right")
 
