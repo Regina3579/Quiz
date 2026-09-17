@@ -298,8 +298,8 @@ struct TrophyRoomView: View {
         let filled = progress.pedestalsFilled
 
         return VStack(spacing: 8) {
-            TrophyCupIcon(metal: .gold, lit: won, height: 74)
-                .frame(height: 76)
+            TrophyCupIcon(metal: .gold, lit: won, height: 80)
+                .frame(height: 82)
 
             Text(award.title)
                 .font(Theme.display(20))
@@ -754,8 +754,8 @@ private struct GrandCup: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            TrophyCupIcon(metal: metal, lit: won, height: 52)
-                .frame(height: 54)
+            TrophyCupIcon(metal: metal, lit: won, height: 56)
+                .frame(height: 58)
 
             VStack(spacing: 1) {
                 Text(shortName)
