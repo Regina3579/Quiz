@@ -19,6 +19,40 @@
 //
 
 import SwiftUI
+import UIKit
+
+// MARK: - Painted pieces, when there are any
+
+/// The room is drawn in code so it works today, but every drawn piece has a
+/// painted one it will use instead the moment that artwork is in the bundle.
+///
+/// Nothing here is required. A missing piece is not a broken screen — it is
+/// the drawn version, unchanged. So the artwork can arrive one plate at a
+/// time, in any order, with no code change and nothing half-finished on
+/// screen in between.
+enum VaultArt {
+    static let background = "TrophyRoomBG"     // the empty hall
+    static let banner     = "TrophyBanner"     // blank carved sign
+    static let arch       = "TrophyArch"       // hollow gold niche frame
+    static let plate      = "TrophyPlate"      // blank name plaque
+    static let chest      = "TrophyChest"      // little treasure chest
+
+    static func cup(_ metal: TrophyCupIcon.Metal) -> String {
+        switch metal {
+        case .bronze:  return "CupBronze"
+        case .silver:  return "CupSilver"
+        case .gold:    return "CupGold"
+        case .diamond: return "CupDiamond"
+        }
+    }
+
+    /// UIKit rather than `Image(_:)`, because a SwiftUI Image of a missing
+    /// asset draws nothing and says nothing — the fallback has to be chosen
+    /// before the view is built, not after it has already come out blank.
+    static func has(_ name: String) -> Bool {
+        UIImage(named: name) != nil
+    }
+}
 
 // MARK: - The room's palette
 
@@ -342,6 +376,34 @@ func remainingLine(_ standing: Int, of target: Int) -> String {
 /// to ship and stretches to any screen.
 private struct VaultBackdrop: View {
     var body: some View {
+        if VaultArt.has(VaultArt.background) {
+            painted
+        } else {
+            drawn
+        }
+    }
+
+    /// The painted hall. Pinned to the top and allowed to crop at the sides,
+    /// so the arched windows stay where they were painted; the stone colour
+    /// carries on underneath for however far the room scrolls.
+    private var painted: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .top) {
+                LinearGradient(colors: [Vault.stoneDeep, Vault.carpet.opacity(0.5)],
+                               startPoint: .top, endPoint: .bottom)
+
+                Image(VaultArt.background)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geo.size.width)
+                    .clipped()
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+        }
+        .ignoresSafeArea()
+    }
+
+    private var drawn: some View {
         ZStack {
             LinearGradient(colors: [Vault.night, Vault.stone,
                                     Vault.stoneDeep, Vault.carpet.opacity(0.55)],
@@ -383,6 +445,11 @@ private struct VaultBanner: View {
     var size: CGFloat = 20
 
     var body: some View {
+        label.background(plank)
+             .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
+    }
+
+    private var label: some View {
         Text(text)
             .font(Theme.display(size))
             .foregroundColor(Vault.goldPale)
@@ -390,15 +457,27 @@ private struct VaultBanner: View {
             .minimumScaleFactor(0.6)
             .lineLimit(2)
             .shadow(color: Vault.woodDeep, radius: 1, y: 1)
-            .padding(.horizontal, 26)
-            .padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Vault.plaque))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Vault.metal, lineWidth: 3))
-            .overlay(alignment: .leading) { stud }
-            .overlay(alignment: .trailing) { stud }
-            .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
+            .padding(.horizontal, VaultArt.has(VaultArt.banner) ? 40 : 26)
+            .padding(.vertical, VaultArt.has(VaultArt.banner) ? 16 : 10)
+    }
+
+    @ViewBuilder
+    private var plank: some View {
+        if VaultArt.has(VaultArt.banner) {
+            // Stretched from the middle only, so the carved ends and their
+            // studs keep their proportions however long the title is.
+            Image(VaultArt.banner)
+                .resizable(capInsets: EdgeInsets(top: 26, leading: 74,
+                                                 bottom: 26, trailing: 74),
+                           resizingMode: .stretch)
+        } else {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Vault.plaque)
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Vault.metal, lineWidth: 3))
+                .overlay(alignment: .leading) { stud }
+                .overlay(alignment: .trailing) { stud }
+        }
     }
 
     private var stud: some View {
@@ -538,9 +617,23 @@ struct TrophyCupIcon: View {
     }
 
     var body: some View {
+        if VaultArt.has(VaultArt.cup(metal)) {
+            Image(VaultArt.cup(metal))
+                .resizable()
+                .scaledToFit()
+                .frame(height: height)
+                .shadow(color: shades[1].opacity(lit ? 0.75 : 0.30),
+                        radius: lit ? 12 : 5)
+                .shadow(color: .black.opacity(0.35), radius: 2, y: 2)
+        } else {
+            drawn
+        }
+    }
+
+    private var drawn: some View {
         let w = height * 0.74
 
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
             // Rim — a little wider than the bowl, which is what gives a cup
             // its lip instead of a funnel's edge.
             Capsule()
@@ -724,9 +817,16 @@ private struct AdventureNiche: View {
                 Text(island.emoji).font(.system(size: 34))
             }
 
-            ArchShape()
-                .strokeBorder(Vault.metal, lineWidth: lit ? 3.5 : 2.5)
-                .opacity(lit ? 1 : 0.8)
+            if VaultArt.has(VaultArt.arch) {
+                Image(VaultArt.arch)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 74, height: 84)
+            } else {
+                ArchShape()
+                    .strokeBorder(Vault.metal, lineWidth: lit ? 3.5 : 2.5)
+                    .opacity(lit ? 1 : 0.8)
+            }
 
             // The best rung so far rides on the corner of the arch.
             if let top {
@@ -754,12 +854,24 @@ private struct AdventureNiche: View {
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.vertical, VaultArt.has(VaultArt.plate) ? 7 : 4)
             .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(Vault.plaque))
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .strokeBorder(Vault.goldDeep, lineWidth: 1.2))
+            .background(plateBacking)
+    }
+
+    @ViewBuilder
+    private var plateBacking: some View {
+        if VaultArt.has(VaultArt.plate) {
+            Image(VaultArt.plate)
+                .resizable(capInsets: EdgeInsets(top: 12, leading: 30,
+                                                 bottom: 12, trailing: 30),
+                           resizingMode: .stretch)
+        } else {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Vault.plaque)
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(Vault.goldDeep, lineWidth: 1.2))
+        }
     }
 
     /// Five little jewels: the ladder at a glance.
@@ -947,7 +1059,14 @@ struct AwardRow: View {
             .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
         } else if award.opensChest {
             HStack(spacing: 2) {
-                Text("🎁").font(.system(size: 21))
+                if VaultArt.has(VaultArt.chest) {
+                    Image(VaultArt.chest)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 26, height: 26)
+                } else {
+                    Text("🎁").font(.system(size: 21))
+                }
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(.white.opacity(0.8))
