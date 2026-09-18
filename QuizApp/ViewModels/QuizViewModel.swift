@@ -75,19 +75,28 @@ final class QuizViewModel: ObservableObject {
         if correct { Sound.correct() } else { Sound.wrong() }
     }
 
-    /// Whether a hint has already been bought for the question showing now.
-    var hintUsed: Bool { !eliminated.isEmpty }
+    /// How many hints have been bought for the question showing now.
+    var hintsUsed: Int { eliminated.count }
 
-    /// Strikes out two wrong answers.
+    /// How many hints this question can give up.
     ///
-    /// The right answer is filtered out before anything is picked, so it can
-    /// never be struck no matter how the shuffle falls. Call only after the
-    /// gems have actually been taken.
+    /// Always two fewer than the number of answers, so the last hint leaves a
+    /// choice rather than handing the answer over. Four answers means two
+    /// hints; a question with only two answers offers none.
+    var hintsPossible: Int { max(0, currentQuestion.options.count - 2) }
+
+    /// Whether another hint can still be bought.
+    var canBuyHint: Bool { !hasAnswered && hintsUsed < hintsPossible }
+
+    /// Strikes out one more wrong answer.
+    ///
+    /// The right answer is filtered out before anything is picked, so no
+    /// shuffle can ever strike it. Call only after the gems have been taken.
     func revealHint() {
-        guard !hasAnswered, eliminated.isEmpty else { return }
+        guard canBuyHint else { return }
         let wrong = currentQuestion.options.indices
-            .filter { $0 != currentQuestion.correctIndex }
-        eliminated = Set(wrong.shuffled().prefix(2))
+            .filter { $0 != currentQuestion.correctIndex && !eliminated.contains($0) }
+        if let struck = wrong.randomElement() { eliminated.insert(struck) }
     }
 
     func next() {

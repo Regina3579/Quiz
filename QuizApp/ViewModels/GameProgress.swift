@@ -328,9 +328,9 @@ final class GameProgress: ObservableObject {
     /// coming in — buying hints must not walk a child backwards away from the
     /// Gem Hunter badge they are working towards.
     @discardableResult
-    func spendOnHint() -> Bool {
-        guard gems >= GemRules.hintCost else { return false }
-        gems -= GemRules.hintCost
+    func spendOnHint(cost: Int) -> Bool {
+        guard gems >= cost else { return false }
+        gems -= cost
         saveGems()
         return true
     }
@@ -601,10 +601,15 @@ final class GameProgress: ObservableObject {
 enum GemRules {
     static let perCorrect = 5
 
-    /// What a hint costs. Two correct answers' worth, so it is a real
-    /// decision rather than a reflex, and cheap enough that a stuck child is
-    /// never stranded.
-    static let hintCost = 10
+    /// What each hint costs, in the order they are bought. The second is
+    /// dearer because it is worth more: the first narrows four answers to
+    /// three, the second takes it down to two.
+    static let hintCosts = [10, 20]
+
+    /// The price of the next hint when `used` have been bought already.
+    static func hintCost(after used: Int) -> Int {
+        hintCosts[min(max(0, used), hintCosts.count - 1)]
+    }
     static let streakOfThree = 5
     static let streakOfFive = 10
     static let perfectRound = 20

@@ -66,16 +66,22 @@ struct QuizView: View {
         .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
         // Asked before the gems go, not after. A child should never find out
         // what a tap cost them by watching the number drop.
-        .alert("Need a Little Help? \u{1F4A1}", isPresented: $showHintPrompt) {
-            Button("Use \(GemRules.hintCost) Gems") { buyHint() }
+        .alert(model.hintsUsed > 0 ? "Need More Help? \u{2728}"
+                                   : "Need a Little Help? \u{1F4A1}",
+               isPresented: $showHintPrompt) {
+            Button("Use \(nextHintCost) Gems") { buyHint() }
             Button("Not Now", role: .cancel) { }
         } message: {
-            Text("Use \(GemRules.hintCost) Gems \u{1F48E} to unlock a hint for this question.")
+            Text(model.hintsUsed > 0
+                 ? "Use \(nextHintCost) Gems \u{1F48E} for a stronger clue. It will "
+                   + "cross out another wrong answer, leaving just two."
+                 : "Use \(nextHintCost) Gems \u{1F48E} to unlock a hint for this question. "
+                   + "It will cross out one wrong answer.")
         }
         .alert("Not enough Gems yet", isPresented: $showBrokeNotice) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("A hint costs \(GemRules.hintCost) Gems, and you have "
+            Text("This hint costs \(nextHintCost) Gems, and you have "
                  + "\(progress.gems). Keep playing — every right answer earns more!")
         }
         .onPreferenceChange(CorrectButtonCenterKey.self) { correctCenter = $0 }
@@ -215,10 +221,13 @@ struct QuizView: View {
         }
     }
 
-    /// Takes the gems first and only strikes the answers if that succeeded, so
-    /// a child who cannot afford it never sees a hint they did not pay for.
+    /// The price of the hint the button is currently offering.
+    private var nextHintCost: Int { GemRules.hintCost(after: model.hintsUsed) }
+
+    /// Takes the gems first and only strikes an answer if that succeeded, so a
+    /// child who cannot afford it never sees a hint they did not pay for.
     private func buyHint() {
-        guard progress.spendOnHint() else {
+        guard progress.spendOnHint(cost: nextHintCost) else {
             Haptics.play(.error)
             showBrokeNotice = true
             return
@@ -228,53 +237,71 @@ struct QuizView: View {
         withAnimation(.easeOut(duration: 0.3)) { model.revealHint() }
     }
 
+    /// One thing at a time in a 56pt strip: the offer, or, once there is
+    /// nothing left to offer, what the hints did. The crossed-out answers are
+    /// already on screen, so the strip does not have to report them as well.
     @ViewBuilder
     private var hintRow: some View {
-        if model.hintUsed {
-            HStack(spacing: 7) {
-                Text("🌟").font(.system(size: 16))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Hint Unlocked!")
-                        .font(Theme.bold(14))
-                        .foregroundColor(Theme.ink)
-                    Text("Two wrong answers are crossed out.")
-                        .font(Theme.medium(12))
-                        .foregroundColor(Theme.inkSoft)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 13)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Theme.didYouKnow))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Theme.star.opacity(0.7), lineWidth: 2))
-            .transition(.opacity)
+        if model.canBuyHint {
+            hintButton
+        } else if model.hintsUsed > 0 {
+            hintDone
         } else {
-            Button {
-                Haptics.play(.light)
-                showHintPrompt = true
-            } label: {
-                HStack(spacing: 7) {
-                    Text("💡").font(.system(size: 15))
-                    Text("Get Hint").font(Theme.bold(15))
-                    GemIcon(size: 15)
-                    Text("\(GemRules.hintCost)").font(Theme.bold(15))
-                }
-                .foregroundColor(Theme.ink)
-                .padding(.horizontal, 18)
-                // A set height, centred in the strip. Filling it would make a
-                // 56pt lozenge out of a four-word button.
-                .frame(height: 40)
-                .background(Capsule().fill(Theme.didYouKnow))
-                .overlay(Capsule().stroke(Theme.star, lineWidth: 2))
-            }
-            .buttonStyle(PressableButtonStyle())
-            .frame(maxWidth: .infinity)
-            .transition(.opacity)
+            Color.clear
         }
+    }
+
+    private var hintButton: some View {
+        let second = model.hintsUsed > 0
+
+        return Button {
+            Haptics.play(.light)
+            showHintPrompt = true
+        } label: {
+            HStack(spacing: 6) {
+                Text(second ? "\u{2728}" : "\u{1F4A1}").font(.system(size: 15))
+                Text(second ? "Need more help? Hint 2" : "Get Hint")
+                    .font(Theme.bold(15))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                GemIcon(size: 15)
+                Text("\(nextHintCost)").font(Theme.bold(15))
+            }
+            .foregroundColor(Theme.ink)
+            .padding(.horizontal, 18)
+            // A set height, centred in the strip. Filling it would make a
+            // 56pt lozenge out of a four-word button.
+            .frame(height: 40)
+            .background(Capsule().fill(Theme.didYouKnow))
+            .overlay(Capsule().stroke(Theme.star, lineWidth: 2))
+        }
+        .buttonStyle(PressableButtonStyle())
+        .frame(maxWidth: .infinity)
+        .transition(.opacity)
+    }
+
+    private var hintDone: some View {
+        HStack(spacing: 7) {
+            Text("\u{1F31F}").font(.system(size: 16))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Hint Unlocked!")
+                    .font(Theme.bold(14))
+                    .foregroundColor(Theme.ink)
+                Text("It is down to two answers now — you can do this!")
+                    .font(Theme.medium(12))
+                    .foregroundColor(Theme.inkSoft)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 13)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(Theme.didYouKnow))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(Theme.star.opacity(0.7), lineWidth: 2))
+        .transition(.opacity)
     }
 
     private var nextButton: some View {
