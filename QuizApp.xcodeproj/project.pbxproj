@@ -16,6 +16,7 @@
 		AB0000000000000000000043 /* IslandBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000042 /* IslandBackground.swift */; };
 		AB0000000000000000000050 /* ProMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000051 /* ProMode.swift */; };
 		AB0000000000000000000052 /* ProQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000053 /* ProQuestions.swift */; };
+		AB0000000000000000000072 /* Hints.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000073 /* Hints.swift */; };
 		AB0000000000000000000054 /* ProQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000055 /* ProQuizViewModel.swift */; };
 		AB0000000000000000000056 /* ProHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000057 /* ProHubView.swift */; };
 		AB0000000000000000000058 /* ProQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000059 /* ProQuizView.swift */; };
@@ -62,6 +63,7 @@
 		AB0000000000000000000042 /* IslandBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandBackground.swift; sourceTree = "<group>"; };
 		AB0000000000000000000051 /* ProMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProMode.swift; sourceTree = "<group>"; };
 		AB0000000000000000000053 /* ProQuestions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProQuestions.swift; sourceTree = "<group>"; };
+		AB0000000000000000000073 /* Hints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hints.swift; sourceTree = "<group>"; };
 		AB0000000000000000000055 /* ProQuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProQuizViewModel.swift; sourceTree = "<group>"; };
 		AB0000000000000000000057 /* ProHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProHubView.swift; sourceTree = "<group>"; };
 		AB0000000000000000000059 /* ProQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProQuizView.swift; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 				AB0000000000000000000017 /* QuizData.swift */,
 				AB000000000000000000005D /* DailyChallenge.swift */,
 				AB0000000000000000000053 /* ProQuestions.swift */,
+				AB0000000000000000000073 /* Hints.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -316,6 +319,7 @@
 				AB000000000000000000000E /* ResultView.swift in Sources */,
 				AB0000000000000000000050 /* ProMode.swift in Sources */,
 				AB0000000000000000000052 /* ProQuestions.swift in Sources */,
+				AB0000000000000000000072 /* Hints.swift in Sources */,
 				AB0000000000000000000054 /* ProQuizViewModel.swift in Sources */,
 				AB0000000000000000000056 /* ProHubView.swift in Sources */,
 				AB0000000000000000000058 /* ProQuizView.swift in Sources */,

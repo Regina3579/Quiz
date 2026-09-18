@@ -75,8 +75,9 @@ final class QuizViewModel: ObservableObject {
         if correct { Sound.correct() } else { Sound.wrong() }
     }
 
-    /// How many hints have been bought for the question showing now.
-    var hintsUsed: Int { eliminated.count }
+    /// How many hints have been bought for the question showing now, the
+    /// written clue included. This is what the price ladder counts.
+    var hintsUsed: Int { hintsTaken }
 
     /// How many hints this question can give up.
     ///
@@ -85,15 +86,39 @@ final class QuizViewModel: ObservableObject {
     /// hints; a question with only two answers offers none.
     var hintsPossible: Int { max(0, currentQuestion.options.count - 2) }
 
+    /// The written clue showing now, once Hint 1 has been bought for a
+    /// question that has one. Cleared with everything else on the next
+    /// question.
+    @Published private(set) var clue: String?
+
+    /// Whether this question has a written clue waiting behind Hint 1.
+    var hasClue: Bool { HintBook.hasClue(for: currentQuestion.prompt) }
+
+    /// Hints already taken, counting the clue as one of them.
+    var hintsTaken: Int { eliminated.count + (clue == nil ? 0 : 1) }
+
     /// Whether another hint can still be bought.
-    var canBuyHint: Bool { !hasAnswered && hintsUsed < hintsPossible }
+    ///
+    /// A question with a clue has one more to sell than one without: the clue
+    /// itself, then the crossings-out.
+    var canBuyHint: Bool {
+        guard !hasAnswered else { return false }
+        return hintsTaken < hintsPossible + (hasClue ? 1 : 0)
+    }
 
     /// Strikes out one more wrong answer.
     ///
     /// The right answer is filtered out before anything is picked, so no
     /// shuffle can ever strike it. Call only after the gems have been taken.
+    /// Gives the next hint: the written clue first when there is one, then a
+    /// crossed-out answer. The clue comes first deliberately — it nudges
+    /// without narrowing, which is what a first hint should do.
     func revealHint() {
         guard canBuyHint else { return }
+        if hasClue, clue == nil {
+            clue = HintBook.clue(for: currentQuestion.prompt)
+            return
+        }
         let wrong = currentQuestion.options.indices
             .filter { $0 != currentQuestion.correctIndex && !eliminated.contains($0) }
         if let struck = wrong.randomElement() { eliminated.insert(struck) }
@@ -124,6 +149,7 @@ final class QuizViewModel: ObservableObject {
         selectedOption = nil
         hasAnswered = false
         eliminated = []
+        clue = nil
     }
 
     func restart() {
@@ -134,5 +160,6 @@ final class QuizViewModel: ObservableObject {
         isFinished = false
         results = []
         eliminated = []
+        clue = nil
     }
 }

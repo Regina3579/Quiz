@@ -238,13 +238,22 @@ struct QuizView: View {
                 title: model.hintsUsed > 0 ? "Need More Help?" : "Need a Hint?",
                 leadIn: "Use ", price: "\(nextHintCost) Gems",
                 tail: " to get a clue!",
-                detail: model.hintsUsed > 0
-                    ? "We will remove 1 more wrong answer, leaving only two."
-                    : "We will remove 1 wrong answer for you.",
+                detail: hintPromptDetail,
                 confirm: "Use \(nextHintCost) Gems",
                 onConfirm: { showHintPrompt = false; buyHint() },
                 onCancel: { Haptics.play(.light); showHintPrompt = false })
         }
+    }
+
+    /// What the next hint will actually do, which depends on whether this
+    /// question has a written clue and whether it has already been given.
+    private var hintPromptDetail: String {
+        if model.hasClue && model.clue == nil {
+            return "We will give you a little clue to point you the right way."
+        }
+        return model.hintsUsed > 0
+            ? "We will cross out another wrong answer, leaving only two."
+            : "We will cross out one wrong answer for you."
     }
 
     /// The price of the hint the button is currently offering.
@@ -284,7 +293,14 @@ struct QuizView: View {
     /// so the strip does not have to report them as well.
     @ViewBuilder
     private var hintRow: some View {
-        if model.canBuyHint {
+        if let clue = model.clue {
+            // Once there is a clue it owns the strip — it is the thing worth
+            // reading. Any further help shrinks to a chip beside it.
+            HStack(spacing: 9) {
+                clueCard(clue)
+                if model.canBuyHint { moreChip }
+            }
+        } else if model.canBuyHint {
             HStack(spacing: 9) {
                 hintButton
                 // Only ever offered on an untouched question, so the two
@@ -297,6 +313,50 @@ struct QuizView: View {
         } else {
             Color.clear
         }
+    }
+
+    private func clueCard(_ text: String) -> some View {
+        HStack(spacing: 8) {
+            Text("💡").font(.system(size: 17))
+            Text(text)
+                .font(Theme.medium(12.5))
+                .foregroundColor(Theme.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(Theme.didYouKnow))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(Theme.star.opacity(0.75), lineWidth: 2))
+        .transition(.opacity)
+    }
+
+    /// The narrow "more help" button that sits beside a clue.
+    private var moreChip: some View {
+        Button {
+            Haptics.play(.light)
+            showHintPrompt = true
+        } label: {
+            VStack(spacing: 1) {
+                Text("✨").font(.system(size: 13))
+                HStack(spacing: 3) {
+                    GemIcon(size: 12)
+                    Text("\(nextHintCost)").font(Theme.bold(13))
+                }
+            }
+            .foregroundColor(Theme.ink)
+            .padding(.horizontal, 11)
+            .frame(maxHeight: .infinity)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Theme.didYouKnow))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Theme.star, lineWidth: 2))
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 
     private var hintButton: some View {
