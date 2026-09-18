@@ -59,6 +59,12 @@ struct QuizView: View {
             // Gold stars bursting from the tapped answer when it's correct.
             CorrectBurst(trigger: celebrateTrigger, origin: burstOrigin)
 
+            if showHintPrompt || showFiftyPrompt {
+                hintPrompt
+                    .transition(.opacity)
+                    .zIndex(2)
+            }
+
             if explanationExpanded, let explanation = model.currentQuestion.explanation {
                 ExplanationSheet(text: explanation,
                                  accent: model.island.palette.end) {
@@ -67,27 +73,10 @@ struct QuizView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
+        .animation(.easeInOut(duration: 0.2), value: showHintPrompt)
+        .animation(.easeInOut(duration: 0.2), value: showFiftyPrompt)
         // Asked before the gems go, not after. A child should never find out
         // what a tap cost them by watching the number drop.
-        .alert(model.hintsUsed > 0 ? "Need More Help? \u{2728}"
-                                   : "Need a Little Help? \u{1F4A1}",
-               isPresented: $showHintPrompt) {
-            Button("Use \(nextHintCost) Gems") { buyHint() }
-            Button("Not Now", role: .cancel) { }
-        } message: {
-            Text(model.hintsUsed > 0
-                 ? "Use \(nextHintCost) Gems \u{1F48E} for a stronger clue. It will "
-                   + "cross out another wrong answer, leaving just two."
-                 : "Use \(nextHintCost) Gems \u{1F48E} to unlock a hint for this question. "
-                   + "It will cross out one wrong answer.")
-        }
-        .alert("50-50 Magic \u{1FA84}", isPresented: $showFiftyPrompt) {
-            Button("Use \(GemRules.fiftyFiftyCost) Gems") { buyFiftyFifty() }
-            Button("Not Now", role: .cancel) { }
-        } message: {
-            Text("Use \(GemRules.fiftyFiftyCost) Gems \u{1F48E} to remove two wrong "
-                 + "answers at once, leaving only two choices.")
-        }
         .alert("Not enough Gems yet", isPresented: $showBrokeNotice) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -228,6 +217,33 @@ struct QuizView: View {
             hintRow
         } else {
             Color.clear
+        }
+    }
+
+    /// The card shown over the quiz when a power-up is tapped. Both offers
+    /// share it; only the words differ.
+    @ViewBuilder
+    private var hintPrompt: some View {
+        if showFiftyPrompt {
+            HintPromptView(
+                title: "50-50 Magic",
+                leadIn: "Use ", price: "\(GemRules.fiftyFiftyCost) Gems",
+                tail: " for magic!",
+                detail: "We will remove 2 wrong answers, leaving only two choices.",
+                confirm: "Use \(GemRules.fiftyFiftyCost) Gems",
+                onConfirm: { showFiftyPrompt = false; buyFiftyFifty() },
+                onCancel: { Haptics.play(.light); showFiftyPrompt = false })
+        } else {
+            HintPromptView(
+                title: model.hintsUsed > 0 ? "Need More Help?" : "Need a Hint?",
+                leadIn: "Use ", price: "\(nextHintCost) Gems",
+                tail: " to get a clue!",
+                detail: model.hintsUsed > 0
+                    ? "We will remove 1 more wrong answer, leaving only two."
+                    : "We will remove 1 wrong answer for you.",
+                confirm: "Use \(nextHintCost) Gems",
+                onConfirm: { showHintPrompt = false; buyHint() },
+                onCancel: { Haptics.play(.light); showHintPrompt = false })
         }
     }
 
