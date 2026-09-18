@@ -50,8 +50,8 @@ enum Theme {
     /// Soft cream fill for the "Did you know?" box. (#FFF8D6)
     static let didYouKnow = Color(red: 1.00, green: 0.973, blue: 0.839)
 
-    /// A bright pink used for the jewel gem and jewel counts. (#FF459E)
-    static let jewelPink = Color(red: 1.00, green: 0.27, blue: 0.62)
+    /// A bright pink used for the gem gem and gem counts. (#FF459E)
+    static let gemPink = Color(red: 1.00, green: 0.27, blue: 0.62)
 
     /// Purple gradient for the primary "Next" button. (#8B5CF6 → #A855F7)
     static let nextButton = LinearGradient(
@@ -82,15 +82,18 @@ enum Theme {
     }
 }
 
-/// The pink-gem jewel icon used everywhere jewels are shown.
+/// The pink-gem gem icon used everywhere gems are shown.
 /// Set `sparkle: true` for little twinkling stars that make it glitter.
-struct JewelIcon: View {
+struct GemIcon: View {
     var size: CGFloat = 16
     var sparkle: Bool = false
 
     @State private var twinkle = false
 
     var body: some View {
+        // The artwork is still filed under its old name, like the Pro card and
+        // the Jewel Rush music. Asset names are never seen by a player, and
+        // renaming the file buys nothing worth a broken image.
         Image("JewelGem")
             .resizable()
             .scaledToFit()
@@ -124,7 +127,7 @@ struct JewelIcon: View {
         Image(systemName: "sparkle")
             .font(.system(size: size))
             .foregroundStyle(.white)
-            .shadow(color: Theme.jewelPink.opacity(0.8), radius: 2)
+            .shadow(color: Theme.gemPink.opacity(0.8), radius: 2)
     }
 }
 

@@ -36,7 +36,7 @@ struct ProUnlockView: View {
                      + "clock, in a lightning round, or without a single "
                      + "mistake."
             case .sticker:
-                return "Every sticker on every shelf, to buy with the jewels "
+                return "Every sticker on every shelf, to buy with the gems "
                      + "you have already earned."
             }
         }
@@ -91,9 +91,9 @@ struct ProUnlockView: View {
                 .foregroundColor(ink)
 
             row("⚡️", "All six Pro Challenges",
-                "Timed, Lightning, Perfect Run, Jewel Rush and more")
+                "Timed, Lightning, Perfect Run, Gem Rush and more")
             row("🎨", "Every sticker unlocked",
-                "All ten collections, still bought with jewels you earn")
+                "All ten collections, still bought with gems you earn")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -115,7 +115,7 @@ struct ProUnlockView: View {
             row("📅", "The Daily Challenge",
                 "A new one every day, free forever")
             row("⭐️", "Ten stickers to keep",
-                "One from each adventure, chosen and bought with jewels")
+                "One from each adventure, chosen and bought with gems")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

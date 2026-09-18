@@ -3,7 +3,7 @@
 //  QuizApp
 //
 //  When a round wins something worth having, the result screen doesn't just
-//  add the jewels — it puts a treasure chest on the table. The child taps it,
+//  add the gems — it puts a treasure chest on the table. The child taps it,
 //  the lid flies open, and the prizes come out one after another.
 //
 //  Awards that carry no prize skip the chest and show as a quiet line instead:
@@ -23,7 +23,7 @@ struct RewardChestView: View {
     private var prized: [Achievement] { awards.filter(\.opensChest) }
     private var plain: [Achievement] { awards.filter { !$0.opensChest } }
 
-    private var jewels: Int { prized.reduce(0) { $0 + $1.jewelReward } }
+    private var gems: Int { prized.reduce(0) { $0 + $1.gemReward } }
     private var stickers: Int { prized.filter { $0.stickerReward != nil }.count }
 
     var body: some View {
@@ -109,13 +109,13 @@ struct RewardChestView: View {
         VStack(spacing: 10) {
             Text("🎉").font(.system(size: 44))
 
-            if jewels > 0 {
+            if gems > 0 {
                 prizeLine(index: 1) {
                     HStack(spacing: 7) {
-                        JewelIcon(size: 22)
-                        Text("+\(jewels)")
+                        GemIcon(size: 22)
+                        Text("+\(gems)")
                             .font(Theme.display(24))
-                            .foregroundStyle(Theme.jewelPink)
+                            .foregroundStyle(Theme.gemPink)
                     }
                 }
             }

@@ -4,7 +4,7 @@
 //
 //  The challenge modes. Each is a different way to test what the child has
 //  learned on the adventure map: against the clock, without a single slip,
-//  or deep inside one category. They all pay out in jewels, which buy
+//  or deep inside one category. They all pay out in gems, which buy
 //  stickers for the sticker book.
 //
 //  Five of them live in the Pro room. The Daily Challenge is free for
@@ -19,7 +19,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     case timedChallenge
     case lightningRound
     case perfectRun
-    case jewelRush
+    /// Pinned to its old spelling: the rawValue is the key this mode's
+    /// rounds and best score are saved under, so letting it follow the
+    /// rename would strand both.
+    case gemRush = "jewelRush"
     case categoryMaster
 
     var id: String { rawValue }
@@ -39,7 +42,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "Timed Challenge"
         case .lightningRound: return "Lightning Round"
         case .perfectRun:     return "Perfect Run"
-        case .jewelRush:      return "Jewel Rush"
+        case .gemRush:      return "Gem Rush"
         case .categoryMaster: return "Category Master"
         }
     }
@@ -50,7 +53,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "⏱️"
         case .lightningRound: return "⚡️"
         case .perfectRun:     return "🎯"
-        case .jewelRush:      return "💎"
+        case .gemRush:      return "💎"
         case .categoryMaster: return "🏅"
         }
     }
@@ -62,7 +65,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "10 questions · 15 seconds each"
         case .lightningRound: return "10 easy questions · 8 seconds each"
         case .perfectRun:     return "One wrong answer ends the round"
-        case .jewelRush:      return "Build a streak, earn more jewels"
+        case .gemRush:      return "Build a streak, earn more gems"
         case .categoryMaster: return "15 questions from one category"
         }
     }
@@ -87,8 +90,8 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
             return "Ten questions that get harder as you go, and there are no "
                  + "second chances: one wrong answer ends the round on the "
                  + "spot. Go slowly and think — nothing is chasing you here."
-        case .jewelRush:
-            return "Every correct answer pays jewels, and this is the mode where "
+        case .gemRush:
+            return "Every correct answer pays gems, and this is the mode where "
                  + "streaks count double: reach three in a row and five in a row "
                  + "for twice the usual bonus. A wrong answer resets the run."
         case .categoryMaster:
@@ -122,7 +125,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     var endsOnWrongAnswer: Bool { self == .perfectRun }
 
     /// True when streak bonuses are worth double in this mode.
-    var hasStreakBonus: Bool { self == .jewelRush }
+    var hasStreakBonus: Bool { self == .gemRush }
 
     /// True when the mode may only be played once a day.
     var isOncePerDay: Bool { self == .dailyChallenge }
@@ -133,7 +136,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     // MARK: - Rewards
 
     /// Every correct answer is worth the same everywhere in the app.
-    var jewelsPerCorrect: Int { JewelRules.perCorrect }
+    var gemsPerCorrect: Int { GemRules.perCorrect }
 
     /// A flat reward for finishing the mode, on top of the usual streak and
     /// perfect-round bonuses.
@@ -143,14 +146,14 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return 10
         case .lightningRound: return 10
         case .perfectRun:     return 20
-        case .jewelRush:      return 10
+        case .gemRush:      return 10
         case .categoryMaster: return 20
         }
     }
 
-    /// Jewel Rush is the streak mode, so its streak bonuses count double.
+    /// Gem Rush is the streak mode, so its streak bonuses count double.
     /// The bonuses themselves are still paid at most once each.
-    var streakMultiplier: Int { self == .jewelRush ? 2 : 1 }
+    var streakMultiplier: Int { self == .gemRush ? 2 : 1 }
 
     /// The Daily Challenge is only five questions long, so a clean sweep
     /// would trip both streak milestones at once. It skips them and pays a
@@ -159,12 +162,12 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
 
     /// What a flawless round is worth, where it differs from the usual +20.
     var perfectBonus: Int {
-        self == .dailyChallenge ? 5 : JewelRules.perfectRound
+        self == .dailyChallenge ? 5 : GemRules.perfectRound
     }
 
     /// The best possible haul, shown on the card so the prize is clear.
-    var bestPossibleJewels: Int {
-        JewelRules.bestPossible(questionCount: questionCount,
+    var bestPossibleGems: Int {
+        GemRules.bestPossible(questionCount: questionCount,
                                 streakMultiplier: streakMultiplier,
                                 awardsStreakBonuses: awardsStreakBonuses,
                                 perfectBonus: perfectBonus,
@@ -180,7 +183,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "ProCardTimed"
         case .lightningRound: return "ProCardLightning"
         case .perfectRun:     return "ProCardPerfect"
-        case .jewelRush:      return "ProCardJewel"
+        case .gemRush:      return "ProCardJewel"
         case .categoryMaster: return "ProCardCategory"
         case .dailyChallenge: return nil   // lives on the map, drawn there
         }
@@ -200,7 +203,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .perfectRun:
             return .init(start: Color(red: 0.35, green: 0.82, blue: 0.63),
                          end:   Color(red: 0.10, green: 0.58, blue: 0.55))
-        case .jewelRush:
+        case .gemRush:
             return .init(start: Color(red: 1.00, green: 0.46, blue: 0.78),
                          end:   Color(red: 0.72, green: 0.24, blue: 0.86))
         case .categoryMaster:

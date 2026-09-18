@@ -3,7 +3,7 @@
 //  QuizApp
 //
 //  Plays one Pro Challenge round: the clock in the corner for timed modes,
-//  a live streak badge for Jewel Rush, and a warning banner when a single
+//  a live streak badge for Gem Rush, and a warning banner when a single
 //  wrong answer is about to end everything.
 //
 
@@ -65,7 +65,7 @@ struct ProQuizView: View {
             Button("Keep playing", role: .cancel) { model.startClock() }
             Button("Leave", role: .destructive) { dismiss() }
         } message: {
-            Text("Your jewels from this round won't be saved.")
+            Text("Your gems from this round won't be saved.")
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.isFinished)
     }
@@ -241,7 +241,7 @@ struct ProQuizView: View {
         if model.endedEarly {
             label = "See How You Did"
         } else if model.isLastQuestion {
-            label = "See My Jewels!"
+            label = "See My Gems!"
         } else {
             label = "Next"
         }
@@ -280,7 +280,7 @@ private struct ProCorrectCenterKey: PreferenceKey {
 
 #Preview {
     NavigationStack {
-        ProQuizView(route: ProRoute(mode: .jewelRush))
+        ProQuizView(route: ProRoute(mode: .gemRush))
             .environmentObject(GameProgress())
     }
 }

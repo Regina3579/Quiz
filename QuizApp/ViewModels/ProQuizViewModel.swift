@@ -4,7 +4,7 @@
 //
 //  Drives one Pro Challenge round. Unlike the island levels, a Pro round
 //  can be racing a clock, can end the moment an answer is wrong, and can
-//  pay out more jewels the longer a streak runs.
+//  pay out more gems the longer a streak runs.
 //
 
 import SwiftUI
@@ -79,8 +79,8 @@ final class ProQuizViewModel: ObservableObject {
     /// The full payout for the round, worked out by the same rules the
     /// adventure map uses. The completion bonus is paid for finishing, so a
     /// Perfect Run that ended early does not collect it.
-    var reward: JewelReward {
-        JewelRules.reward(results: results,
+    var reward: GemReward {
+        GemRules.reward(results: results,
                           correct: score,
                           total: totalQuestions,
                           streakMultiplier: mode.streakMultiplier,
@@ -89,7 +89,7 @@ final class ProQuizViewModel: ObservableObject {
                           completionBonus: finished ? mode.completionBonus : 0)
     }
 
-    var totalJewels: Int { reward.total }
+    var totalGems: Int { reward.total }
 
     /// True once the child has faced every question in the round.
     private var finished: Bool { results.count >= totalQuestions }

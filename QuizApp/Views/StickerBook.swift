@@ -2,7 +2,7 @@
 //  StickerBook.swift
 //  QuizApp
 //
-//  The child's very own sticker book. Jewels earned from quizzes can be spent
+//  The child's very own sticker book. Gems earned from quizzes can be spent
 //  in the sticker shop, and owned stickers can be placed anywhere across the
 //  book's pages — dragged, resized and peeled off freely.
 //
@@ -49,7 +49,7 @@ struct PlacedNote: Identifiable, Codable, Hashable {
 }
 
 /// A themed group of stickers in the shop (e.g. "Animal Kingdom"). Each
-/// category has a Cute tier (50 jewels) and an Epic tier (100 jewels).
+/// category has a Cute tier (50 gems) and an Epic tier (100 gems).
 struct StickerCategory: Identifiable {
     let id: String
     let name: String
@@ -61,8 +61,8 @@ struct StickerCategory: Identifiable {
 }
 
 /// The stickers available in the shop, organised into themed categories.
-/// Every 50 jewels buys one sticker: the Cute tier is 50 jewels each and the
-/// fancier Epic tier is 100 jewels each.
+/// Every 50 gems buys one sticker: the Cute tier is 50 gems each and the
+/// fancier Epic tier is 100 gems each.
 enum StickerCatalog {
     static let cuteCost = 50
     static let epicCost = 100
@@ -391,7 +391,7 @@ enum StickerCatalog {
             ancientEpicSticker(1),  // pharaoh kitten among the treasure
             ancientEpicSticker(2),  // the Sphinx between two braziers
             ancientEpicSticker(3),  // Horus falcon over the pyramids
-            ancientEpicSticker(4),  // treasure chest of ankhs and jewels
+            ancientEpicSticker(4),  // treasure chest of ankhs and gems
             ancientEpicSticker(5),  // Anubis gateway onto the pyramids
             ancientEpicSticker(6),  // hanging gardens of Babylon
             ancientEpicSticker(7),  // golden temple valley at sunrise
@@ -1273,10 +1273,10 @@ struct StickerShopSheet: View {
             Spacer()
 
             HStack(spacing: 5) {
-                JewelIcon(size: 18)
-                Text("\(progress.jewels)")
+                GemIcon(size: 18)
+                Text("\(progress.gems)")
                     .font(Theme.bold(15))
-                    .foregroundStyle(Theme.jewelPink)
+                    .foregroundStyle(Theme.gemPink)
             }
             .padding(.horizontal, 12)
             .frame(height: 36)
@@ -1341,7 +1341,7 @@ struct StickerShopSheet: View {
 
     private func stickerList(_ category: StickerCategory) -> some View {
         VStack(spacing: 8) {
-            Text("Buy stickers with your jewels, then tap one to stick it in your book!")
+            Text("Buy stickers with your gems, then tap one to stick it in your book!")
                 .font(Theme.medium(13))
                 .foregroundColor(Theme.inkSoft)
                 .multilineTextAlignment(.center)
@@ -1350,13 +1350,13 @@ struct StickerShopSheet: View {
             ScrollView {
                 if !category.cute.isEmpty {
                     section(title: "🌸 Cute Collection",
-                            subtitle: "50 jewels each",
+                            subtitle: "50 gems each",
                             stickers: category.cute)
                 }
 
                 if !category.epic.isEmpty {
                     section(title: "✨ Epic Collection",
-                            subtitle: "100 jewels each",
+                            subtitle: "100 gems each",
                             stickers: category.epic)
                         .padding(.top, 4)
                 }
@@ -1388,7 +1388,7 @@ struct StickerShopSheet: View {
     private func shopCell(_ sticker: Sticker) -> some View {
         let owned = progress.owns(sticker)
         let locked = progress.needsPro(sticker)
-        let affordable = progress.jewels >= sticker.cost
+        let affordable = progress.gems >= sticker.cost
 
         return VStack(spacing: 8) {
             // A locked sticker is still shown in full, only dimmed. The whole
@@ -1416,10 +1416,10 @@ struct StickerShopSheet: View {
                 .background(Capsule().fill(Color(red: 0.93, green: 0.55, blue: 0.16)))
             } else {
                 HStack(spacing: 4) {
-                    JewelIcon(size: 15)
+                    GemIcon(size: 15)
                     Text("\(sticker.cost)")
                         .font(Theme.bold(13))
-                        .foregroundStyle(affordable ? AnyShapeStyle(Theme.jewelPink)
+                        .foregroundStyle(affordable ? AnyShapeStyle(Theme.gemPink)
                                                     : AnyShapeStyle(Theme.inkSoft))
                 }
                 .padding(.horizontal, 12).padding(.vertical, 5)

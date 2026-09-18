@@ -3,7 +3,7 @@
 //  QuizApp
 //
 //  The Pro Challenge room. Five harder ways to play, each paying out in
-//  jewels so the sticker shop keeps filling up.
+//  gems so the sticker shop keeps filling up.
 //
 
 import SwiftUI
@@ -17,12 +17,12 @@ struct ProHubView: View {
     @State private var appeared = false
 
     /// The header artwork is 941 x 534, cropped to include the whole crown,
-    /// and the back button and jewel pill sit at these fractions of it.
+    /// and the back button and gem pill sit at these fractions of it.
     /// Overlaying them here keeps them live while the rest of the header
     /// stays the original picture.
     private let headerAspect: CGFloat = 941.0 / 534.0
     private let backButtonAt = CGPoint(x: 0.080, y: 0.182)
-    private let jewelPillAt  = CGPoint(x: 0.869, y: 0.176)
+    private let gemPillAt  = CGPoint(x: 0.869, y: 0.176)
 
     var body: some View {
         ZStack {
@@ -72,8 +72,8 @@ struct ProHubView: View {
                         .position(x: w * backButtonAt.x, y: h * backButtonAt.y)
                 }
                 .overlay(alignment: .topLeading) {
-                    jewelPill
-                        .position(x: w * jewelPillAt.x, y: h * jewelPillAt.y)
+                    gemPill
+                        .position(x: w * gemPillAt.x, y: h * gemPillAt.y)
                 }
         }
         // Reserve the picture's own height so the scroll view lays out right.
@@ -98,10 +98,10 @@ struct ProHubView: View {
         .accessibilityLabel("Back")
     }
 
-    private var jewelPill: some View {
+    private var gemPill: some View {
         HStack(spacing: 7) {
-            JewelIcon(size: 21, sparkle: true)
-            Text("\(progress.jewels)")
+            GemIcon(size: 21, sparkle: true)
+            Text("\(progress.gems)")
                 .font(Theme.display(21))
                 .foregroundColor(.white)
                 .contentTransition(.numericText())
@@ -112,7 +112,7 @@ struct ProHubView: View {
         .overlay(Capsule().stroke(Color(red: 0.69, green: 0.55, blue: 0.98),
                                   lineWidth: 2.5))
         .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
-        .accessibilityLabel("\(progress.jewels) jewels")
+        .accessibilityLabel("\(progress.gems) gems")
     }
 
     // MARK: - Mode cards
@@ -129,7 +129,7 @@ struct ProHubView: View {
     }
 
     /// Each row is the card illustration itself. Everything on it — icon,
-    /// title, tagline, jewel total — is fixed for that mode, so the picture
+    /// title, tagline, gem total — is fixed for that mode, so the picture
     /// can be used whole. Only a personal best is added on top.
     private func modeCard(_ mode: ProMode, index: Int) -> some View {
         let best = progress.proBest(mode)
@@ -153,7 +153,7 @@ struct ProHubView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleJewels) jewels")
+        .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleGems) gems")
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 18)
         .animation(.spring(response: 0.5, dampingFraction: 0.85)
@@ -306,12 +306,12 @@ private struct ProBriefingSheet: View {
 
     private var rewardRow: some View {
         HStack(spacing: 10) {
-            JewelIcon(size: 24, sparkle: true)
+            GemIcon(size: 24, sparkle: true)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Up to \(mode.bestPossibleJewels) jewels")
+                Text("Up to \(mode.bestPossibleGems) gems")
                     .font(Theme.bold(17))
                     .foregroundColor(.white)
-                Text("\(mode.jewelsPerCorrect) per correct answer"
+                Text("\(mode.gemsPerCorrect) per correct answer"
                      + (mode.completionBonus > 0 ? " · \(mode.completionBonus) bonus for a clean sweep" : ""))
                     .font(Theme.medium(12))
                     .foregroundColor(.white.opacity(0.9))
@@ -393,7 +393,7 @@ private struct ProBriefingSheet: View {
 
 // MARK: - Background
 
-/// A deep jewel-toned backdrop with slow drifting sparkles, so the Pro room
+/// A deep gem-toned backdrop with slow drifting sparkles, so the Pro room
 /// feels like a different, grander place from the adventure map.
 struct ProBackground: View {
     private let sparkles: [Sprite] = {

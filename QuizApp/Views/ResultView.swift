@@ -19,8 +19,8 @@ struct ResultView: View {
     @State private var starsShown = 0
     @State private var celebrate = false
     @State private var recorded = false
-    @State private var reward: JewelReward?
-    @State private var jewelsShown = 0
+    @State private var reward: GemReward?
+    @State private var gemsShown = 0
     /// Trophy Room awards this level won, snapshotted as it was banked.
     @State private var awardsWon: [Achievement] = []
 
@@ -87,7 +87,7 @@ struct ResultView: View {
 
                 recapRow.opacity(showContent ? 1 : 0)
 
-                jewelReward.opacity(showContent ? 1 : 0)
+                gemReward.opacity(showContent ? 1 : 0)
 
                 if !awardsWon.isEmpty {
                     RewardChestView(awards: awardsWon)
@@ -110,7 +110,7 @@ struct ResultView: View {
     /// The island's own scene is behind this screen, and a reef or a castle is
     /// far too busy to read a score off. This lays a deep wash over it: dark
     /// enough through the middle, where the numbers are, that white type and a
-    /// pink jewel count stand clear, but lighter at the very top and bottom so
+    /// pink gem count stand clear, but lighter at the very top and bottom so
     /// the scene still shows and the screen keeps the island's colour.
     private var scrim: some View {
         LinearGradient(stops: [
@@ -148,24 +148,24 @@ struct ResultView: View {
         }
     }
 
-    private var jewelReward: some View {
+    private var gemReward: some View {
         Group {
             if let reward = reward, reward.total > 0 {
                 VStack(spacing: 10) {
-                    // The big jewel total, counting up.
+                    // The big gem total, counting up.
                     HStack(spacing: 8) {
-                        JewelIcon(size: 34)
-                        Text("+\(jewelsShown)")
+                        GemIcon(size: 34)
+                        Text("+\(gemsShown)")
                             .font(Theme.display(36))
-                            .foregroundStyle(Theme.jewelPink)
-                        Text("Jewels")
+                            .foregroundStyle(Theme.gemPink)
+                        Text("Gems")
                             .font(Theme.bold(17))
                             .foregroundColor(.white.opacity(0.9))
                     }
 
                     // What made up the reward.
                     VStack(spacing: 6) {
-                        rewardLine("⭐️", "\(reward.correctCount) correct × \(JewelRules.perCorrect)",
+                        rewardLine("⭐️", "\(reward.correctCount) correct × \(GemRules.perCorrect)",
                                    reward.perCorrect)
                         if reward.hasStreakThree {
                             rewardLine("🔥", "3 in a row", reward.streakThreeBonus)
@@ -181,7 +181,7 @@ struct ResultView: View {
                 .padding(.vertical, 14)
                 .padding(.horizontal, 18)
                 // A dark surface rather than a pale translucent one: white
-                // type and the pink jewel count need something solid behind
+                // type and the pink gem count need something solid behind
                 // them, and a lightened card only lets the reef through.
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -260,7 +260,7 @@ struct ResultView: View {
     // MARK: - Animation & saving
 
     private func animateIn() {
-        // Save the result once (keeps the player's best score) and award jewels.
+        // Save the result once (keeps the player's best score) and award gems.
         if !recorded {
             reward = progress.completeLevel(islandID: model.island.id,
                                             level: model.level.number,
@@ -279,23 +279,23 @@ struct ResultView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             celebrate = true
             if earned >= 2 { Haptics.play(.success) }
-            countUpJewels()
+            countUpGems()
         }
     }
 
-    /// Rolls the jewel number up from zero for a satisfying reward reveal.
-    private func countUpJewels() {
+    /// Rolls the gem number up from zero for a satisfying reward reveal.
+    private func countUpGems() {
         guard let total = reward?.total, total > 0 else { return }
         let steps = 22
         let stepValue = max(1, total / steps)
         Timer.scheduledTimer(withTimeInterval: 0.045, repeats: true) { timer in
-            let next = jewelsShown + stepValue
+            let next = gemsShown + stepValue
             if next >= total {
-                jewelsShown = total
+                gemsShown = total
                 timer.invalidate()
                 Haptics.play(.light)
             } else {
-                jewelsShown = next
+                gemsShown = next
             }
         }
     }

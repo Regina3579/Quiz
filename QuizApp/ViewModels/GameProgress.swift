@@ -19,7 +19,7 @@ final class GameProgress: ObservableObject {
     static let unlockEverything = true
 
     /// TESTING: when true, every sticker counts as already owned, so they can
-    /// all be placed for free. Set back to false to restore buying with jewels.
+    /// all be placed for free. Set back to false to restore buying with gems.
     ///
     /// Off now, and it has to stay off: it short-circuits `owns`, which would
     /// hand every child the whole book and leave the Pro lock doing nothing at
@@ -36,9 +36,9 @@ final class GameProgress: ObservableObject {
     /// replaying one easy level over and over.
     @Published private(set) var bestCorrect: [String: Int] = [:]
 
-    /// The player's treasure chest — jewels earned for correct answers,
+    /// The player's treasure chest — gems earned for correct answers,
     /// perfect rounds and first-time level clears.
-    @Published private(set) var jewels: Int = 0
+    @Published private(set) var gems: Int = 0
 
     /// IDs of stickers the child has bought from the sticker shop.
     @Published private(set) var ownedStickers: Set<String> = []
@@ -67,7 +67,10 @@ final class GameProgress: ObservableObject {
     @Published private(set) var recentlyUnlocked: [Achievement] = []
 
     private let defaultsKey = "quizspark.progress.v1"
-    private let jewelsKey = "quizspark.jewels.v1"
+    /// Still "jewels" on purpose. The currency was renamed to gems, but
+    /// this is the key its balance is saved under — changing it would
+    /// orphan the store and every child would open the app to nothing.
+    private let gemsKey = "quizspark.jewels.v1"
     private let ownedStickersKey = "quizspark.stickers.owned.v1"
     private let placedStickersKey = "quizspark.stickers.placed.v1"
     private let placedNotesKey = "quizspark.notes.placed.v1"
@@ -79,7 +82,7 @@ final class GameProgress: ObservableObject {
     /// The retired one-note-per-page store, read once so nothing is lost.
     private let pageNotesKey = "quizspark.stickers.notes.v1"
 
-    // Jewel reward amounts live in JewelRules, at the bottom of this file.
+    // Gem reward amounts live in GemRules, at the bottom of this file.
 
     init() { load() }
 
@@ -147,24 +150,24 @@ final class GameProgress: ObservableObject {
         }
     }
 
-    /// Finishes a level: saves the best star count, awards jewels, and returns
+    /// Finishes a level: saves the best star count, awards gems, and returns
     /// a breakdown so the result screen can show the reward. Call once per
     /// completed play-through. Pass the per-question results so the streak
     /// bonuses can be worked out.
     func completeLevel(islandID: Int, level: Int,
                        correct: Int, total: Int, earned: Int,
-                       results: [Bool]) -> JewelReward {
+                       results: [Bool]) -> GemReward {
         record(islandID: islandID, level: level, earned: earned)
 
         // So tomorrow's Daily Challenge can pass over what was just answered.
         DailyChallenge.noteLevelPlayed(islandID: islandID, level: level,
                                        questionCount: total)
 
-        let reward = JewelRules.reward(results: results,
+        let reward = GemRules.reward(results: results,
                                        correct: correct,
                                        total: total)
-        jewels += reward.total
-        saveJewels()
+        gems += reward.total
+        saveGems()
 
         // Keep the best run on this level, for the adventure's own ladder.
         let bestKey = key(islandID, level)
@@ -190,7 +193,7 @@ final class GameProgress: ObservableObject {
         switch achievement.measure {
         case .correctAnswers:    return tally.correctAnswers
         case .questionsAnswered: return tally.questionsAnswered
-        case .jewelsEarned:      return tally.jewelsEarned
+        case .gemsEarned:      return tally.gemsEarned
         case .bestStreak:        return tally.bestStreak
         case .perfectLevels:     return tally.perfectLevels
         case .perfectRunWins:    return tally.perfectRunWins
@@ -254,15 +257,15 @@ final class GameProgress: ObservableObject {
     private func bank(results: [Bool], correct: Int, total: Int, earned: Int) {
         tally.questionsAnswered += total
         tally.correctAnswers += correct
-        tally.jewelsEarned += earned
-        tally.bestStreak = max(tally.bestStreak, JewelRules.longestStreak(results))
+        tally.gemsEarned += earned
+        tally.bestStreak = max(tally.bestStreak, GemRules.longestStreak(results))
     }
 
     /// Hands over every award now earned and records what was new, so the
     /// result screen can show it.
     ///
-    /// This loops because an award can pay jewels, and paying jewels can be
-    /// what wins the next one — Jewel Hunter falling out of a cup, say. It
+    /// This loops because an award can pay gems, and paying gems can be
+    /// what wins the next one — Gem Hunter falling out of a cup, say. It
     /// settles as soon as a pass finds nothing new.
     private func awardEarnedAchievements() {
         var fresh: [Achievement] = []
@@ -273,9 +276,9 @@ final class GameProgress: ObservableObject {
             for award in AchievementCatalog.all where !unlockedAchievements.contains(award.id) {
                 guard standing(award) >= award.target else { continue }
                 unlockedAchievements.insert(award.id)
-                if award.jewelReward > 0 {
-                    jewels += award.jewelReward
-                    tally.jewelsEarned += award.jewelReward
+                if award.gemReward > 0 {
+                    gems += award.gemReward
+                    tally.gemsEarned += award.gemReward
                 }
                 if let sticker = award.stickerReward { ownedStickers.insert(sticker) }
                 fresh.append(award)
@@ -288,7 +291,7 @@ final class GameProgress: ObservableObject {
         recentlyUnlocked = fresh
 
         guard !fresh.isEmpty else { return }
-        saveJewels()
+        saveGems()
         saveStickers()
         saveTally()
         saveAchievements()
@@ -315,20 +318,20 @@ final class GameProgress: ObservableObject {
 
     /// Whether the child can afford a sticker they don't already own.
     func canBuy(_ sticker: Sticker) -> Bool {
-        !owns(sticker) && !needsPro(sticker) && jewels >= sticker.cost
+        !owns(sticker) && !needsPro(sticker) && gems >= sticker.cost
     }
 
-    /// Buys a sticker, spending jewels. Returns true on success.
+    /// Buys a sticker, spending gems. Returns true on success.
     @discardableResult
     func buySticker(_ sticker: Sticker) -> Bool {
         guard !owns(sticker) else { return true }
-        // Checked here and not only in the shop: this is the one door jewels
+        // Checked here and not only in the shop: this is the one door gems
         // leave by, so it is the one place the lock has to hold.
         guard !needsPro(sticker) else { return false }
-        guard jewels >= sticker.cost else { return false }
-        jewels -= sticker.cost
+        guard gems >= sticker.cost else { return false }
+        gems -= sticker.cost
         ownedStickers.insert(sticker.id)
-        saveJewels()
+        saveGems()
         saveStickers()
         return true
     }
@@ -381,7 +384,7 @@ final class GameProgress: ObservableObject {
         UserDefaults.standard.set(dailyPlayedOn, forKey: dailyPlayedKey)
     }
 
-    /// Banks the jewels from a finished Pro round, remembers the best score
+    /// Banks the gems from a finished Pro round, remembers the best score
     /// and adds the round to the Trophy Room's tallies. Returns true when this
     /// run beat the previous best.
     ///
@@ -389,11 +392,11 @@ final class GameProgress: ObservableObject {
     /// cut short by a wrong answer, which is what separates a Perfect Run that
     /// was won from one that was merely played.
     @discardableResult
-    func finishProRound(mode: ProMode, score: Int, jewels earned: Int,
+    func finishProRound(mode: ProMode, score: Int, gems earned: Int,
                         results: [Bool] = [], endedEarly: Bool = false) -> Bool {
         if earned > 0 {
-            jewels += earned
-            saveJewels()
+            gems += earned
+            saveGems()
         }
         if mode.isOncePerDay { markPlayedToday() }
 
@@ -451,7 +454,7 @@ final class GameProgress: ObservableObject {
     /// Wipes all saved progress (handy for testing / a "reset" button).
     func resetAll() {
         stars = [:]
-        jewels = 0
+        gems = 0
         ownedStickers = []
         placedStickers = []
         placedNotes = []
@@ -463,7 +466,7 @@ final class GameProgress: ObservableObject {
         recentlyUnlocked = []
         UserDefaults.standard.removeObject(forKey: dailyPlayedKey)
         save()
-        saveJewels()
+        saveGems()
         saveStickers()
         saveNotes()
         saveProScores()
@@ -479,7 +482,7 @@ final class GameProgress: ObservableObject {
            let decoded = try? JSONDecoder().decode([String: Int].self, from: data) {
             stars = decoded
         }
-        jewels = UserDefaults.standard.integer(forKey: jewelsKey)
+        gems = UserDefaults.standard.integer(forKey: gemsKey)
         if let data = UserDefaults.standard.data(forKey: ownedStickersKey),
            let decoded = try? JSONDecoder().decode(Set<String>.self, from: data) {
             ownedStickers = decoded
@@ -526,8 +529,8 @@ final class GameProgress: ObservableObject {
         }
     }
 
-    private func saveJewels() {
-        UserDefaults.standard.set(jewels, forKey: jewelsKey)
+    private func saveGems() {
+        UserDefaults.standard.set(gems, forKey: gemsKey)
     }
 
     private func saveStickers() {
@@ -570,7 +573,7 @@ final class GameProgress: ObservableObject {
     }
 }
 
-/// The one place the jewel economy is defined, so the adventure map and the
+/// The one place the gem economy is defined, so the adventure map and the
 /// Pro Challenge always pay out by the same rules.
 ///
 ///   Correct answer        +5
@@ -581,7 +584,7 @@ final class GameProgress: ObservableObject {
 /// The streak bonuses are deliberately awarded at most once each. Paying
 /// them every time a run of three comes around again would let a long
 /// round snowball far past what a sticker is worth.
-enum JewelRules {
+enum GemRules {
     static let perCorrect = 5
     static let streakOfThree = 5
     static let streakOfFive = 10
@@ -599,7 +602,7 @@ enum JewelRules {
 
     /// Works out the payout for a finished round.
     /// - Parameters:
-    ///   - streakMultiplier: doubles the streak bonuses, for Jewel Rush.
+    ///   - streakMultiplier: doubles the streak bonuses, for Gem Rush.
     ///   - awardsStreakBonuses: false for short rounds like the Daily
     ///     Challenge, where five questions would trigger both milestones at
     ///     once and overpay a deliberately modest round.
@@ -611,12 +614,12 @@ enum JewelRules {
                        streakMultiplier: Int = 1,
                        awardsStreakBonuses: Bool = true,
                        perfectBonus: Int? = nil,
-                       completionBonus: Int = 0) -> JewelReward {
+                       completionBonus: Int = 0) -> GemReward {
         let streak = longestStreak(results)
         let perfect = total > 0 && correct == total
         let three = awardsStreakBonuses && streak >= 3 ? streakOfThree * streakMultiplier : 0
         let five = awardsStreakBonuses && streak >= 5 ? streakOfFive * streakMultiplier : 0
-        return JewelReward(
+        return GemReward(
             correctCount: correct,
             perCorrect: correct * perCorrect,
             streakThreeBonus: three,
@@ -626,7 +629,7 @@ enum JewelRules {
             longestStreak: streak)
     }
 
-    /// The most a round of this shape can pay, for the "up to N jewels" label.
+    /// The most a round of this shape can pay, for the "up to N gems" label.
     static func bestPossible(questionCount: Int,
                              streakMultiplier: Int = 1,
                              awardsStreakBonuses: Bool = true,
@@ -643,8 +646,8 @@ enum JewelRules {
     }
 }
 
-/// A breakdown of the jewels earned from finishing a round.
-struct JewelReward {
+/// A breakdown of the gems earned from finishing a round.
+struct GemReward {
     let correctCount: Int
     let perCorrect: Int
     let streakThreeBonus: Int

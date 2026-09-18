@@ -103,7 +103,7 @@ final class Music {
 
     /// The Pro room lifts the energy a little without ever getting tense:
     /// a light ticking pulse under the clock, something bouncier for
-    /// Lightning, a thread of suspense for Perfect Run, sparkle for Jewel
+    /// Lightning, a thread of suspense for Perfect Run, sparkle for Gem
     /// Rush. Any of these with no file of its own falls back to the room's
     /// theme, and that to the map's.
     static func track(for mode: ProMode) -> String {
@@ -111,7 +111,7 @@ final class Music {
         case .timedChallenge: return "music_timed"
         case .lightningRound: return "music_lightning"
         case .perfectRun:     return "music_perfect"
-        case .jewelRush:      return "music_jewel"
+        case .gemRush:      return "music_jewel"
         case .categoryMaster: return "music_category"
         case .dailyChallenge: return "music_daily"
         }

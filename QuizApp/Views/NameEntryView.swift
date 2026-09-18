@@ -130,7 +130,7 @@ struct NameEntryView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Theme.jewelPink.opacity(0.5), lineWidth: 2)
+                    .stroke(Theme.gemPink.opacity(0.5), lineWidth: 2)
             )
             .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
             .padding(.horizontal, 30)

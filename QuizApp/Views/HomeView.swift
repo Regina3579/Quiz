@@ -3,12 +3,12 @@
 //  QuizApp
 //
 //  The Adventure Map — the app's home. The painted frame fills the screen:
-//  parchment in the middle, jungle around the edges, and the jewel purse,
+//  parchment in the middle, jungle around the edges, and the gem purse,
 //  Daily Challenge card, Pro crown and sticker book drawn into the corners.
 //  The ten islands scroll inside the parchment window.
 //
 //  The controls are part of the picture, so the code only adds what has to
-//  be live: the jewel number, the child's name, the tap targets, the sound
+//  be live: the gem number, the child's name, the tap targets, the sound
 //  toggle, and the "done today" state on the Daily card.
 //
 
@@ -63,8 +63,8 @@ struct HomeView: View {
     /// looks like it ends higher than it does.
     private static let window = (x0: 0.115, y0: 0.215, x1: 0.745, y1: 0.828)
 
-    /// The inside of the jewel purse, to the right of the painted gem.
-    private static let jewelNumber = (x: 0.193, y: 0.084, w: 0.150, h: 0.027)
+    /// The inside of the gem purse, to the right of the painted gem.
+    private static let gemNumber = (x: 0.193, y: 0.084, w: 0.150, h: 0.027)
     /// The words inside the cream name chip, left of the painted pencil.
     private static let nameText = (x: 0.491, y: 0.193, w: 0.182, h: 0.024)
 
@@ -93,7 +93,7 @@ struct HomeView: View {
                     ZStack(alignment: .topLeading) {
                         mapFrame(width: fit.width, height: fit.height)
                         islandWindow(width: fit.width, height: fit.height)
-                        liveJewelCount(width: fit.width, height: fit.height)
+                        liveGemCount(width: fit.width, height: fit.height)
                         liveName(width: fit.width, height: fit.height)
                         tapTargets(width: fit.width, height: fit.height)
                         settingsButton(width: fit.width, height: fit.height)
@@ -301,16 +301,16 @@ struct HomeView: View {
     // MARK: - The live bits laid over the painted ones
 
     /// Covers the painted "200" with the real balance.
-    private func liveJewelCount(width w: CGFloat, height h: CGFloat) -> some View {
-        let box = CGSize(width: w * Self.jewelNumber.w, height: h * Self.jewelNumber.h)
+    private func liveGemCount(width w: CGFloat, height h: CGFloat) -> some View {
+        let box = CGSize(width: w * Self.gemNumber.w, height: h * Self.gemNumber.h)
 
-        return Text("\(progress.jewels)")
+        return Text("\(progress.gems)")
             .font(Theme.display(min(27, box.height * 0.82)))
             .foregroundColor(.white)
             .minimumScaleFactor(0.5)
             .lineLimit(1)
             .contentTransition(.numericText())
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.jewels)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress.gems)
             .frame(width: box.width, height: box.height)
             .background(
                 // Matched to the inside of the painted purse, so the drawn
@@ -319,8 +319,8 @@ struct HomeView: View {
                     .fill(Color(red: 0.290, green: 0.102, blue: 0.022))
                     .blur(radius: 2)
             )
-            .position(x: w * Self.jewelNumber.x, y: h * Self.jewelNumber.y)
-            .accessibilityLabel("\(progress.jewels) jewels")
+            .position(x: w * Self.gemNumber.x, y: h * Self.gemNumber.y)
+            .accessibilityLabel("\(progress.gems) gems")
     }
 
     /// Covers the painted "Hi, Regi!" with the child's own name. The drawn

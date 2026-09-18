@@ -37,9 +37,9 @@ struct Achievement: Identifiable, Hashable {
     enum Measure: Hashable {
         case correctAnswers
         case questionsAnswered
-        /// Jewels earned over the whole journey — spending them never takes
+        /// Gems earned over the whole journey — spending them never takes
         /// this back down, or buying a sticker would cost the child an award.
-        case jewelsEarned
+        case gemsEarned
         case bestStreak
         /// Levels finished with every question right.
         case perfectLevels
@@ -63,18 +63,18 @@ struct Achievement: Identifiable, Hashable {
     let measure: Measure
     /// How many are needed.
     let target: Int
-    /// Jewels handed over when it is won.
-    var jewelReward: Int = 0
+    /// Gems handed over when it is won.
+    var gemReward: Int = 0
     /// A keepsake sticker handed over with it, by sticker id.
     var stickerReward: String? = nil
 
     /// True when this is worth opening a treasure chest for.
-    var opensChest: Bool { jewelReward > 0 || stickerReward != nil }
+    var opensChest: Bool { gemReward > 0 || stickerReward != nil }
 
     /// The rewards as lines for the chest.
     var rewardLines: [String] {
         var lines: [String] = []
-        if jewelReward > 0 { lines.append("+\(jewelReward) 💎") }
+        if gemReward > 0 { lines.append("+\(gemReward) 💎") }
         if stickerReward != nil { lines.append("+1 rare sticker") }
         lines.append(title)
         return lines
@@ -140,27 +140,27 @@ enum AchievementCatalog {
                         title: "Bronze Badge",
                         detail: "25 right in \(island.name)",
                         kind: kind, measure: .islandCorrect(islandID: id), target: 25,
-                        jewelReward: 15),
+                        gemReward: 15),
             Achievement(id: "adv.\(id).silver", emoji: "🥈",
                         title: "Silver Badge",
                         detail: "50 right in \(island.name)",
                         kind: kind, measure: .islandCorrect(islandID: id), target: 50,
-                        jewelReward: 25),
+                        gemReward: 25),
             Achievement(id: "adv.\(id).gold", emoji: "🥇",
                         title: "Gold Badge",
                         detail: "75 right in \(island.name)",
                         kind: kind, measure: .islandCorrect(islandID: id), target: 75,
-                        jewelReward: 40),
+                        gemReward: 40),
             Achievement(id: "adv.\(id).cup", emoji: "🏆",
                         title: name.cup,
                         detail: "Finish all 10 levels of \(island.name)",
                         kind: kind, measure: .islandLevelsCleared(islandID: id), target: 10,
-                        jewelReward: 60),
+                        gemReward: 60),
             Achievement(id: "adv.\(id).crown", emoji: "👑",
                         title: name.crown,
                         detail: "Get all 100 questions right in \(island.name)",
                         kind: kind, measure: .islandCorrect(islandID: id), target: 100,
-                        jewelReward: 100, stickerReward: crownSticker[id])
+                        gemReward: 100, stickerReward: crownSticker[id])
         ]
     }
 
@@ -174,19 +174,19 @@ enum AchievementCatalog {
         Achievement(id: "cup.bronze", emoji: "🥉", title: "Bronze Cup",
                     detail: "Answer 50 questions correctly",
                     kind: .grandCup, measure: .correctAnswers, target: 50,
-                    jewelReward: 25),
+                    gemReward: 25),
         Achievement(id: "cup.silver", emoji: "🥈", title: "Silver Cup",
                     detail: "Answer 150 questions correctly",
                     kind: .grandCup, measure: .correctAnswers, target: 150,
-                    jewelReward: 50),
+                    gemReward: 50),
         Achievement(id: "cup.gold", emoji: "🥇", title: "Gold Cup",
                     detail: "Answer 300 questions correctly",
                     kind: .grandCup, measure: .correctAnswers, target: 300,
-                    jewelReward: 75),
+                    gemReward: 75),
         Achievement(id: "cup.diamond", emoji: "💎", title: "Diamond Trophy",
                     detail: "Answer 750 questions correctly",
                     kind: .grandCup, measure: .correctAnswers, target: 750,
-                    jewelReward: 100, stickerReward: "explorer_e1")
+                    gemReward: 100, stickerReward: "explorer_e1")
     ]
 
     // MARK: - Special achievements
@@ -198,32 +198,34 @@ enum AchievementCatalog {
         Achievement(id: "badge.perfectMaster", emoji: "🌟", title: "Perfect Master",
                     detail: "Get 10 perfect levels",
                     kind: .badge, measure: .perfectLevels, target: 10,
-                    jewelReward: 50),
+                    gemReward: 50),
         Achievement(id: "badge.streakMaster", emoji: "🔥", title: "Streak Master",
                     detail: "Get 10 correct answers in a row",
                     kind: .badge, measure: .bestStreak, target: 10),
         Achievement(id: "badge.lightningHero", emoji: "⚡️", title: "Lightning Hero",
                     detail: "Finish 10 Lightning Rounds",
                     kind: .badge, measure: .proRounds(.lightningRound), target: 10,
-                    jewelReward: 40),
+                    gemReward: 40),
         Achievement(id: "badge.speedChampion", emoji: "⏱️", title: "Speed Champion",
                     detail: "Finish 10 Timed Challenges",
                     kind: .badge, measure: .proRounds(.timedChallenge), target: 10,
-                    jewelReward: 40),
+                    gemReward: 40),
         Achievement(id: "badge.perfectRunner", emoji: "🎯", title: "Perfect Runner",
                     detail: "Win 5 Perfect Runs",
                     kind: .badge, measure: .perfectRunWins, target: 5,
-                    jewelReward: 40),
-        Achievement(id: "badge.jewelHunter", emoji: "💎", title: "Jewel Hunter",
-                    detail: "Earn 1,000 jewels altogether",
-                    kind: .badge, measure: .jewelsEarned, target: 1000),
+                    gemReward: 40),
+        // The id stays "jewelHunter": it is saved in unlockedAchievements, and
+        // renaming it would take the badge back off anyone who had won it.
+        Achievement(id: "badge.jewelHunter", emoji: "💎", title: "Gem Hunter",
+                    detail: "Earn 1,000 gems altogether",
+                    kind: .badge, measure: .gemsEarned, target: 1000),
         Achievement(id: "badge.quizExplorer", emoji: "📚", title: "Quiz Explorer",
                     detail: "Answer 100 questions",
                     kind: .badge, measure: .questionsAnswered, target: 100),
         Achievement(id: "badge.quizMaster", emoji: "👑", title: "Quiz Master",
                     detail: "Answer 500 questions",
                     kind: .badge, measure: .questionsAnswered, target: 500,
-                    jewelReward: 50)
+                    gemReward: 50)
     ]
 
     // MARK: - The one at the end
@@ -232,7 +234,7 @@ enum AchievementCatalog {
         id: "ultimate.adventurer", emoji: "✨", title: "Ultimate Adventurer",
         detail: "Finish all 10 adventures",
         kind: .ultimate, measure: .islandsComplete, target: 10,
-        jewelReward: 250, stickerReward: "ocean_e2")
+        gemReward: 250, stickerReward: "ocean_e2")
 
     static let all: [Achievement] = adventure + grandCups + badges + [ultimate]
 }
@@ -242,8 +244,8 @@ enum AchievementCatalog {
 struct LifetimeTally: Codable, Equatable {
     var questionsAnswered = 0
     var correctAnswers = 0
-    /// Never goes down. See `Achievement.Measure.jewelsEarned`.
-    var jewelsEarned = 0
+    /// Never goes down. See `Achievement.Measure.gemsEarned`.
+    var gemsEarned = 0
     var bestStreak = 0
     var perfectLevels = 0
     var perfectRunWins = 0

@@ -505,7 +505,7 @@ enum ProQuestions {
         case .timedChallenge:
             return Array(medium.shuffled().prefix(mode.questionCount))
 
-        case .jewelRush:
+        case .gemRush:
             // A gentle climb, so an early streak is within reach for everyone.
             let opener = easy.shuffled().prefix(3)
             let rest = medium.shuffled().prefix(mode.questionCount - 3)

@@ -2,7 +2,7 @@
 //  ProResultView.swift
 //  QuizApp
 //
-//  The end of a Pro Challenge round: how it went, the jewels banked, and
+//  The end of a Pro Challenge round: how it went, the gems banked, and
 //  whether a new personal best was set.
 //
 
@@ -19,7 +19,7 @@ struct ProResultView: View {
     @State private var celebrate = false
     @State private var recorded = false
     @State private var isNewBest = false
-    @State private var jewelsShown = 0
+    @State private var gemsShown = 0
     /// Trophy Room awards this round won, snapshotted as it was banked.
     @State private var awardsWon: [Achievement] = []
 
@@ -79,7 +79,7 @@ struct ProResultView: View {
 
                     recapRow.opacity(showContent ? 1 : 0)
 
-                    jewelCard.opacity(showContent ? 1 : 0)
+                    gemCard.opacity(showContent ? 1 : 0)
 
                     if !awardsWon.isEmpty {
                         RewardChestView(awards: awardsWon)
@@ -127,21 +127,21 @@ struct ProResultView: View {
         .padding(.horizontal, 4)
     }
 
-    private var jewelCard: some View {
+    private var gemCard: some View {
         VStack(spacing: 12) {
             HStack(spacing: 8) {
-                JewelIcon(size: 34, sparkle: true)
-                Text("+\(jewelsShown)")
+                GemIcon(size: 34, sparkle: true)
+                Text("+\(gemsShown)")
                     .font(Theme.display(36))
-                    .foregroundStyle(Theme.jewelPink)
-                Text("Jewels")
+                    .foregroundStyle(Theme.gemPink)
+                Text("Gems")
                     .font(Theme.bold(17))
                     .foregroundColor(.white.opacity(0.9))
             }
 
             VStack(spacing: 6) {
                 let reward = model.reward
-                line("✅", "\(reward.correctCount) correct × \(JewelRules.perCorrect)",
+                line("✅", "\(reward.correctCount) correct × \(GemRules.perCorrect)",
                      reward.perCorrect)
                 if reward.hasStreakThree {
                     line("🔥", "3 in a row" + (mode.hasStreakBonus ? " (double)" : ""),
@@ -188,7 +188,7 @@ struct ProResultView: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            // A once-a-day mode cannot be replayed for more jewels today.
+            // A once-a-day mode cannot be replayed for more gems today.
             if mode.isOncePerDay {
                 HStack(spacing: 7) {
                     Image(systemName: "calendar.badge.clock")
@@ -207,7 +207,7 @@ struct ProResultView: View {
                     Haptics.play(.light)
                     showContent = false
                     celebrate = false
-                    jewelsShown = 0
+                    gemsShown = 0
                     recorded = false
                     isNewBest = false
                     withAnimation { model.restart() }
@@ -256,7 +256,7 @@ struct ProResultView: View {
         if !recorded {
             isNewBest = progress.finishProRound(mode: mode,
                                                 score: model.score,
-                                                jewels: model.totalJewels,
+                                                gems: model.totalGems,
                                                 results: model.results,
                                                 endedEarly: model.endedEarly)
             awardsWon = progress.recentlyUnlocked
@@ -267,22 +267,22 @@ struct ProResultView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             celebrate = true
             if model.isPerfect { Haptics.play(.success) }
-            countUpJewels()
+            countUpGems()
         }
     }
 
-    private func countUpJewels() {
-        let total = model.totalJewels
+    private func countUpGems() {
+        let total = model.totalGems
         guard total > 0 else { return }
         let step = max(1, total / 22)
         Timer.scheduledTimer(withTimeInterval: 0.045, repeats: true) { timer in
-            let next = jewelsShown + step
+            let next = gemsShown + step
             if next >= total {
-                jewelsShown = total
+                gemsShown = total
                 timer.invalidate()
                 Haptics.play(.light)
             } else {
-                jewelsShown = next
+                gemsShown = next
             }
         }
     }

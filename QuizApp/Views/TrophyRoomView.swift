@@ -988,12 +988,12 @@ private struct AdventureNiche: View {
                 .strokeBorder(Vault.goldDeep, lineWidth: 1.2))
     }
 
-    /// Five little jewels: the ladder at a glance.
+    /// Five little gems: the ladder at a glance.
     private var pips: some View {
         HStack(spacing: 5) {
             ForEach(rungs) { rung in
                 // An empty pip is a dim socket, not a black hole — it still
-                // has to look like a jewel waiting to be set.
+                // has to look like a gem waiting to be set.
                 Circle()
                     .fill(progress.hasWon(rung)
                           ? AnyShapeStyle(Vault.metal)

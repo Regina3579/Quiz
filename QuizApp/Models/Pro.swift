@@ -12,7 +12,7 @@
 //
 //  The sticker book is deliberately not locked shut. A child without Pro can
 //  open it, look at every shelf, and buy one sticker from each of the ten
-//  adventures. Ten real stickers they chose and paid jewels for is a book
+//  adventures. Ten real stickers they chose and paid gems for is a book
 //  worth coming back to, and it shows them exactly what the rest would be.
 //  A locked door shows them nothing.
 //
