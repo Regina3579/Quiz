@@ -97,14 +97,19 @@ final class QuizViewModel: ObservableObject {
     /// Hints already taken, counting the clue as one of them.
     var hintsTaken: Int { eliminated.count + (clue == nil ? 0 : 1) }
 
-    /// Whether another hint can still be bought.
+    /// How many hints this question will sell, never more than two.
     ///
-    /// A question with a clue has one more to sell than one without: the clue
-    /// itself, then the crossings-out.
-    var canBuyHint: Bool {
-        guard !hasAnswered else { return false }
-        return hintsTaken < hintsPossible + (hasClue ? 1 : 0)
+    /// The cap matters. Without it, adding a written clue quietly gave a
+    /// question a third hint — clue, cross out, cross out — priced 10, 20 and
+    /// 20, because the ladder only has two rungs and repeats the last. Two
+    /// hints were asked for and two is what there are: a clue then a crossing
+    /// out where a clue exists, two crossings out where one does not.
+    var hintsForSale: Int {
+        min(GemRules.hintCosts.count, hintsPossible + (hasClue ? 1 : 0))
     }
+
+    /// Whether another hint can still be bought.
+    var canBuyHint: Bool { !hasAnswered && hintsTaken < hintsForSale }
 
     /// Strikes out one more wrong answer.
     ///
