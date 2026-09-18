@@ -45,6 +45,7 @@
 		AB0000000000000000000040 /* wrong.wav in Resources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000003F /* wrong.wav */; };
 		AB0000000000000000000046 /* pageflip.wav in Resources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000047 /* pageflip.wav */; };
 		AB0000000000000000000048 /* stickerpop.wav in Resources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000049 /* stickerpop.wav */; };
+		AB000000000000000000006B /* music_map.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000006A /* music_map.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -87,6 +88,7 @@
 		AB000000000000000000003F /* wrong.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = wrong.wav; sourceTree = "<group>"; };
 		AB0000000000000000000047 /* pageflip.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = pageflip.wav; sourceTree = "<group>"; };
 		AB0000000000000000000049 /* stickerpop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = stickerpop.wav; sourceTree = "<group>"; };
+		AB000000000000000000006A /* music_map.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = music_map.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +133,7 @@
 				AB000000000000000000003F /* wrong.wav */,
 				AB0000000000000000000047 /* pageflip.wav */,
 				AB0000000000000000000049 /* stickerpop.wav */,
+				AB000000000000000000006A /* music_map.mp3 */,
 			);
 			path = Sounds;
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 				AB0000000000000000000040 /* wrong.wav in Resources */,
 				AB0000000000000000000046 /* pageflip.wav in Resources */,
 				AB0000000000000000000048 /* stickerpop.wav in Resources */,
+				AB000000000000000000006B /* music_map.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

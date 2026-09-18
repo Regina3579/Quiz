@@ -271,20 +271,67 @@ final class Music {
         ramp(voice: active, to: targetLevel)
     }
 
-    /// Decodes the whole track once. Looping a decoded buffer is what makes
-    /// the join seamless — the file's own framing never comes into it.
+    /// Decodes the whole track once, then cuts the silence off both ends.
+    ///
+    /// The trim is the part that matters, and this comment used to say the
+    /// opposite — that decoding made the file's own framing irrelevant. It
+    /// does not. A compressed file carries encoder padding, a few silent
+    /// frames added at each end, and the decoder hands them straight back.
+    /// They land inside the buffer like any other sample, so looping the
+    /// buffer plays them: a small hiccup once every time round, which on a
+    /// sixty-second loop is once a minute, forever.
+    ///
+    /// Trimming it here rather than in the file means it does not matter
+    /// which decoder ran or how much padding it chose to add.
     private func buffer(from file: URL) -> AVAudioPCMBuffer? {
         guard let audio = try? AVAudioFile(forReading: file) else { return nil }
         let frames = AVAudioFrameCount(audio.length)
         guard frames > 0,
-              let buffer = AVAudioPCMBuffer(pcmFormat: audio.processingFormat,
-                                            frameCapacity: frames) else { return nil }
+              let raw = AVAudioPCMBuffer(pcmFormat: audio.processingFormat,
+                                         frameCapacity: frames) else { return nil }
         do {
-            try audio.read(into: buffer)
+            try audio.read(into: raw)
         } catch {
             return nil
         }
-        return buffer
+        return trimmingSilence(raw) ?? raw
+    }
+
+    /// Quieter than this at either end is padding, not music. About -60 dBFS,
+    /// which is far below anything a track would actually open on — this one
+    /// starts at -3.7 — so no real note is ever in danger of being cut.
+    private static let silenceFloor: Float = 0.001
+
+    private func trimmingSilence(_ buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        guard let samples = buffer.floatChannelData else { return nil }
+        let count = Int(buffer.frameLength)
+        let channels = Int(buffer.format.channelCount)
+        guard count > 0, channels > 0 else { return nil }
+
+        func sounds(at frame: Int) -> Bool {
+            for c in 0..<channels where abs(samples[c][frame]) > Self.silenceFloor {
+                return true
+            }
+            return false
+        }
+
+        var first = 0
+        while first < count, !sounds(at: first) { first += 1 }
+        var last = count - 1
+        while last > first, !sounds(at: last) { last -= 1 }
+
+        let kept = last - first + 1
+        // Nothing to trim, or nothing but silence: leave the buffer alone.
+        guard kept > 0, kept < count else { return nil }
+
+        guard let out = AVAudioPCMBuffer(pcmFormat: buffer.format,
+                                         frameCapacity: AVAudioFrameCount(kept)),
+              let trimmed = out.floatChannelData else { return nil }
+        for c in 0..<channels {
+            for i in 0..<kept { trimmed[c][i] = samples[c][first + i] }
+        }
+        out.frameLength = AVAudioFrameCount(kept)
+        return out
     }
 
     /// Eases one voice's volume across to `target`, then runs `done`.
