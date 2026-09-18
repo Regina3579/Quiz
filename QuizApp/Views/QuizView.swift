@@ -12,6 +12,7 @@ import SwiftUI
 
 struct QuizView: View {
     @StateObject private var model: QuizViewModel
+    @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss
     @State private var explanationExpanded = false
     @State private var celebrateTrigger = 0
@@ -19,6 +20,8 @@ struct QuizView: View {
     @State private var correctCenter: CGPoint = .zero
     /// Snapshot of where the burst should start, taken when answered.
     @State private var burstOrigin: CGPoint = .zero
+    @State private var showHintPrompt = false
+    @State private var showBrokeNotice = false
 
     private let valid: Bool
 
@@ -61,6 +64,20 @@ struct QuizView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
+        // Asked before the gems go, not after. A child should never find out
+        // what a tap cost them by watching the number drop.
+        .alert("Need a Little Help? \u{1F4A1}", isPresented: $showHintPrompt) {
+            Button("Use \(GemRules.hintCost) Gems") { buyHint() }
+            Button("Not Now", role: .cancel) { }
+        } message: {
+            Text("Use \(GemRules.hintCost) Gems \u{1F48E} to unlock a hint for this question.")
+        }
+        .alert("Not enough Gems yet", isPresented: $showBrokeNotice) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("A hint costs \(GemRules.hintCost) Gems, and you have "
+                 + "\(progress.gems). Keep playing — every right answer earns more!")
+        }
         .onPreferenceChange(CorrectButtonCenterKey.self) { correctCenter = $0 }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -155,7 +172,8 @@ struct QuizView: View {
                     index: pair.offset,
                     hasAnswered: model.hasAnswered,
                     selectedOption: model.selectedOption,
-                    correctIndex: model.currentQuestion.correctIndex
+                    correctIndex: model.currentQuestion.correctIndex,
+                    eliminated: model.eliminated.contains(pair.offset)
                 ) {
                     withAnimation { model.select(pair.offset) }
                 }
@@ -187,8 +205,75 @@ struct QuizView: View {
                             expand: { explanationExpanded = true })
                 .transition(.opacity)
                 .animation(.easeOut(duration: 0.25), value: model.hasAnswered)
+        } else if !model.hasAnswered {
+            // This strip is empty until an answer is given, so the hint lives
+            // here rather than costing the screen a row of its own. The quiz
+            // fits one screen exactly, and it has to keep fitting.
+            hintRow
         } else {
             Color.clear
+        }
+    }
+
+    /// Takes the gems first and only strikes the answers if that succeeded, so
+    /// a child who cannot afford it never sees a hint they did not pay for.
+    private func buyHint() {
+        guard progress.spendOnHint() else {
+            Haptics.play(.error)
+            showBrokeNotice = true
+            return
+        }
+        Haptics.play(.success)
+        Sound.play("stickerpop")
+        withAnimation(.easeOut(duration: 0.3)) { model.revealHint() }
+    }
+
+    @ViewBuilder
+    private var hintRow: some View {
+        if model.hintUsed {
+            HStack(spacing: 7) {
+                Text("🌟").font(.system(size: 16))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Hint Unlocked!")
+                        .font(Theme.bold(14))
+                        .foregroundColor(Theme.ink)
+                    Text("Two wrong answers are crossed out.")
+                        .font(Theme.medium(12))
+                        .foregroundColor(Theme.inkSoft)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 13)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Theme.didYouKnow))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Theme.star.opacity(0.7), lineWidth: 2))
+            .transition(.opacity)
+        } else {
+            Button {
+                Haptics.play(.light)
+                showHintPrompt = true
+            } label: {
+                HStack(spacing: 7) {
+                    Text("💡").font(.system(size: 15))
+                    Text("Get Hint").font(Theme.bold(15))
+                    GemIcon(size: 15)
+                    Text("\(GemRules.hintCost)").font(Theme.bold(15))
+                }
+                .foregroundColor(Theme.ink)
+                .padding(.horizontal, 18)
+                // A set height, centred in the strip. Filling it would make a
+                // 56pt lozenge out of a four-word button.
+                .frame(height: 40)
+                .background(Capsule().fill(Theme.didYouKnow))
+                .overlay(Capsule().stroke(Theme.star, lineWidth: 2))
+            }
+            .buttonStyle(PressableButtonStyle())
+            .frame(maxWidth: .infinity)
+            .transition(.opacity)
         }
     }
 

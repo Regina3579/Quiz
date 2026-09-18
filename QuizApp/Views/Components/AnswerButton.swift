@@ -16,6 +16,9 @@ struct AnswerButton: View {
     let hasAnswered: Bool
     let selectedOption: Int?
     let correctIndex: Int
+    /// Struck out by a hint. Defaults to false so the Pro screens, which have
+    /// no hints, need no change.
+    var eliminated: Bool = false
     let action: () -> Void
 
     /// The pill artwork, in the order the design shows them.
@@ -32,6 +35,11 @@ struct AnswerButton: View {
     /// Once answered, the right answer and a wrong pick stay lit and the
     /// others step back, so the page reads at a glance.
     private var dimmed: Bool { hasAnswered && !isCorrect && !isChosen }
+
+    /// A struck answer is faded and crossed, not removed. Taking it off the
+    /// screen would shuffle the three remaining pills upward mid-question and
+    /// lose the child their place; leaving it draws the help it bought.
+    private var struck: Bool { eliminated && !hasAnswered }
 
     var body: some View {
         Button(action: action) {
@@ -64,8 +72,16 @@ struct AnswerButton: View {
                     }
                 }
                 .frame(width: w, height: h)
-                .saturation(dimmed ? 0.35 : 1)
-                .opacity(dimmed ? 0.6 : 1)
+                .overlay {
+                    if struck {
+                        Capsule()
+                            .fill(Theme.ink.opacity(0.55))
+                            .frame(width: w * 0.66, height: max(2, h * 0.045))
+                            .offset(x: w * 0.055)
+                    }
+                }
+                .saturation(struck ? 0 : (dimmed ? 0.35 : 1))
+                .opacity(struck ? 0.4 : (dimmed ? 0.6 : 1))
                 .overlay {
                     // A soft halo marks the outcome without hiding the art.
                     if hasAnswered && (isCorrect || isChosen) {
@@ -81,9 +97,10 @@ struct AnswerButton: View {
             .aspectRatio(Self.pillAspect, contentMode: .fit)
         }
         .buttonStyle(PressableButtonStyle())
-        .disabled(hasAnswered)
+        .disabled(hasAnswered || eliminated)
         .animation(.easeOut(duration: 0.25), value: hasAnswered)
-        .accessibilityLabel(text)
+        .animation(.easeOut(duration: 0.3), value: eliminated)
+        .accessibilityLabel(struck ? "\(text). Crossed out by your hint" : text)
     }
 
     private func marker(height: CGFloat) -> some View {

@@ -20,6 +20,11 @@ final class QuizViewModel: ObservableObject {
     @Published private(set) var hasAnswered = false
     @Published private(set) var isFinished = false
 
+    /// Answers struck out by a hint on the question showing now. Cleared on
+    /// every move to the next question, so a hint is bought per question and
+    /// never carries over.
+    @Published private(set) var eliminated: Set<Int> = []
+
     /// Per-question record of correctness, used for the recap row.
     @Published private(set) var results: [Bool] = []
 
@@ -70,6 +75,21 @@ final class QuizViewModel: ObservableObject {
         if correct { Sound.correct() } else { Sound.wrong() }
     }
 
+    /// Whether a hint has already been bought for the question showing now.
+    var hintUsed: Bool { !eliminated.isEmpty }
+
+    /// Strikes out two wrong answers.
+    ///
+    /// The right answer is filtered out before anything is picked, so it can
+    /// never be struck no matter how the shuffle falls. Call only after the
+    /// gems have actually been taken.
+    func revealHint() {
+        guard !hasAnswered, eliminated.isEmpty else { return }
+        let wrong = currentQuestion.options.indices
+            .filter { $0 != currentQuestion.correctIndex }
+        eliminated = Set(wrong.shuffled().prefix(2))
+    }
+
     func next() {
         guard hasAnswered else { return }
         if isLastQuestion {
@@ -79,6 +99,7 @@ final class QuizViewModel: ObservableObject {
         currentIndex += 1
         selectedOption = nil
         hasAnswered = false
+        eliminated = []
     }
 
     func restart() {
@@ -88,5 +109,6 @@ final class QuizViewModel: ObservableObject {
         hasAnswered = false
         isFinished = false
         results = []
+        eliminated = []
     }
 }

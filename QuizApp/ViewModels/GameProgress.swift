@@ -321,6 +321,20 @@ final class GameProgress: ObservableObject {
         !owns(sticker) && !needsPro(sticker) && gems >= sticker.cost
     }
 
+    /// Spends gems on a hint. Returns false when there are not enough, so a
+    /// caller never has to check the balance itself.
+    ///
+    /// This does not touch `tally.gemsEarned`, which only ever counts gems
+    /// coming in — buying hints must not walk a child backwards away from the
+    /// Gem Hunter badge they are working towards.
+    @discardableResult
+    func spendOnHint() -> Bool {
+        guard gems >= GemRules.hintCost else { return false }
+        gems -= GemRules.hintCost
+        saveGems()
+        return true
+    }
+
     /// Buys a sticker, spending gems. Returns true on success.
     @discardableResult
     func buySticker(_ sticker: Sticker) -> Bool {
@@ -586,6 +600,11 @@ final class GameProgress: ObservableObject {
 /// round snowball far past what a sticker is worth.
 enum GemRules {
     static let perCorrect = 5
+
+    /// What a hint costs. Two correct answers' worth, so it is a real
+    /// decision rather than a reflex, and cheap enough that a stuck child is
+    /// never stranded.
+    static let hintCost = 10
     static let streakOfThree = 5
     static let streakOfFive = 10
     static let perfectRound = 20
