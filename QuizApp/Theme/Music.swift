@@ -9,10 +9,12 @@
 //  Two things shape how this is built.
 //
 //  It has to loop without a seam. AVAudioPlayer's own looping leaves a gap on
-//  anything compressed, because AAC carries a few silent frames of encoder
-//  padding at each end. So the file is decoded once into a buffer and the
-//  engine is told to loop *the buffer*, which is sample-accurate and leaves
-//  the tracks small enough to ship.
+//  anything compressed, because the encoder adds a few silent frames of
+//  padding at each end. So the file is decoded once into a buffer, the padding
+//  is trimmed off the buffer, and the engine loops what is left — which is
+//  sample-accurate and still leaves the tracks small enough to ship. Decoding
+//  alone does not fix it: the padding decodes into the buffer like any other
+//  sample, and looping the buffer would simply play it.
 //
 //  And it has to stay underneath. A child is reading a question; the music is
 //  there to settle them, not to compete. It plays at a fraction of the sound
@@ -129,7 +131,7 @@ final class Music {
         guard AudioSettings.musicOn else { playing = resolved; return }
         guard let file = url(for: resolved) else { return }
 
-        guard start() else { return }
+        guard prepare() else { return }
         crossfade(to: file, named: resolved)
     }
 
@@ -197,8 +199,11 @@ final class Music {
     }
 
     func resume() {
+        // `playing` is only non-nil once crossfade has connected a voice, so
+        // these guards are also what keeps the engine from being started with
+        // nothing wired to its output.
         guard started, AudioSettings.musicOn, playing != nil else { return }
-        try? engine.start()
+        guard startEngine() else { return }
         if !voices[active].isPlaying { voices[active].play() }
     }
 
@@ -228,29 +233,57 @@ final class Music {
         return nil
     }
 
-    private func start() -> Bool {
+    /// Attaches the voices and builds the output chain — and deliberately does
+    /// not start the engine.
+    ///
+    /// Starting it here is what crashed the app. An engine with nothing
+    /// connected to its output fails an assertion inside `start()`:
+    ///
+    ///     required condition is false: inputNode != nullptr || outputNode != nullptr
+    ///
+    /// That is a C++ assertion surfacing as an NSException, not a Swift error,
+    /// so the `do`/`catch` written around it caught nothing and the app went
+    /// down on launch. And the voices could not simply have been connected
+    /// sooner: a player node has to be wired up with the format of the buffer
+    /// it is about to play, and no track has been decoded yet. Connecting with
+    /// a guessed format is what makes scheduleBuffer fail on a file that turns
+    /// out to be mono, or recorded at a different rate from the mixer.
+    ///
+    /// So the engine is started in `crossfade` instead, at the first moment
+    /// all three things are true: a decoded buffer, its real format, and a
+    /// voice actually connected to the mixer.
+    private func prepare() -> Bool {
         guard !started else { return true }
         // .ambient: mixes with whatever the family already has playing and
         // stays silent when the ring switch is off.
         try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
 
-        // Attached now, connected later: a player node has to be wired up with
-        // the format of the buffer it is about to play, and that is not known
-        // until a track has been decoded. Connecting with a guessed format is
-        // what makes scheduleBuffer fail on a file that turns out to be mono,
-        // or recorded at a different rate from the mixer.
+        // Asking for the main mixer is what creates it and joins it to the
+        // output. Nothing else here does, and without it the engine has no
+        // output chain for a voice to be connected to.
+        _ = engine.mainMixerNode
+
         for voice in voices {
             engine.attach(voice)
             voice.volume = 0
         }
+        engine.prepare()
+        started = true
+        return true
+    }
+
+    /// Starts the engine if it is not already running. Safe to call only once
+    /// something is connected to the mixer.
+    @discardableResult
+    private func startEngine() -> Bool {
+        if engine.isRunning { return true }
         do {
             try engine.start()
+            return true
         } catch {
             return false        // no music; the game is unaffected
         }
-        started = true
-        return true
     }
 
     private func crossfade(to file: URL, named: String) {
@@ -263,6 +296,12 @@ final class Music {
         incoming.stop()
         incoming.volume = 0
         engine.connect(incoming, to: engine.mainMixerNode, format: buffer.format)
+
+        // Now, and not a moment earlier. There is a voice connected to the
+        // mixer with the format of a buffer that has actually been decoded,
+        // which is the condition the engine asserts on.
+        guard startEngine() else { return }
+
         incoming.scheduleBuffer(buffer, at: nil, options: [.loops])
         incoming.play()
         playing = named
