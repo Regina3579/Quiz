@@ -610,6 +610,12 @@ enum GemRules {
     static func hintCost(after used: Int) -> Int {
         hintCosts[min(max(0, used), hintCosts.count - 1)]
     }
+
+    /// 50-50 Magic: both hints at once, for less than buying them one after
+    /// the other. Deliberately cheaper than the 30 that two separate hints
+    /// come to — a child who already knows they are stuck should not pay a
+    /// penalty for saying so up front.
+    static let fiftyFiftyCost = 25
     static let streakOfThree = 5
     static let streakOfFive = 10
     static let perfectRound = 20

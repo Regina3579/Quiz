@@ -21,7 +21,10 @@ struct QuizView: View {
     /// Snapshot of where the burst should start, taken when answered.
     @State private var burstOrigin: CGPoint = .zero
     @State private var showHintPrompt = false
+    @State private var showFiftyPrompt = false
     @State private var showBrokeNotice = false
+    /// What the "not enough Gems" notice should quote.
+    @State private var shortfallCost = 0
 
     private let valid: Bool
 
@@ -78,10 +81,17 @@ struct QuizView: View {
                  : "Use \(nextHintCost) Gems \u{1F48E} to unlock a hint for this question. "
                    + "It will cross out one wrong answer.")
         }
+        .alert("50-50 Magic \u{1FA84}", isPresented: $showFiftyPrompt) {
+            Button("Use \(GemRules.fiftyFiftyCost) Gems") { buyFiftyFifty() }
+            Button("Not Now", role: .cancel) { }
+        } message: {
+            Text("Use \(GemRules.fiftyFiftyCost) Gems \u{1F48E} to remove two wrong "
+                 + "answers at once, leaving only two choices.")
+        }
         .alert("Not enough Gems yet", isPresented: $showBrokeNotice) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("This hint costs \(nextHintCost) Gems, and you have "
+            Text("This costs \(shortfallCost) Gems, and you have "
                  + "\(progress.gems). Keep playing — every right answer earns more!")
         }
         .onPreferenceChange(CorrectButtonCenterKey.self) { correctCenter = $0 }
@@ -225,25 +235,47 @@ struct QuizView: View {
     private var nextHintCost: Int { GemRules.hintCost(after: model.hintsUsed) }
 
     /// Takes the gems first and only strikes an answer if that succeeded, so a
-    /// child who cannot afford it never sees a hint they did not pay for.
+    /// child who cannot afford it never sees help they did not pay for.
     private func buyHint() {
         guard progress.spendOnHint(cost: nextHintCost) else {
-            Haptics.play(.error)
-            showBrokeNotice = true
-            return
+            refuse(nextHintCost); return
         }
-        Haptics.play(.success)
-        Sound.play("stickerpop")
+        celebrate()
         withAnimation(.easeOut(duration: 0.3)) { model.revealHint() }
     }
 
-    /// One thing at a time in a 56pt strip: the offer, or, once there is
-    /// nothing left to offer, what the hints did. The crossed-out answers are
-    /// already on screen, so the strip does not have to report them as well.
+    private func buyFiftyFifty() {
+        guard progress.spendOnHint(cost: GemRules.fiftyFiftyCost) else {
+            refuse(GemRules.fiftyFiftyCost); return
+        }
+        celebrate()
+        withAnimation(.easeOut(duration: 0.35)) { model.revealFiftyFifty() }
+    }
+
+    private func refuse(_ cost: Int) {
+        Haptics.play(.error)
+        shortfallCost = cost
+        showBrokeNotice = true
+    }
+
+    private func celebrate() {
+        Haptics.play(.success)
+        Sound.play("stickerpop")
+    }
+
+    /// One row in a 56pt strip: what can still be bought, or, once nothing
+    /// can, what the hints did. The crossed-out answers are already on screen,
+    /// so the strip does not have to report them as well.
     @ViewBuilder
     private var hintRow: some View {
         if model.canBuyHint {
-            hintButton
+            HStack(spacing: 9) {
+                hintButton
+                // Only ever offered on an untouched question, so the two
+                // buttons never mean the same thing at different prices.
+                if model.canBuyFiftyFifty { fiftyFiftyButton }
+            }
+            .frame(maxWidth: .infinity)
         } else if model.hintsUsed > 0 {
             hintDone
         } else {
@@ -253,22 +285,33 @@ struct QuizView: View {
 
     private var hintButton: some View {
         let second = model.hintsUsed > 0
+        return powerUp(icon: second ? "\u{2728}" : "\u{1F4A1}",
+                       title: second ? "Need more help? Hint 2" : "Get Hint",
+                       cost: nextHintCost) { showHintPrompt = true }
+    }
 
-        return Button {
+    private var fiftyFiftyButton: some View {
+        powerUp(icon: "\u{1FA84}", title: "50-50 Magic",
+                cost: GemRules.fiftyFiftyCost) { showFiftyPrompt = true }
+    }
+
+    private func powerUp(icon: String, title: String, cost: Int,
+                         action: @escaping () -> Void) -> some View {
+        Button {
             Haptics.play(.light)
-            showHintPrompt = true
+            action()
         } label: {
-            HStack(spacing: 6) {
-                Text(second ? "\u{2728}" : "\u{1F4A1}").font(.system(size: 15))
-                Text(second ? "Need more help? Hint 2" : "Get Hint")
-                    .font(Theme.bold(15))
+            HStack(spacing: 5) {
+                Text(icon).font(.system(size: 15))
+                Text(title)
+                    .font(Theme.bold(14))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                GemIcon(size: 15)
-                Text("\(nextHintCost)").font(Theme.bold(15))
+                    .minimumScaleFactor(0.65)
+                GemIcon(size: 14)
+                Text("\(cost)").font(Theme.bold(14))
             }
             .foregroundColor(Theme.ink)
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 13)
             // A set height, centred in the strip. Filling it would make a
             // 56pt lozenge out of a four-word button.
             .frame(height: 40)
@@ -276,7 +319,6 @@ struct QuizView: View {
             .overlay(Capsule().stroke(Theme.star, lineWidth: 2))
         }
         .buttonStyle(PressableButtonStyle())
-        .frame(maxWidth: .infinity)
         .transition(.opacity)
     }
 

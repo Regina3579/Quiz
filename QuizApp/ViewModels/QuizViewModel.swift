@@ -99,6 +99,21 @@ final class QuizViewModel: ObservableObject {
         if let struck = wrong.randomElement() { eliminated.insert(struck) }
     }
 
+    /// Whether 50-50 Magic is worth offering.
+    ///
+    /// Only on an untouched question. Once a hint has been bought there is
+    /// one strike left, which is exactly what the cheaper second hint does —
+    /// offering the dearer bundle for the same result would be a trap.
+    var canBuyFiftyFifty: Bool { !hasAnswered && hintsUsed == 0 && hintsPossible >= 2 }
+
+    /// Strikes wrong answers until two choices remain.
+    func revealFiftyFifty() {
+        guard canBuyFiftyFifty else { return }
+        let wrong = currentQuestion.options.indices
+            .filter { $0 != currentQuestion.correctIndex }
+        eliminated = Set(wrong.shuffled().prefix(hintsPossible))
+    }
+
     func next() {
         guard hasAnswered else { return }
         if isLastQuestion {
