@@ -67,7 +67,7 @@ struct HintPromptView: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            body_
+            content
                 .padding(.top, 34)
                 .padding(.bottom, 18)
                 .padding(.horizontal, 18)
@@ -106,9 +106,7 @@ struct HintPromptView: View {
             .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
     }
 
-    /// Named with a trailing underscore because `body` is taken by the
-    /// protocol and this is the body of the card, not of the view.
-    private var body_: some View {
+    private var content: some View {
         VStack(spacing: 13) {
             HStack(spacing: 12) {
                 if UIImage(named: Self.mascotAsset) != nil {

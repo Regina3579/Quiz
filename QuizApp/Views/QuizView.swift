@@ -75,8 +75,8 @@ struct QuizView: View {
         .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
         .animation(.easeInOut(duration: 0.2), value: showHintPrompt)
         .animation(.easeInOut(duration: 0.2), value: showFiftyPrompt)
-        // Asked before the gems go, not after. A child should never find out
-        // what a tap cost them by watching the number drop.
+        // Still a plain alert on purpose. This one is bad news rather than an
+        // offer, and the festive card would be the wrong shape for it.
         .alert("Not enough Gems yet", isPresented: $showBrokeNotice) {
             Button("OK", role: .cancel) { }
         } message: {
