@@ -23,6 +23,7 @@ struct HomeView: View {
     @State private var showNameEntry = false
     @State private var showTrophyRoom = false
     @State private var showSettings = false
+    @State private var showPro = false
 
     /// How far the trail has been pulled up, and how far the finger has moved
     /// since it went down. The two are kept apart so the map can follow a
@@ -129,6 +130,9 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showTrophyRoom) {
             TrophyRoomView().environmentObject(progress)
+        }
+        .sheet(isPresented: $showPro) {
+            ProUnlockView(reason: .proChallenges)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
@@ -448,18 +452,25 @@ struct HomeView: View {
             .accessibilityLabel(doneToday ? "Daily Challenge, already played today"
                                           : "Play today's Daily Challenge")
 
-        // Pro Challenge
+        // Pro Challenge — the crown is always tappable. Without Pro it opens
+        // the page explaining what is behind it rather than doing nothing,
+        // because a button that ignores a child is worse than one that says no.
         Color.clear
             .contentShape(Rectangle())
             .onTapGesture {
                 Haptics.play(.light)
-                path.append(ProHubRoute())
+                if Pro.isActive {
+                    path.append(ProHubRoute())
+                } else {
+                    showPro = true
+                }
             }
             .frame(width: w * (Self.proRect.x1 - Self.proRect.x0),
                    height: h * (Self.proRect.y1 - Self.proRect.y0))
             .position(x: w * (Self.proRect.x0 + Self.proRect.x1) / 2,
                       y: h * (Self.proRect.y0 + Self.proRect.y1) / 2)
-            .accessibilityLabel("Open the Pro Challenge")
+            .accessibilityLabel(Pro.isActive ? "Open the Pro Challenge"
+                                             : "Pro Challenge. Locked — tap to see what Pro includes")
 
         // Sticker book
         Color.clear

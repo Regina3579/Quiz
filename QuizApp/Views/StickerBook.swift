@@ -453,6 +453,13 @@ enum StickerCatalog {
         blossomGarden, scienceLab, brainCastle, ancientKingdom, championsSummit
     ]
 
+    /// The ten a child can buy without Pro: the first Cute sticker on each
+    /// adventure's shelf. One from every adventure rather than ten from one,
+    /// so the free taster covers the whole book instead of finishing a corner
+    /// of it — and so whichever adventure a child loves, there is a sticker in
+    /// it they can actually have.
+    static let freeSampleIDs: Set<String> = Set(categories.compactMap { $0.cute.first?.id })
+
     static let all: [Sticker] = categories.flatMap { $0.cute + $0.epic }
 
     static let byID: [String: Sticker] = Dictionary(
@@ -1223,6 +1230,9 @@ struct StickerShopSheet: View {
     /// The category being browsed, or nil while choosing a category.
     @State private var selected: StickerCategory?
 
+    /// Raised by tapping a sticker that needs Pro.
+    @State private var showPro = false
+
     private let columns = [GridItem(.adaptive(minimum: 96), spacing: 14)]
 
     var body: some View {
@@ -1234,6 +1244,9 @@ struct StickerShopSheet: View {
             } else {
                 categoryList
             }
+        }
+        .sheet(isPresented: $showPro) {
+            ProUnlockView(reason: .sticker)
         }
         .background(Theme.homeBackground.ignoresSafeArea())
     }
@@ -1374,12 +1387,16 @@ struct StickerShopSheet: View {
 
     private func shopCell(_ sticker: Sticker) -> some View {
         let owned = progress.owns(sticker)
+        let locked = progress.needsPro(sticker)
         let affordable = progress.jewels >= sticker.cost
 
         return VStack(spacing: 8) {
+            // A locked sticker is still shown in full, only dimmed. The whole
+            // point of leaving the book open is that a child can see what is
+            // on the shelves; hiding them would make the shop a wall.
             StickerGlyph(sticker: sticker, size: 58)
-                .opacity(owned || affordable ? 1 : 0.5)
-                .grayscale(owned || affordable ? 0 : 0.6)
+                .opacity(owned || (affordable && !locked) ? 1 : 0.5)
+                .grayscale(owned || (affordable && !locked) ? 0 : 0.6)
 
             if owned {
                 Label("Place", systemImage: "hand.tap.fill")
@@ -1387,6 +1404,16 @@ struct StickerShopSheet: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 12).padding(.vertical, 5)
                     .background(Capsule().fill(Theme.correct))
+            } else if locked {
+                // A price it cannot pay would be a lie, so it shows the reason
+                // instead.
+                HStack(spacing: 4) {
+                    Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold))
+                    Text("PRO").font(Theme.bold(12))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12).padding(.vertical, 5)
+                .background(Capsule().fill(Color(red: 0.93, green: 0.55, blue: 0.16)))
             } else {
                 HStack(spacing: 4) {
                     JewelIcon(size: 15)
@@ -1407,13 +1434,19 @@ struct StickerShopSheet: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(owned ? Theme.correct.opacity(0.6) : .white, lineWidth: 2)
+                .stroke(owned ? Theme.correct.opacity(0.6)
+                        : locked ? Color(red: 0.93, green: 0.55, blue: 0.16).opacity(0.5)
+                        : .white,
+                        lineWidth: 2)
         )
         .contentShape(Rectangle())
         .onTapGesture {
             if owned {
                 onPlace(sticker)
                 dismiss()
+            } else if locked {
+                Haptics.play(.light)
+                showPro = true
             } else if affordable {
                 Haptics.play(.success)
                 progress.buySticker(sticker)

@@ -20,7 +20,12 @@ final class GameProgress: ObservableObject {
 
     /// TESTING: when true, every sticker counts as already owned, so they can
     /// all be placed for free. Set back to false to restore buying with jewels.
-    static let unlockAllStickers = true
+    ///
+    /// Off now, and it has to stay off: it short-circuits `owns`, which would
+    /// hand every child the whole book and leave the Pro lock doing nothing at
+    /// all. Turning it on again to look at the shelves also turns the paywall
+    /// off, silently.
+    static let unlockAllStickers = false
 
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
@@ -297,15 +302,29 @@ final class GameProgress: ObservableObject {
         return ownedStickers.contains(sticker.id)
     }
 
+    /// Whether Pro is needed before this one can even be bought.
+    ///
+    /// Only ever about buying. A sticker won from the Trophy Room arrives
+    /// through `awardEarnedAchievements` and is owned outright — a Master
+    /// Crown earned by getting all hundred questions right is not going to
+    /// turn round and ask for money.
+    func needsPro(_ sticker: Sticker) -> Bool {
+        guard !Pro.isActive else { return false }
+        return !StickerCatalog.freeSampleIDs.contains(sticker.id)
+    }
+
     /// Whether the child can afford a sticker they don't already own.
     func canBuy(_ sticker: Sticker) -> Bool {
-        !owns(sticker) && jewels >= sticker.cost
+        !owns(sticker) && !needsPro(sticker) && jewels >= sticker.cost
     }
 
     /// Buys a sticker, spending jewels. Returns true on success.
     @discardableResult
     func buySticker(_ sticker: Sticker) -> Bool {
         guard !owns(sticker) else { return true }
+        // Checked here and not only in the shop: this is the one door jewels
+        // leave by, so it is the one place the lock has to hold.
+        guard !needsPro(sticker) else { return false }
         guard jewels >= sticker.cost else { return false }
         jewels -= sticker.cost
         ownedStickers.insert(sticker.id)
