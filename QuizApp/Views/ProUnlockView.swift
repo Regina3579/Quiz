@@ -64,6 +64,8 @@ struct ProUnlockView: View {
 
     let reason: Reason
 
+    @State private var showPlans = false
+
     // MARK: - Painted pieces
 
     private enum Art {
@@ -143,6 +145,9 @@ struct ProUnlockView: View {
                 }
 
                 footer(w)
+            }
+            .fullScreenCover(isPresented: $showPlans) {
+                ProPlansView()
             }
         }
     }
@@ -317,10 +322,10 @@ struct ProUnlockView: View {
     private func footer(_ w: CGFloat) -> some View {
         VStack(spacing: w * 0.010) {
             Button {
-                Haptics.play(.success)
-                // Grants Pro without charging anything — see Pro.unlock().
-                Pro.unlock()
-                dismiss()
+                Haptics.play(.light)
+                // This page explains what Pro is; the prices and the actual
+                // purchase live on the next one.
+                showPlans = true
             } label: {
                 GlossyPill(text: "Unlock Pro", icon: "crown.fill",
                            face: [Color(red: 1.00, green: 0.80, blue: 0.24),
