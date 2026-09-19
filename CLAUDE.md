@@ -79,10 +79,10 @@ When adding or editing quiz content in `QuizApp/Data/QuizData.swift`:
 9. 👑 Ancient Kingdom — ✅ 10 levels (rich explanations)
 10. 🏆 Champion's Summit — ✅ 10 levels (mixed grand challenge, rich explanations)
 
-All ten were written to the older brief, which aimed levels 9–10 at "expert
-for a child" rather than at an adult. They are not wrong, but the top of each
-island is probably easier than rule 2 now asks for. Worth a pass one island
-at a time; nothing else in the content needs revisiting.
+**All 1,000 questions are finished and signed off. Do not rewrite them.** The
+rules above govern anything written from here on; they are not a reason to go
+back over what is already there. The set has been played through by both ends
+of the audience and it works.
 
 ## Xcode project note
 
