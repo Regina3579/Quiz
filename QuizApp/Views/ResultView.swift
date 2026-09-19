@@ -5,6 +5,16 @@
 //  End-of-level celebration: stars pop in, confetti falls, and progress
 //  is saved so the next level unlocks on the trail.
 //
+//  Built from the same pieces as the Pro Challenge result — the cheering
+//  star, the title ribbon, the gem crest and the glossy buttons — so the two
+//  screens plainly belong to one game. The differences are the ones that
+//  matter: a level is scored in stars, and its gem haul can be nothing at
+//  all, in which case the panel simply is not there.
+//
+//  The backdrop stays the island's own scene rather than the painted night
+//  forest. Finishing a level in Ocean Paradise should still look like Ocean
+//  Paradise; what the artwork brings is the furniture on top of it.
+//
 
 import SwiftUI
 
@@ -26,7 +36,31 @@ struct ResultView: View {
 
     private var earned: Int { model.starsEarned }
 
-    private var heroEmoji: String {
+    /// The child's name, ready to drop into a greeting (empty if not set).
+    private var playerName: String { Player.name }
+
+    /// The greeting, split so the child's own name can be the gold part.
+    private var headline: (lead: String, name: String) {
+        let name = playerName
+        switch earned {
+        case 3:  return name.isEmpty ? ("Perfect!", "") : ("Perfect, ", name + "!")
+        case 2:  return name.isEmpty ? ("Great Job!", "") : ("Great job, ", name + "!")
+        case 1:  return ("Level Cleared!", "")
+        default: return name.isEmpty ? ("Almost There!", "")
+                                     : ("Almost there, ", name + "!")
+        }
+    }
+
+    /// The score line, with the numbers picked out in gold.
+    private var subtitlePieces: [(String, Bool)] {
+        if earned == 0 {
+            return [("Get at least half right to earn a star!", false)]
+        }
+        return [("You got ", false), ("\(model.score)", true), (" out of ", false),
+                ("\(model.totalQuestions)", true), ("!", false)]
+    }
+
+    private var fallbackEmoji: String {
         switch earned {
         case 3: return "🏆"
         case 2: return "🎉"
@@ -35,73 +69,38 @@ struct ResultView: View {
         }
     }
 
-    /// The child's name, ready to drop into a greeting (empty if not set).
-    private var playerName: String { Player.name }
-
-    private var headline: String {
-        let name = playerName
-        switch earned {
-        case 3: return name.isEmpty ? "Perfect!" : "Perfect, \(name)!"
-        case 2: return name.isEmpty ? "Great Job!" : "Great job, \(name)!"
-        case 1: return "Level Cleared!"
-        default: return name.isEmpty ? "Almost There!" : "Almost there, \(name)!"
-        }
-    }
-
-    private var subtitle: String {
-        if earned == 0 {
-            return "Get at least half right to earn a star. Try again!"
-        }
-        return "You got \(model.score) out of \(model.totalQuestions)!"
-    }
-
     var body: some View {
-        ZStack {
-            scrim
+        GeometryReader { geo in
+            let w = geo.size.width
 
-            VStack(spacing: 20) {
-                Spacer(minLength: 0)
+            ZStack {
+                scrim
 
-                Text(heroEmoji)
-                    .font(.system(size: 84))
-                    .scaleEffect(showContent ? 1 : 0.3)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.5), value: showContent)
-
-                // These two sit straight on the scene with no card under them,
-                // so they carry their own shadow to lift them off it.
-                Text(headline)
-                    .font(Theme.display(34))
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.75), radius: 6, y: 2)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: w * 0.028) {
+                        ResultStarMascot(width: w, appeared: showContent,
+                                         fallback: fallbackEmoji, scale: 0.42)
+                        ResultBanner(lead: headline.lead, name: headline.name, width: w)
+                        StarRating(shown: starsShown, width: w)
+                            .padding(.vertical, w * 0.01)
+                        ResultLine(pieces: subtitlePieces, size: w * 0.052)
+                        ResultMarkRow(results: model.results, width: w)
+                        gemPanel(w)
+                        if !awardsWon.isEmpty { RewardChestView(awards: awardsWon) }
+                        actions(w)
+                    }
                     .opacity(showContent ? 1 : 0)
-
-                stars
-
-                Text(subtitle)
-                    .font(Theme.bold(18))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .shadow(color: .black.opacity(0.75), radius: 5, y: 2)
-                    .padding(.horizontal, 20)
-                    .opacity(showContent ? 1 : 0)
-
-                recapRow.opacity(showContent ? 1 : 0)
-
-                gemReward.opacity(showContent ? 1 : 0)
-
-                if !awardsWon.isEmpty {
-                    RewardChestView(awards: awardsWon)
-                        .opacity(showContent ? 1 : 0)
+                    .padding(.horizontal, w * 0.045)
+                    .padding(.top, w * 0.02)
+                    .padding(.bottom, w * 0.07)
+                    .frame(maxWidth: .infinity)
                 }
 
-                Spacer(minLength: 0)
-
-                actions.opacity(showContent ? 1 : 0)
-            }
-            .padding(24)
-
-            if earned >= 2 {
-                ConfettiView(isActive: celebrate).ignoresSafeArea()
+                if earned >= 2 {
+                    ConfettiView(isActive: celebrate)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                }
             }
         }
         .onAppear { animateIn() }
@@ -122,95 +121,35 @@ struct ResultView: View {
         .ignoresSafeArea()
     }
 
-    private var stars: some View {
-        HStack(spacing: 16) {
-            ForEach(0..<3, id: \.self) { i in
-                Image(systemName: i < starsShown ? "star.fill" : "star")
-                    .font(.system(size: 46))
-                    .foregroundColor(i < starsShown ? Theme.star : .white.opacity(0.45))
-                    .scaleEffect(i < starsShown ? 1 : 0.7)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.5).delay(Double(i) * 0.2),
-                               value: starsShown)
-            }
-        }
-    }
-
-    private var recapRow: some View {
-        HStack(spacing: 7) {
-            ForEach(Array(model.results.enumerated()), id: \.offset) { pair in
-                Image(systemName: pair.element ? "checkmark" : "xmark")
-                    .font(Theme.bold(12))
-                    .foregroundColor(pair.element ? Theme.correct : Theme.incorrect)
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(.white))
-                    .shadow(color: .black.opacity(0.12), radius: 3, y: 2)
-            }
-        }
-    }
-
-    private var gemReward: some View {
-        Group {
-            if let reward = reward, reward.total > 0 {
-                VStack(spacing: 10) {
-                    // The big gem total, counting up.
-                    HStack(spacing: 8) {
-                        GemIcon(size: 34)
-                        Text("+\(gemsShown)")
-                            .font(Theme.display(36))
-                            .foregroundStyle(Theme.gemPink)
-                        Text("Gems")
-                            .font(Theme.bold(17))
-                            .foregroundColor(.white.opacity(0.9))
+    /// The gem haul, if there was one. A level cleared with nothing to show
+    /// for it gets no empty frame — the screen just closes up around it.
+    @ViewBuilder
+    private func gemPanel(_ w: CGFloat) -> some View {
+        if let reward, reward.total > 0 {
+            GemPanel(total: gemsShown, width: w) {
+                VStack(spacing: w * 0.028) {
+                    RewardRow(icon: "⭐️",
+                              label: "\(reward.correctCount) correct × \(GemRules.perCorrect)",
+                              amount: reward.perCorrect, width: w)
+                    if reward.hasStreakThree {
+                        RewardRow(icon: "🔥", label: "3 in a row",
+                                  amount: reward.streakThreeBonus, width: w)
                     }
-
-                    // What made up the reward.
-                    VStack(spacing: 6) {
-                        rewardLine("⭐️", "\(reward.correctCount) correct × \(GemRules.perCorrect)",
-                                   reward.perCorrect)
-                        if reward.hasStreakThree {
-                            rewardLine("🔥", "3 in a row", reward.streakThreeBonus)
-                        }
-                        if reward.hasStreakFive {
-                            rewardLine("🔥", "5 in a row", reward.streakFiveBonus)
-                        }
-                        if reward.isPerfect {
-                            rewardLine("🎁", "Perfect round bonus", reward.perfectBonus)
-                        }
+                    if reward.hasStreakFive {
+                        RewardRow(icon: "🔥", label: "5 in a row",
+                                  amount: reward.streakFiveBonus, width: w)
+                    }
+                    if reward.isPerfect {
+                        RewardRow(icon: "🎁", label: "Perfect round bonus",
+                                  amount: reward.perfectBonus, width: w)
                     }
                 }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 18)
-                // A dark surface rather than a pale translucent one: white
-                // type and the pink gem count need something solid behind
-                // them, and a lightened card only lets the reef through.
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.black.opacity(0.45))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(.white.opacity(0.40), lineWidth: 1.5)
-                )
-                .shadow(color: .black.opacity(0.35), radius: 10, y: 5)
             }
         }
     }
 
-    private func rewardLine(_ icon: String, _ label: String, _ amount: Int) -> some View {
-        HStack(spacing: 8) {
-            Text(icon).font(.system(size: 15))
-            Text(label)
-                .font(Theme.medium(14))
-                .foregroundColor(.white.opacity(0.9))
-            Spacer(minLength: 12)
-            Text("+\(amount)")
-                .font(Theme.bold(15))
-                .foregroundColor(Theme.star)
-        }
-    }
-
-    private var actions: some View {
-        VStack(spacing: 12) {
+    private func actions(_ w: CGFloat) -> some View {
+        VStack(spacing: w * 0.028) {
             Button {
                 Haptics.play(.light)
                 withAnimation {
@@ -220,8 +159,8 @@ struct ResultView: View {
                     model.restart()
                 }
             } label: {
-                actionLabel(icon: "arrow.clockwise", text: "Play Again",
-                            filled: true, tint: model.island.palette.end)
+                GlossyPill(text: "Play Again", icon: "arrow.clockwise",
+                           face: GlossyPill.pink, width: w, big: true)
             }
             .buttonStyle(PressableButtonStyle())
 
@@ -229,32 +168,12 @@ struct ResultView: View {
                 Haptics.play(.light)
                 onExit()
             } label: {
-                actionLabel(icon: "map.fill", text: "Back to Trail",
-                            filled: false, tint: model.island.palette.end)
+                GlossyPill(text: "Back to Trail", icon: "map.fill",
+                           face: GlossyPill.blue, width: w)
             }
             .buttonStyle(PressableButtonStyle())
         }
-    }
-
-    private func actionLabel(icon: String, text: String, filled: Bool, tint: Color) -> some View {
-        HStack {
-            Image(systemName: icon)
-            Text(text)
-        }
-        .font(Theme.bold(18))
-        .foregroundColor(filled ? tint : .white)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(filled ? AnyShapeStyle(Color.white)
-                             : AnyShapeStyle(Color.black.opacity(0.45)))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(filled ? Color.clear : Color.white.opacity(0.75), lineWidth: 2)
-        )
-        .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
+        .padding(.top, w * 0.02)
     }
 
     // MARK: - Animation & saving
