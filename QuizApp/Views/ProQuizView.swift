@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ProQuizView: View {
     @StateObject private var model: ProQuizViewModel
@@ -47,7 +48,19 @@ struct ProQuizView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { explanationExpanded = false }
                 }
             }
+
+            if showQuitAlert {
+                LeaveChallengeDialog(
+                    onKeepPlaying: {
+                        showQuitAlert = false
+                        model.startClock()
+                    },
+                    onLeave: { dismiss() })
+                    .transition(.opacity)
+                    .zIndex(4)
+            }
         }
+        .animation(.easeInOut(duration: 0.22), value: showQuitAlert)
         .animation(.easeInOut(duration: 0.2), value: explanationExpanded)
         .onPreferenceChange(ProCorrectCenterKey.self) { correctCenter = $0 }
         .navigationBarBackButtonHidden(true)
@@ -61,12 +74,6 @@ struct ProQuizView: View {
             Music.shared.play(Music.track(for: mode))
         }
         .onDisappear { model.abandon() }
-        .alert("Leave the challenge?", isPresented: $showQuitAlert) {
-            Button("Keep playing", role: .cancel) { model.startClock() }
-            Button("Leave", role: .destructive) { dismiss() }
-        } message: {
-            Text("Your gems from this round won't be saved.")
-        }
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.isFinished)
     }
 
@@ -282,5 +289,130 @@ private struct ProCorrectCenterKey: PreferenceKey {
     NavigationStack {
         ProQuizView(route: ProRoute(mode: .gemRush))
             .environmentObject(GameProgress())
+    }
+}
+
+// MARK: - Leaving a challenge
+
+/// The "Leave Challenge?" card, in place of the system alert.
+///
+/// A grey system alert in the middle of a bright challenge reads as the app
+/// breaking rather than the game asking a question. This is the same card the
+/// rest of the game is drawn in: the sad star over its cloud, and the two
+/// choices plainly different from each other.
+///
+/// The whole card is one painted picture, wording included, because none of
+/// that wording changes — the two buttons are tap targets laid exactly over
+/// the painted pills, with a press that lights the pill. Changing any of the
+/// words means repainting the picture.
+struct LeaveChallengeDialog: View {
+    let onKeepPlaying: () -> Void
+    let onLeave: () -> Void
+
+    static let art = "LeaveDialog"
+
+    /// 908 x 526, the size the artwork was cut to.
+    private static let aspect: CGFloat = 1.7262
+    private static let keepAt  = CGRect(x: 0.134, y: 0.665, width: 0.430, height: 0.198)
+    private static let leaveAt = CGRect(x: 0.575, y: 0.673, width: 0.306, height: 0.183)
+
+    private static var hasArt: Bool { UIImage(named: art) != nil }
+
+    @State private var appeared = false
+
+    var body: some View {
+        ZStack {
+            // Barely a dim — the artwork carries its own glow and the mockup
+            // shows the challenge still bright behind it. Its real job is to
+            // swallow taps, so an answer cannot be chosen through the card.
+            Color.black.opacity(0.22)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onKeepPlaying)
+
+            Group {
+                if Self.hasArt { painted } else { drawn }
+            }
+            .scaleEffect(appeared ? 1 : 0.86)
+            .opacity(appeared ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.72)) {
+                appeared = true
+            }
+        }
+    }
+
+    private var painted: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = w / Self.aspect
+
+            Image(Self.art)
+                .resizable()
+                .scaledToFit()
+                .frame(width: w, height: h)
+                .overlay(alignment: .topLeading) {
+                    ZStack(alignment: .topLeading) {
+                        target(Self.keepAt,  w, h, action: onKeepPlaying)
+                        target(Self.leaveAt, w, h, action: onLeave)
+                    }
+                }
+        }
+        .aspectRatio(Self.aspect, contentMode: .fit)
+        // The artwork is 908 pixels wide; past this it would only soften.
+        .frame(maxWidth: 620)
+        .padding(.horizontal, 10)
+    }
+
+    /// A tap target sitting exactly on one of the painted pills.
+    private func target(_ r: CGRect, _ w: CGFloat, _ h: CGFloat,
+                        action: @escaping () -> Void) -> some View {
+        Button(action: action) { Color.clear }
+            .buttonStyle(PillPressStyle(inset: h * 0.018))
+            .frame(width: r.width * w, height: r.height * h)
+            .position(x: r.midX * w, y: r.midY * h)
+    }
+
+    /// If the picture is ever missing from the bundle.
+    private var drawn: some View {
+        VStack(spacing: 14) {
+            Text("Leave Challenge?")
+                .font(Theme.display(26))
+                .foregroundColor(Color(red: 0.36, green: 0.16, blue: 0.62))
+            Text("If you leave now, the gems from this round won't be saved.")
+                .font(Theme.medium(15))
+                .foregroundColor(Theme.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 12) {
+                Button(action: onKeepPlaying) {
+                    Text("Keep Playing")
+                        .font(Theme.bold(16))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(Capsule().fill(Color(red: 0.55, green: 0.15, blue: 0.80)))
+                }
+                .buttonStyle(PressableButtonStyle())
+
+                Button(action: onLeave) {
+                    Text("Leave")
+                        .font(Theme.bold(16))
+                        .foregroundColor(Theme.incorrect)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(Capsule().fill(Color(red: 1.00, green: 0.93, blue: 0.94)))
+                        .overlay(Capsule().strokeBorder(Theme.incorrect.opacity(0.6), lineWidth: 2))
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+        }
+        .padding(22)
+        .background(RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(Color(red: 1.00, green: 0.98, blue: 0.93)))
+        .padding(.horizontal, 26)
+        .shadow(color: .black.opacity(0.4), radius: 18, y: 8)
     }
 }

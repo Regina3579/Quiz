@@ -169,6 +169,28 @@ struct OutlinedText<Face: View>: View {
     }
 }
 
+/// Press feedback for a button whose face is part of the artwork.
+///
+/// The usual style shrinks its label, but a button sitting on a painted pill
+/// has an empty rectangle for a label, so shrinking it would show a child
+/// nothing. This lights the pill instead and dips it very slightly, which
+/// reads on a painted face.
+struct PillPressStyle: ButtonStyle {
+    let inset: CGFloat
+
+    func makeBody(configuration: Configuration) -> some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .overlay(
+                Capsule()
+                    .fill(Color.white.opacity(configuration.isPressed ? 0.30 : 0))
+                    .padding(inset)
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 /// A soft white "bubble" card with a chunky, playful drop shadow.
 struct BubbleCard: ViewModifier {
     var cornerRadius: CGFloat = Theme.cornerRadius

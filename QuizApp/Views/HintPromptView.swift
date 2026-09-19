@@ -298,29 +298,6 @@ struct HintPromptView: View {
     }
 }
 
-// MARK: - Pressing a painted button
-
-/// Press feedback for a button whose face is part of the artwork.
-///
-/// The usual style shrinks its label, but here the label is an empty
-/// rectangle, so shrinking it would show a child nothing. This lights the
-/// pill instead and dips it very slightly, which reads on a painted face.
-private struct PillPressStyle: ButtonStyle {
-    let inset: CGFloat
-
-    func makeBody(configuration: Configuration) -> some View {
-        Color.clear
-            .contentShape(Rectangle())
-            .overlay(
-                Capsule()
-                    .fill(Color.white.opacity(configuration.isPressed ? 0.30 : 0))
-                    .padding(inset)
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
-
 #Preview {
     ZStack {
         Color.green.ignoresSafeArea()
