@@ -131,6 +131,44 @@ struct GemIcon: View {
     }
 }
 
+/// Text with a drawn outline, the way the painted artwork is lettered.
+///
+/// SwiftUI has no text stroke, so the outline is the same string laid down
+/// once per direction underneath — eight copies is enough for the corners to
+/// close up at these sizes. `face` is that same string again, styled however
+/// the caller likes: one colour, a gradient, or several colours in one line.
+/// The font is set on the stack so every copy lays out identically and the
+/// face lands exactly on the outline.
+struct OutlinedText<Face: View>: View {
+    let plain: String
+    let font: Font
+    let outline: Color
+    let width: CGFloat
+    @ViewBuilder var face: () -> Face
+
+    private static var directions: [CGSize] {
+        [CGSize(width: -1, height: 0), CGSize(width: 1, height: 0),
+         CGSize(width: 0, height: -1), CGSize(width: 0, height: 1),
+         CGSize(width: -0.7, height: -0.7), CGSize(width: 0.7, height: -0.7),
+         CGSize(width: -0.7, height: 0.7), CGSize(width: 0.7, height: 0.7)]
+    }
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<8, id: \.self) { i in
+                let d = Self.directions[i]
+                Text(plain)
+                    .foregroundColor(outline)
+                    .offset(x: d.width * width, y: d.height * width)
+            }
+            face()
+        }
+        .font(font)
+        .lineLimit(1)
+        .minimumScaleFactor(0.45)
+    }
+}
+
 /// A soft white "bubble" card with a chunky, playful drop shadow.
 struct BubbleCard: ViewModifier {
     var cornerRadius: CGFloat = Theme.cornerRadius

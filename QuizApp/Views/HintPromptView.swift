@@ -137,13 +137,15 @@ struct HintPromptView: View {
 
     private func ribbonTitle(w: CGFloat, h: CGFloat) -> some View {
         place(Self.titleAt, w, h) {
-            OutlinedText(title,
+            OutlinedText(plain: title,
                          font: .system(size: w * Self.titleSize,
                                        weight: .black, design: .rounded),
-                         fill: LinearGradient(colors: [.white, Self.gold, Self.goldD],
-                                              startPoint: .top, endPoint: .bottom),
                          outline: Self.purpleD,
-                         width: max(1.5, w * 0.007))
+                         width: max(1.5, w * 0.007)) {
+                Text(title).foregroundStyle(
+                    LinearGradient(colors: [.white, Self.gold, Self.goldD],
+                                   startPoint: .top, endPoint: .bottom))
+            }
         }
     }
 
@@ -200,13 +202,13 @@ struct HintPromptView: View {
                     .minimumScaleFactor(0.6)
             }
             place(Self.rightLabelAt, w, h) {
-                OutlinedText(confirm,
+                OutlinedText(plain: confirm,
                              font: .system(size: w * Self.buttonSize,
                                            weight: .heavy, design: .rounded),
-                             fill: LinearGradient(colors: [.white, .white],
-                                                  startPoint: .top, endPoint: .bottom),
                              outline: Self.purpleD.opacity(0.75),
-                             width: max(1, w * 0.004))
+                             width: max(1, w * 0.004)) {
+                    Text(confirm).foregroundColor(.white)
+                }
             }
         }
     }
@@ -316,54 +318,6 @@ private struct PillPressStyle: ButtonStyle {
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Outlined lettering
-
-/// Text with a drawn outline, the way the card's painted words are lettered.
-///
-/// SwiftUI has no text stroke, so the outline is the same string drawn once
-/// per direction underneath and blurred by nothing — eight copies is enough
-/// for the corners to close up at these sizes.
-private struct OutlinedText<F: ShapeStyle>: View {
-    let string: String
-    let font: Font
-    let fill: F
-    let outline: Color
-    let width: CGFloat
-
-    init(_ string: String, font: Font, fill: F, outline: Color, width: CGFloat) {
-        self.string = string
-        self.font = font
-        self.fill = fill
-        self.outline = outline
-        self.width = width
-    }
-
-    private static var directions: [CGSize] {
-        [CGSize(width: -1, height: 0), CGSize(width: 1, height: 0),
-         CGSize(width: 0, height: -1), CGSize(width: 0, height: 1),
-         CGSize(width: -0.7, height: -0.7), CGSize(width: 0.7, height: -0.7),
-         CGSize(width: -0.7, height: 0.7), CGSize(width: 0.7, height: 0.7)]
-    }
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<8, id: \.self) { i in
-                let d = Self.directions[i]
-                base.foregroundColor(outline)
-                    .offset(x: d.width * width, y: d.height * width)
-            }
-            base.foregroundStyle(fill)
-        }
-    }
-
-    private var base: some View {
-        Text(string)
-            .font(font)
-            .lineLimit(1)
-            .minimumScaleFactor(0.45)
     }
 }
 
