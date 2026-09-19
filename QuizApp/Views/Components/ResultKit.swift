@@ -26,12 +26,12 @@ enum ResultArt {
 
     /// Only the crest's shape is needed in code; the star and the ribbon are
     /// laid out by `scaledToFit` alone.
-    static let crestAspect: CGFloat = 2.4791
+    static let crestAspect: CGFloat = 2.4148
 
     /// The ribbon's writing area, as a fraction of the banner picture.
     static let bannerTitleAt = CGRect(x: 0.10, y: 0.235, width: 0.80, height: 0.52)
     /// The blank gold scroll on the crest, likewise.
-    static let crestTextAt   = CGRect(x: 0.15, y: 0.565, width: 0.70, height: 0.29)
+    static let crestTextAt   = CGRect(x: 0.150, y: 0.576, width: 0.700, height: 0.283)
 
     static func has(_ name: String) -> Bool { UIImage(named: name) != nil }
 
@@ -108,11 +108,22 @@ struct ResultStarMascot: View {
 
 // MARK: - The title ribbon
 
+/// The title ribbon.
+///
+/// It fills whatever width it is given rather than claiming a fraction of the
+/// screen: asking for more than the column it sits in made it hang off the
+/// right edge, since a child wider than its parent is not brought back inside.
+///
+/// It also tucks up under whatever is above it. The star in the mockup is
+/// painted with its lower points already behind this ribbon — there is no
+/// whole star to recover — so the ribbon has to sit over the cut, exactly as
+/// it does in the artwork.
 struct ResultBanner: View {
     /// The greeting, split so the child's own name can be the gold part.
     let lead: String
     let name: String
     let width: CGFloat
+    var tuckUnder: CGFloat = 0.050
 
     private var whole: String { lead + name }
 
@@ -135,7 +146,7 @@ struct ResultBanner: View {
                     }
                     .allowsHitTesting(false)
                 }
-                .frame(width: width * 0.98)
+                .padding(.top, -width * tuckUnder)
         } else {
             Text(whole)
                 .font(.system(size: width * 0.076, weight: .black, design: .rounded))
