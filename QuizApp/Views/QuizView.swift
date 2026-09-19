@@ -250,7 +250,7 @@ struct QuizView: View {
     ///
     /// Kept to a line or two. The card these sit on is a painted picture with
     /// a fixed opening for them, and a sentence that runs long only shrinks
-    /// itself until a seven-year-old cannot read it.
+    /// itself until the youngest player cannot read it.
     private var hintPromptDetail: String {
         if model.hasClue && model.clue == nil {
             return "We will give you a little clue."

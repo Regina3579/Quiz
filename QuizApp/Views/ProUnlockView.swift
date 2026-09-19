@@ -2,11 +2,11 @@
 //  ProUnlockView.swift
 //  QuizApp
 //
-//  What Pro is, shown at the moment a child reaches for something behind it.
+//  What Pro is, shown at the moment a player reaches for something behind it.
 //
 //  This page says what Pro adds and nothing else. It used to carry a second
 //  list of everything that stays free, which was well meant but wrong in two
-//  ways: a child finds the free game by playing it, and spending half a page
+//  ways: a player finds the free game by playing it, and spending half a page
 //  arguing against your own offer only muddles it. The one line of reassurance
 //  a parent needs belongs beside the price, not here.
 //
@@ -25,7 +25,7 @@ import UIKit
 struct ProUnlockView: View {
     @Environment(\.dismiss) private var dismiss
 
-    /// What the child just tried to open. The page is the same either way —
+    /// What the player just tried to open. The page is the same either way —
     /// it is the whole of what Pro adds, and both doors lead to all of it.
     enum Reason {
         case proChallenges

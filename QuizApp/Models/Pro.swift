@@ -7,10 +7,10 @@
 //  Two things are behind it: the Pro Challenge room, and the sticker shop
 //  beyond its free samples. Everything else — all ten adventures, every
 //  question, the Trophy Room, the Daily Challenge — stays open to everyone.
-//  A child who never pays still has the whole game to play; Pro adds ways to
+//  Anyone who never pays still has the whole game to play; Pro adds ways to
 //  play it again and things to collect.
 //
-//  The sticker book is deliberately not locked shut. A child without Pro can
+//  The sticker book is deliberately not locked shut. A player without Pro can
 //  open it, look at every shelf, and buy one sticker from each of the ten
 //  adventures. Ten real stickers they chose and paid gems for is a book
 //  worth coming back to, and it shows them exactly what the rest would be.
@@ -23,7 +23,7 @@ enum Pro {
     static let activeKey = "quizspark.pro.active"
 
     /// TESTING: when true, Pro reads as locked no matter what is saved, so the
-    /// whole app can be looked at the way a child without Pro sees it. Set back
+    /// whole app can be looked at the way a player without Pro sees it. Set back
     /// to false to let the saved flag decide again.
     ///
     /// This is here because there is no way to give Pro back once it has been
