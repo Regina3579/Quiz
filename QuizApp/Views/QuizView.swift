@@ -229,7 +229,7 @@ struct QuizView: View {
                 title: "50-50 Magic",
                 leadIn: "Use ", price: "\(GemRules.fiftyFiftyCost) Gems",
                 tail: " for magic!",
-                detail: "We will remove 2 wrong answers, leaving only two choices.",
+                detail: "We will remove 2 wrong answers.",
                 confirm: "Use \(GemRules.fiftyFiftyCost) Gems",
                 onConfirm: { showFiftyPrompt = false; buyFiftyFifty() },
                 onCancel: { Haptics.play(.light); showFiftyPrompt = false })
@@ -247,13 +247,17 @@ struct QuizView: View {
 
     /// What the next hint will actually do, which depends on whether this
     /// question has a written clue and whether it has already been given.
+    ///
+    /// Kept to a line or two. The card these sit on is a painted picture with
+    /// a fixed opening for them, and a sentence that runs long only shrinks
+    /// itself until a seven-year-old cannot read it.
     private var hintPromptDetail: String {
         if model.hasClue && model.clue == nil {
-            return "We will give you a little clue to point you the right way."
+            return "We will give you a little clue."
         }
         return model.hintsUsed > 0
-            ? "We will cross out another wrong answer, leaving only two."
-            : "We will cross out one wrong answer for you."
+            ? "We will remove another wrong answer."
+            : "We will remove 1 wrong answer for you."
     }
 
     /// The price of the hint the button is currently offering.
