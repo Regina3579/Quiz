@@ -32,9 +32,9 @@ struct ProUnlockView: View {
         var line: String {
             switch self {
             case .proChallenges:
-                return "Six new ways to play every adventure — against the "
-                     + "clock, in a lightning round, or without a single "
-                     + "mistake."
+                return "\(ProMode.proCountWord.capitalized) new ways to play "
+                     + "every adventure — against the clock, in a lightning "
+                     + "round, or without a single mistake."
             case .sticker:
                 return "Every sticker on every shelf, to buy with the gems "
                      + "you have already earned."
@@ -90,8 +90,8 @@ struct ProUnlockView: View {
                 .font(Theme.bold(17))
                 .foregroundColor(ink)
 
-            row("⚡️", "All six Pro Challenges",
-                "Timed, Lightning, Perfect Run, Gem Rush and more")
+            row("⚡️", "All \(ProMode.proCountWord) Pro Challenges",
+                ProMode.proModes.map(\.title).joined(separator: " · "))
             row("🎨", "Every sticker unlocked",
                 "All ten collections, still bought with gems you earn")
         }

@@ -34,6 +34,16 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     /// The modes listed inside the Pro room.
     static var proModes: [ProMode] { allCases.filter(\.isPro) }
 
+    /// How many modes the Pro room holds, spelled out for the paywall.
+    /// Derived rather than written down so the page selling Pro cannot promise
+    /// a number of challenges the room does not actually have.
+    static var proCountWord: String {
+        let words = ["zero", "one", "two", "three", "four", "five",
+                     "six", "seven", "eight", "nine", "ten"]
+        let count = proModes.count
+        return words.indices.contains(count) ? words[count] : "\(count)"
+    }
+
     // MARK: - Presentation
 
     var title: String {

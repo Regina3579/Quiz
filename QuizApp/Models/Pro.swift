@@ -22,11 +22,25 @@ import Foundation
 enum Pro {
     static let activeKey = "quizspark.pro.active"
 
+    /// TESTING: when true, Pro reads as locked no matter what is saved, so the
+    /// whole app can be looked at the way a child without Pro sees it. Set back
+    /// to false to let the saved flag decide again.
+    ///
+    /// This is here because there is no way to give Pro back once it has been
+    /// taken: `unlock()` can be reached from the paywall, nothing in the app
+    /// undoes it, and a phone that has tapped it once would otherwise never
+    /// show the locked state again without deleting the app.
+    ///
+    /// While it is on, tapping "Unlock Pro" still writes the saved flag but
+    /// changes nothing on screen — the override wins. That is the point of it,
+    /// not a fault.
+    static let forceLocked = true
+
     /// The single source of truth. Everything that gates on Pro reads this
     /// and nothing else, so there is one place to change when the purchase
     /// is real and one place to look when something is unexpectedly locked.
     static var isActive: Bool {
-        get { UserDefaults.standard.bool(forKey: activeKey) }
+        get { !forceLocked && UserDefaults.standard.bool(forKey: activeKey) }
         set { UserDefaults.standard.set(newValue, forKey: activeKey) }
     }
 

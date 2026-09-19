@@ -479,6 +479,10 @@ final class GameProgress: ObservableObject {
         unlockedAchievements = []
         recentlyUnlocked = []
         UserDefaults.standard.removeObject(forKey: dailyPlayedKey)
+        // Pro is part of "all saved progress". Leaving it behind meant a reset
+        // handed back a brand-new player who somehow already owned Pro, and
+        // there was no other way in the app to put it back.
+        Pro.lock()
         save()
         saveGems()
         saveStickers()
