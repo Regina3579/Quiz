@@ -182,22 +182,7 @@ struct TrophyRoomView: View {
     }
 
     private var closeButton: some View {
-        Button {
-            Haptics.play(.light)
-            dismiss()
-        } label: {
-            Image(systemName: "xmark")
-                .font(Theme.bold(16))
-                .foregroundColor(Vault.woodDeep)
-                .padding(11)
-                .background(Circle().fill(Vault.metal))
-                .overlay(Circle().stroke(Vault.goldDeep, lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.45), radius: 5, y: 2)
-        }
-        .buttonStyle(PressableButtonStyle())
-        .padding(.trailing, 16)
-        .padding(.top, 10)
-        .accessibilityLabel("Close the trophy room")
+        VaultCloseButton(label: "Close the trophy room") { dismiss() }
     }
 
     // MARK: - Header
@@ -908,7 +893,7 @@ private struct AdventureNiche: View {
     /// Always at full colour. An adventure the child has not scored in yet is
     /// still a place they can see; draining it grey says the artwork is
     /// switched off, and with nothing won that is the whole room. Won and
-    /// unwon are told apart by the frame, the padlock and the pips — none of
+    /// unwon are told apart by the frame, the pips and the count — none of
     /// which cost the picture its colour.
     @ViewBuilder
     private var islandPicture: some View {
@@ -919,20 +904,20 @@ private struct AdventureNiche: View {
         }
     }
 
-    /// The best rung so far rides on the corner of the arch.
+    /// The best rung so far rides on the corner of the arch — and nothing
+    /// rides there until there is one.
+    ///
+    /// This used to show a padlock instead, which said the wrong thing. None
+    /// of these adventures is locked: every one can be played, and the room
+    /// is open to everyone. The padlock only meant "no trophy here yet", and
+    /// the pips and the count underneath already say that without implying a
+    /// door that does not exist.
     @ViewBuilder
     private var cornerBadge: some View {
         if let top {
             Text(top.emoji)
                 .font(.system(size: 23))
                 .shadow(color: .black.opacity(0.55), radius: 2)
-        } else {
-            Image(systemName: "lock.fill")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(Vault.goldPale.opacity(0.85))
-                .padding(5)
-                .background(Circle().fill(Vault.woodDeep))
-                .overlay(Circle().strokeBorder(Vault.goldDeep, lineWidth: 1))
         }
     }
 
@@ -1047,21 +1032,43 @@ private struct AdventureLadderSheet: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button {
-                Haptics.play(.light)
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(Theme.bold(15))
-                    .foregroundColor(Vault.woodDeep)
-                    .padding(10)
-                    .background(Circle().fill(Vault.metal))
-                    .overlay(Circle().strokeBorder(Vault.goldDeep, lineWidth: 1.5))
-            }
-            .buttonStyle(PressableButtonStyle())
-            .padding(16)
-            .accessibilityLabel("Close")
+            VaultCloseButton { dismiss() }
         }
+    }
+}
+
+// MARK: - The way out
+
+/// The close button, in the hall and in the ladder sheet alike.
+///
+/// It was 38 points across, which is under the 44 Apple asks for, and it sat
+/// 10 points off the top in the very corner — where a rounded screen curves
+/// the last few points away and a thumb has to be aimed rather than just put
+/// down. It is now a proper target, stood off the corner.
+///
+/// It is dark wood under a gold rim rather than the other way round. Gold on
+/// gold vanished into the hall's own gilding, which is the whole back wall.
+private struct VaultCloseButton: View {
+    var label: String = "Close"
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.play(.light)
+            action()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 19, weight: .black))
+                .foregroundColor(Vault.goldPale)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(Vault.woodDeep.opacity(0.94)))
+                .overlay(Circle().strokeBorder(Vault.gold, lineWidth: 2.5))
+                .shadow(color: .black.opacity(0.55), radius: 7, y: 3)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .padding(.trailing, 18)
+        .padding(.top, 18)
+        .accessibilityLabel(label)
     }
 }
 
