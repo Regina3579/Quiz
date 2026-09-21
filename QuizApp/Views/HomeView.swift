@@ -78,22 +78,33 @@ struct HomeView: View {
     private static let bookRect  = (x0: 0.764, y0: 0.184, x1: 0.969, y1: 0.255)
     /// The sound toggle sits low on the left jungle border, out of the way.
     private static let muteAt   = (x: 0.085, y: 0.930)
-    // The right-hand column of buttons, in the order they are stacked:
-    // the painted sticker book, then the Timed Challenge, then the Trophy
-    // Room. All three are the same width so they read as one set, and the
-    // two live ones are spaced to land in the parchment between the book
-    // above them and the painted galleon, which sails in at y 0.475.
+    // The right-hand column of buttons: the painted sticker book, then the
+    // Timed Challenge, then the Trophy Room.
+    //
+    // These y values are not eyeballed. Both icons carry transparent margin
+    // inside their own canvas — the Timed Challenge sits high in its square,
+    // the Trophy Room low in its — so centring the two canvases evenly left
+    // the visible pictures uneven: barely a hair under the sticker book and
+    // a wide gap above the trophy. The numbers below place what you can
+    // actually see, measured from each file's opaque bounds, so all three
+    // gaps come out the same: under the book, between the two, and above the
+    // galleon that sails in at y 0.4835.
+    //
+    // Redo them with that in mind if either picture is ever replaced: a new
+    // file with different margins will need different centres.
+    private static let columnAt: CGFloat = 0.869
+    private static let columnWidth: CGFloat = 0.175
 
     /// The Timed Challenge, second in the column. Its artwork is square and
     /// carries its own name and PRO tag, so nothing is drawn over it.
-    private static let timedAt = (x: 0.866, y: 0.312)
-    private static let timedWidth: CGFloat = 0.195
-    private static let timedAspect: CGFloat = 1
+    private static let timedAt = (x: columnAt, y: 0.329)
+    private static let timedWidth: CGFloat = columnWidth
+    private static let timedAspect: CGFloat = 1254.0 / 1254.0
 
     /// The Trophy Room, third. Its artwork is 583 x 600 and carries its own
     /// banner, so the only thing laid over it is the count of awards won.
-    private static let trophyAt = (x: 0.866, y: 0.415)
-    private static let trophyWidth: CGFloat = 0.195
+    private static let trophyAt = (x: columnAt, y: 0.426)
+    private static let trophyWidth: CGFloat = columnWidth
     private static let trophyAspect: CGFloat = 583.0 / 600.0
 
     var body: some View {
