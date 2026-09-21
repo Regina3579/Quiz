@@ -13,7 +13,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct HomeView: View {
     @EnvironmentObject private var progress: GameProgress
@@ -79,20 +78,23 @@ struct HomeView: View {
     private static let bookRect  = (x0: 0.764, y0: 0.184, x1: 0.969, y1: 0.255)
     /// The sound toggle sits low on the left jungle border, out of the way.
     private static let muteAt   = (x: 0.085, y: 0.930)
-    /// The trophy room sits under the painted sticker book, third in the
-    /// right-hand column of buttons. Its artwork is 583 x 600 and carries its
-    /// own "Trophy Room" banner, so nothing is drawn over it but the count.
-    /// Sized to the painted sticker book above it, so the two read as a pair.
-    private static let trophyAt = (x: 0.866, y: 0.326)
+    // The right-hand column of buttons, in the order they are stacked:
+    // the painted sticker book, then the Timed Challenge, then the Trophy
+    // Room. All three are the same width so they read as one set, and the
+    // two live ones are spaced to land in the parchment between the book
+    // above them and the painted galleon, which sails in at y 0.475.
+
+    /// The Timed Challenge, second in the column. Its artwork is square and
+    /// carries its own name and PRO tag, so nothing is drawn over it.
+    private static let timedAt = (x: 0.866, y: 0.312)
+    private static let timedWidth: CGFloat = 0.195
+    private static let timedAspect: CGFloat = 1
+
+    /// The Trophy Room, third. Its artwork is 583 x 600 and carries its own
+    /// banner, so the only thing laid over it is the count of awards won.
+    private static let trophyAt = (x: 0.866, y: 0.415)
     private static let trophyWidth: CGFloat = 0.195
     private static let trophyAspect: CGFloat = 583.0 / 600.0
-
-    /// The Timed Challenge, fourth in the right-hand column, under the trophy
-    /// room. The painted galleon sails in at y 0.475, and the trophy above
-    /// ends at 0.372, so the button is sized to drop into the gap between
-    /// them with a little parchment showing on either side.
-    private static let timedAt = (x: 0.866, y: 0.421)
-    private static let timedWidth: CGFloat = 0.180
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -423,61 +425,36 @@ struct HomeView: View {
             .accessibilityLabel("My trophy room, \(won) award\(won == 1 ? "" : "s") won")
     }
 
-    /// The Timed Challenge, given a button of its own under the Trophy Room.
+    /// The Timed Challenge, given a button of its own between the sticker
+    /// book and the Trophy Room.
     ///
     /// It used to be the first card inside the Pro room, which meant three
     /// taps and a scroll to reach the round people replay most. Here it is
     /// one tap from home.
     ///
-    /// It is still Pro, so it says so: the gold PRO tag is on the badge
-    /// whether or not the family has subscribed. Without Pro the tap opens
-    /// the page that explains what Pro is, exactly as the crown does — the
-    /// button never simply ignores a child.
-    ///
-    /// Drawn rather than painted, unlike the trophy and the sticker book. If
-    /// a `TimedChallengeIcon` is ever added to the asset catalogue it is used
-    /// instead, with no other change needed.
+    /// The artwork carries its own name and its own gold PRO tag, so nothing
+    /// is laid over it — the badge says it is Pro whether or not the family
+    /// has subscribed. Without Pro the tap opens the page that explains what
+    /// Pro is, exactly as the crown does; the button never simply ignores a
+    /// child.
     private func timedButton(width w: CGFloat, height h: CGFloat) -> some View {
-        let side = w * Self.timedWidth
+        let iconW = w * Self.timedWidth
+        let iconH = iconW / Self.timedAspect
         let mode = ProMode.timedChallenge
 
-        return Group {
-            if UIImage(named: "TimedChallengeIcon") != nil {
-                Image("TimedChallengeIcon").resizable().scaledToFit()
-            } else {
-                TimedChallengeBadge(side: side, palette: mode.palette)
+        return Image("TimedChallengeIcon")
+            .resizable()
+            .scaledToFit()
+            .frame(width: iconW, height: iconH)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                if Pro.isActive { briefing = mode } else { showPro = true }
             }
-        }
-        .frame(width: side, height: side)
-        // Just the badge and the PRO tag. The trophy next door carries a
-        // count because counting is what that room is for; a third piece of
-        // lettering on something this small would only crowd it.
-        .overlay(alignment: .topTrailing) { proTag(side: side) }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            Haptics.play(.light)
-            if Pro.isActive { briefing = mode } else { showPro = true }
-        }
-        .position(x: w * Self.timedAt.x, y: h * Self.timedAt.y)
-        .accessibilityLabel(Pro.isActive
-            ? "Timed Challenge. \(mode.tagline)"
-            : "Timed Challenge. Pro — tap to see what Pro includes")
-    }
-
-    /// The little gold PRO tag worn by the Timed Challenge badge.
-    private func proTag(side: CGFloat) -> some View {
-        Text("PRO")
-            .font(Theme.bold(side * 0.115))
-            .foregroundColor(Color(red: 0.42, green: 0.24, blue: 0.02))
-            .padding(.horizontal, side * 0.070)
-            .padding(.vertical, side * 0.024)
-            .background(Capsule().fill(LinearGradient(
-                colors: [Color(red: 1.00, green: 0.91, blue: 0.48),
-                         Color(red: 0.98, green: 0.70, blue: 0.14)],
-                startPoint: .top, endPoint: .bottom)))
-            .overlay(Capsule().stroke(.white, lineWidth: 1.5))
-            .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
-            .offset(x: side * 0.05, y: -side * 0.05)
+            .position(x: w * Self.timedAt.x, y: h * Self.timedAt.y)
+            .accessibilityLabel(Pro.isActive
+                ? "Timed Challenge. \(mode.tagline)"
+                : "Timed Challenge. Pro — tap to see what Pro includes")
     }
 
     // MARK: - Tap targets over the painted buttons
@@ -663,90 +640,6 @@ private struct IslandBadge: View {
                 .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
         }
         .frame(width: diameter * 1.62)
-    }
-}
-
-// MARK: - The Timed Challenge badge
-
-/// The map button for the Timed Challenge, built in the same shape as the
-/// painted Trophy Room icon above it: a gold rounded-square frame, a deep
-/// coloured window with a sparkle or two in it, and a gold banner across the
-/// bottom with the name on it.
-///
-/// Drawn rather than painted because it has to be sharp at whatever size the
-/// map lands on, and because the one existing piece of timed-challenge
-/// artwork is an 80-pixel badge cut for the paywall — blown up to a map
-/// button it is a blur. `HomeView` prefers a `TimedChallengeIcon` asset if
-/// one is ever added, so real artwork can replace this without touching code.
-///
-/// The window uses the mode's own palette, so the button is the same red as
-/// the Timed Challenge card in the Pro room and reads as the same thing.
-private struct TimedChallengeBadge: View {
-    let side: CGFloat
-    let palette: Island.Palette
-
-    private var goldFace: LinearGradient {
-        LinearGradient(colors: [
-            Color(red: 1.00, green: 0.93, blue: 0.55),
-            Color(red: 1.00, green: 0.80, blue: 0.24),
-            Color(red: 0.92, green: 0.58, blue: 0.09)
-        ], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-
-    var body: some View {
-        ZStack {
-            // The gold frame.
-            RoundedRectangle(cornerRadius: side * 0.26, style: .continuous)
-                .fill(goldFace)
-                .overlay(
-                    RoundedRectangle(cornerRadius: side * 0.26, style: .continuous)
-                        .strokeBorder(.white.opacity(0.85), lineWidth: side * 0.018)
-                )
-                .shadow(color: .black.opacity(0.35), radius: side * 0.07, y: side * 0.035)
-
-            // The window it frames.
-            RoundedRectangle(cornerRadius: side * 0.19, style: .continuous)
-                .fill(LinearGradient(colors: [palette.start, palette.end],
-                                     startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay(
-                    RoundedRectangle(cornerRadius: side * 0.19, style: .continuous)
-                        .strokeBorder(Color(red: 0.72, green: 0.42, blue: 0.06),
-                                      lineWidth: side * 0.012)
-                )
-                .padding(side * 0.085)
-
-            // A couple of sparkles in the corners of the window, the way the
-            // trophy icon has stars behind its cup.
-            Image(systemName: "sparkle")
-                .font(.system(size: side * 0.12, weight: .black))
-                .foregroundColor(.white.opacity(0.85))
-                .offset(x: -side * 0.26, y: -side * 0.22)
-            Image(systemName: "sparkle")
-                .font(.system(size: side * 0.08, weight: .black))
-                .foregroundColor(.white.opacity(0.7))
-                .offset(x: side * 0.27, y: -side * 0.30)
-
-            // The stopwatch, sitting above the banner.
-            Image(systemName: "stopwatch.fill")
-                .font(.system(size: side * 0.40, weight: .black))
-                .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.35), radius: side * 0.03, y: side * 0.015)
-                .offset(y: -side * 0.09)
-
-            // The name banner across the foot of the badge.
-            Text("Timed")
-                .font(Theme.display(side * 0.140))
-                .foregroundColor(Color(red: 0.38, green: 0.10, blue: 0.30))
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding(.horizontal, side * 0.075)
-                .padding(.vertical, side * 0.026)
-                .background(Capsule().fill(goldFace))
-                .overlay(Capsule().strokeBorder(.white.opacity(0.9), lineWidth: side * 0.012))
-                .shadow(color: .black.opacity(0.3), radius: side * 0.03, y: side * 0.015)
-                .offset(y: side * 0.27)
-        }
-        .frame(width: side, height: side)
     }
 }
 
