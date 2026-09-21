@@ -160,10 +160,13 @@ struct IslandView: View {
 /// used to give is carried by the ring instead, which does not cost the
 /// number its place.
 private struct LevelBadge: View {
-    enum State { case playable, locked, comingSoon }
+    /// Named Status, not State. A nested `State` shadows SwiftUI's own inside
+    /// this struct, so `@State` below stops resolving to the property wrapper
+    /// and the compiler reports an enum being used as an attribute.
+    enum Status { case playable, locked, comingSoon }
 
     let number: Int
-    let state: State
+    let state: Status
     let stars: Int
     let tint: Color
     /// The lowest level that is open and not yet cleared: the one to play now.
