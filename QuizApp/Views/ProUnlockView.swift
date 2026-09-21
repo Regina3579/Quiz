@@ -278,7 +278,7 @@ struct ProUnlockView: View {
             HStack(spacing: w * 0.014) {
                 Image(systemName: "book.fill")
                     .font(.system(size: w * 0.036, weight: .black))
-                Text("The full \(StickerBookPages.total)-page sticker book opens — free fills the first \(StickerBookPages.free)")
+                Text("Sticker book pages \(StickerBookPages.lockedRange) unlock — all \(StickerBookPages.total) yours to fill")
                     .font(.system(size: w * 0.034, weight: .bold, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)

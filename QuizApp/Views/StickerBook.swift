@@ -468,11 +468,16 @@ enum StickerCatalog {
 
 // MARK: - How much of the book opens
 
-/// How long the sticker book is, and how much of it turns without Pro.
+/// How long the sticker book is, and how much of it a player can fill in.
 ///
-/// The book is twenty-five pages. Without Pro the first five of them open —
-/// enough room to arrange the ten free stickers properly, not a single page
-/// that fills up and stops. Pro turns the rest.
+/// The book is twenty-five pages, and every one of them turns for everybody.
+/// Without Pro the first five are the ones you can put things on; the other
+/// twenty are there to be looked at, each wearing its own little crown lock.
+///
+/// Shutting the far pages away entirely would have been easier, and worse: a
+/// book that stops at five looks like a book with five pages. A book that
+/// turns all the way through and shows twenty crowned pages waiting is the
+/// same offer told honestly, and a child can see exactly what it is.
 ///
 /// Both numbers live here rather than inside the book view because the Pro
 /// page quotes them too, and a paywall promising a length the book does not
@@ -481,11 +486,18 @@ enum StickerBookPages {
     static let total = 25
     static let free = 5
 
-    /// How many pages this player can actually turn to right now.
-    static var open: Int { Pro.isActive ? total : free }
+    /// Whether this page is one the player can stick things on. Pro opens
+    /// all of them; without it, the first `free` are yours.
+    static func isLocked(_ page: Int) -> Bool {
+        guard !Pro.isActive else { return false }
+        return page >= free
+    }
 
     /// True while some of the book is still behind Pro.
-    static var isGated: Bool { open < total }
+    static var isGated: Bool { !Pro.isActive }
+
+    /// How the locked stretch is described wherever it is named: "6–25".
+    static var lockedRange: String { "\(free + 1)–\(total)" }
 }
 
 // MARK: - Sticker glyph
@@ -528,21 +540,18 @@ struct StickerBookView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let totalPages = StickerBookPages.total
-    /// How many pages turn for this player. Read fresh every time the body
-    /// runs, so buying Pro from inside the book opens the rest of it at once.
-    private var openPages: Int { StickerBookPages.open }
-    /// True when the player is standing on the last page they are allowed.
-    private var atFreeEdge: Bool {
-        StickerBookPages.isGated && currentPage == openPages - 1
-    }
+    /// Whether the page on screen is one of the crowned ones. Read fresh every
+    /// time the body runs, so buying Pro from inside the book unlocks the rest
+    /// of it at once.
+    private var currentPageLocked: Bool { StickerBookPages.isLocked(currentPage) }
 
     @State private var currentPage = 0
     @State private var showShop = false
-    /// Raised by trying to turn past the free pages.
+    /// Raised by asking to put something on a crowned page.
     @State private var showPageGate = false
     @State private var showPro = false
     /// Bumped when the Pro page closes, purely to re-run the body so
-    /// `openPages` is read again. `Pro.isActive` is a UserDefaults read and
+    /// the locks are read again. `Pro.isActive` is a UserDefaults read and
     /// SwiftUI has no way to notice it changing on its own.
     @State private var proRefresh = 0
     /// The leaf currently being turned, if any.
@@ -607,9 +616,9 @@ struct StickerBookView: View {
                     }
                 }
 
-                // The friendly stop at the end of the free pages. An overlay
-                // rather than a sheet: the book stays visible behind it, so
-                // what is being offered is obvious.
+                // What the crown on a page means. An overlay rather than a
+                // sheet: the book stays visible behind it, so what is being
+                // offered is obvious.
                 if showPageGate {
                     BookPageGate(freePages: StickerBookPages.free,
                                  totalPages: totalPages,
@@ -636,6 +645,10 @@ struct StickerBookView: View {
         .sheet(isPresented: $showShop) {
             StickerShopSheet { sticker in
                 // Drop the new sticker in the middle of the current page.
+                // Checked again here and not only on the button: Pro can
+                // lapse while the shop is open, and a sticker landing on a
+                // crowned page would be lost the next time the book is read.
+                guard !currentPageLocked else { raiseGate(); return }
                 progress.placeSticker(sticker.id, page: currentPage, x: 0.5, y: 0.5)
                 Haptics.play(.light)
                 Sound.stickerPop()
@@ -722,9 +735,17 @@ struct StickerBookView: View {
                 leaf(page: rightPage, side: .right)
             }
         } else {
-            StickerPageView(page: currentPage, totalPages: totalPages,
-                            editing: $editingNote)
+            page(currentPage)
         }
+    }
+
+    /// One page of the book, told whether it is crowned and what to do about
+    /// it. Built here so the flipping leaf and the flat page cannot disagree.
+    private func page(_ number: Int) -> some View {
+        StickerPageView(page: number, totalPages: totalPages,
+                        locked: StickerBookPages.isLocked(number),
+                        editing: $editingNote,
+                        onLockedTap: raiseGate)
     }
 
     /// The single leaf in the air, rotating about the spine.
@@ -754,9 +775,8 @@ struct StickerBookView: View {
     }
 
     /// One half of a spread, clipped down the spine.
-    private func leaf(page: Int, side: LeafSide) -> some View {
-        StickerPageView(page: page, totalPages: totalPages, editing: $editingNote)
-            .clipShape(LeafClip(side: side))
+    private func leaf(page number: Int, side: LeafSide) -> some View {
+        page(number).clipShape(LeafClip(side: side))
     }
 
     /// The small close button in the top-right corner of the book.
@@ -775,27 +795,17 @@ struct StickerBookView: View {
         .padding(.trailing, 2)
     }
 
-    /// The page-turn arrows on the left and right sides.
-    ///
-    /// On the last free page the right-hand one wears a padlock instead of an
-    /// arrow — still lit, still tappable. A greyed-out button would look like
-    /// the end of the book rather than a door.
+    /// The page-turn arrows on the left and right sides. Both work the whole
+    /// way through the book: the crowned pages are there to be walked past
+    /// and looked at, so nothing stops the turn.
     private var arrowsOverlay: some View {
         HStack {
             roundButton(system: "chevron.left", enabled: currentPage > 0) {
                 turn(forward: false)
             }
             Spacer()
-            if atFreeEdge {
-                roundButton(system: "lock.fill", enabled: true, gold: true) {
-                    Haptics.play(.light)
-                    withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
-                }
-                .accessibilityLabel("More pages with Pro")
-            } else {
-                roundButton(system: "chevron.right", enabled: currentPage < openPages - 1) {
-                    turn(forward: true)
-                }
+            roundButton(system: "chevron.right", enabled: currentPage < totalPages - 1) {
+                turn(forward: true)
             }
         }
     }
@@ -805,10 +815,12 @@ struct StickerBookView: View {
             HStack(spacing: 10) {
                 Button {
                     Haptics.play(.light)
-                    showShop = true
+                    // Opening the shop from a crowned page would end with a
+                    // sticker that had nowhere to land.
+                    if currentPageLocked { raiseGate() } else { showShop = true }
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: currentPageLocked ? "crown.fill" : "plus.circle.fill")
                         Text("Add Stickers")
                     }
                     .font(Theme.bold(17))
@@ -826,11 +838,12 @@ struct StickerBookView: View {
                 // Drops a fresh text box onto the page, ready to type in.
                 Button {
                     Haptics.play(.light)
+                    guard !currentPageLocked else { raiseGate(); return }
                     Sound.stickerPop()
                     editingNote = progress.addNote(page: currentPage, x: 0.5, y: 0.42)
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "textformat")
+                        Image(systemName: currentPageLocked ? "crown.fill" : "textformat")
                         Text("Text")
                     }
                     .font(Theme.bold(17))
@@ -849,20 +862,23 @@ struct StickerBookView: View {
 
             // Just the page count, with a quiet way to ask how things work.
             HStack(spacing: 8) {
-                Text("Page \(currentPage + 1) of \(openPages)")
+                // The count never shrinks: the book is twenty-five pages long
+                // for everyone, and page 19 is page 19 whether or not it is
+                // one you can stick things on yet.
+                Text("Page \(currentPage + 1) of \(totalPages)")
                     .font(Theme.medium(11))
                     .foregroundColor(Theme.inkSoft)
 
-                // Says why the count stops where it does, and opens the same
-                // card the padlock does.
-                if StickerBookPages.isGated {
+                // Only while standing on a crowned page, so the reminder
+                // appears where it is the answer to something.
+                if currentPageLocked {
                     Button {
                         Haptics.play(.light)
                         withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "crown.fill").font(.system(size: 9))
-                            Text("\(totalPages) pages with Pro").font(Theme.bold(11))
+                            Text("Pro page").font(Theme.bold(11))
                         }
                         .foregroundColor(Color(red: 0.62, green: 0.38, blue: 0.02))
                         .padding(.horizontal, 8)
@@ -895,29 +911,27 @@ struct StickerBookView: View {
         .padding(.bottom, 8)
     }
 
-    /// The gold button, worn only by the padlock at the end of the free pages.
-    private var goldButton: LinearGradient {
-        LinearGradient(colors: [
-            Color(red: 1.00, green: 0.85, blue: 0.30),
-            Color(red: 0.97, green: 0.62, blue: 0.09)
-        ], startPoint: .top, endPoint: .bottom)
-    }
-
-    private func roundButton(system: String, enabled: Bool, gold: Bool = false,
-                             action: @escaping () -> Void) -> some View {
+    private func roundButton(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: system)
                 .font(Theme.bold(18))
                 .foregroundColor(.white)
                 .frame(width: 46, height: 46)
-                .background(Circle().fill(!enabled ? AnyShapeStyle(Color.gray.opacity(0.4))
-                                          : gold ? AnyShapeStyle(goldButton)
-                                                 : AnyShapeStyle(pinkButton)))
+                .background(Circle().fill(enabled ? AnyShapeStyle(pinkButton)
+                                                  : AnyShapeStyle(Color.gray.opacity(0.4))))
                 .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 2))
                 .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(!enabled)
+    }
+
+    /// Brings up the card that says what the crown on the page means. Every
+    /// road to it comes through here — the page itself, the caption pill, and
+    /// the two buttons that would otherwise put something down on it.
+    private func raiseGate() {
+        Haptics.play(.light)
+        withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
     }
 
     /// Turns a single leaf around the spine, the way a real book does: the
@@ -928,15 +942,6 @@ struct StickerBookView: View {
         guard !isFlipping else { return }
         let target = currentPage + (forward ? 1 : -1)
         guard target >= 0 && target < totalPages else { return }
-
-        // Swiping is gated exactly where the arrow is. Gating only the button
-        // would leave the limit one flick away, which is worse than no limit
-        // at all: the child finds the page, fills it, and loses it next time.
-        guard target < openPages else {
-            Haptics.play(.light)
-            withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
-            return
-        }
 
         isFlipping = true
         Haptics.play(.light)
@@ -1054,12 +1059,13 @@ private struct StickerBookTipsCard: View {
 
 // MARK: - The end of the free pages
 
-/// The card that appears when the book will not turn any further.
+/// The card that explains the crown, raised by tapping a locked page or by
+/// trying to put something on one.
 ///
-/// It says what is there rather than what is missing: the pages already open
-/// are the child's, and the rest of the book is what Pro adds. There is no
-/// countdown and no nagging — it shows up when the page is asked for, and a
-/// tap anywhere else puts it away.
+/// It says what is there rather than what is missing: the first pages are the
+/// child's, and the crowned ones are what Pro adds. There is no countdown and
+/// no nagging — it only ever appears in answer to a tap, and another tap
+/// anywhere outside it puts it away.
 private struct BookPageGate: View {
     let freePages: Int
     let totalPages: Int
@@ -1074,20 +1080,10 @@ private struct BookPageGate: View {
                 .onTapGesture { Haptics.play(.light); onClose() }
 
             VStack(spacing: 10) {
-                ZStack {
-                    Text("📖").font(.system(size: 44))
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(.white)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(LinearGradient(
-                            colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
-                                     Color(red: 0.97, green: 0.62, blue: 0.09)],
-                            startPoint: .top, endPoint: .bottom)))
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
-                        .offset(x: 26, y: 16)
-                }
-                .padding(.top, 4)
+                // The same crown lock that sits on the page, so the card is
+                // plainly the answer to the thing that was just tapped.
+                CrownLock(size: 72)
+                    .padding(.top, 4)
 
                 Text("Unlock full sticker book with Pro.")
                     .font(Theme.display(19))
@@ -1095,7 +1091,7 @@ private struct BookPageGate: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("The first \(freePages) pages are yours to fill. Pro opens all \(totalPages), plus every sticker in the shop.")
+                Text("Pages 1–\(freePages) are yours to fill. Pro unlocks pages \(freePages + 1)–\(totalPages), and every sticker in the shop.")
                     .font(Theme.medium(13))
                     .foregroundColor(Theme.inkSoft)
                     .multilineTextAlignment(.center)
@@ -1127,7 +1123,7 @@ private struct BookPageGate: View {
                     Haptics.play(.light)
                     onClose()
                 } label: {
-                    Text("Keep sticking")
+                    Text("Keep looking")
                         .font(Theme.bold(14))
                         .foregroundColor(Theme.inkSoft)
                         .padding(.vertical, 4)
@@ -1176,8 +1172,12 @@ private struct LeafClip: Shape {
 private struct StickerPageView: View {
     let page: Int
     let totalPages: Int
+    /// A page beyond the free ones: shown in full, wearing its crown lock,
+    /// but not one you can put anything on yet.
+    var locked: Bool = false
     /// The text box open for typing, shared so only one is ever open.
     @Binding var editing: UUID?
+    var onLockedTap: () -> Void = {}
     @EnvironmentObject private var progress: GameProgress
 
     /// A soft pastel tint that varies gently from page to page.
@@ -1233,16 +1233,135 @@ private struct StickerPageView: View {
                 }
 
                 // Plain paper — stickers go wherever the child wants them.
-                ForEach(progress.stickers(onPage: page)) { placed in
-                    PlacedStickerView(placed: placed, pageSize: geo.size)
-                }
+                // On a crowned page anything already there still shows, it
+                // just cannot be picked up: a lapsed subscription should not
+                // look like a book that has been emptied.
+                Group {
+                    ForEach(progress.stickers(onPage: page)) { placed in
+                        PlacedStickerView(placed: placed, pageSize: geo.size)
+                    }
 
-                // Text boxes sit above the stickers so they stay readable.
-                ForEach(progress.notes(onPage: page)) { note in
-                    PlacedNoteView(note: note, pageSize: geo.size, editing: $editing)
+                    // Text boxes sit above the stickers so they stay readable.
+                    ForEach(progress.notes(onPage: page)) { note in
+                        PlacedNoteView(note: note, pageSize: geo.size, editing: $editing)
+                    }
+                }
+                .allowsHitTesting(!locked)
+
+                if locked {
+                    lockedVeil
                 }
             }
         }
+    }
+
+    /// What a crowned page wears: a wash of frosted paper, the crown lock
+    /// itself, and one line saying which pages these are. The paper colour
+    /// still shows through, so it reads as a page of this book that is not
+    /// open yet rather than a grey slab dropped over the top of it.
+    private var lockedVeil: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.white.opacity(0.62))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(LinearGradient(
+                            colors: [Color(red: 1.00, green: 0.88, blue: 0.45),
+                                     Color(red: 0.97, green: 0.66, blue: 0.12)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 3)
+                )
+
+            VStack(spacing: 8) {
+                CrownLock(size: 74)
+
+                Text("Pro Page")
+                    .font(Theme.display(17))
+                    .foregroundColor(Color(red: 0.55, green: 0.33, blue: 0.02))
+
+                Text("Pages \(StickerBookPages.lockedRange) unlock with Pro")
+                    .font(Theme.medium(11))
+                    .foregroundColor(Theme.inkSoft)
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "crown.fill").font(.system(size: 10))
+                    Text("Unlock").font(Theme.bold(12))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(LinearGradient(
+                    colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
+                             Color(red: 0.97, green: 0.62, blue: 0.09)],
+                    startPoint: .top, endPoint: .bottom)))
+                .overlay(Capsule().stroke(.white.opacity(0.9), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                .padding(.top, 2)
+            }
+            .padding(.horizontal, 12)
+        }
+        // The whole page is the button. A child who taps a locked page
+        // expects something to happen, and hunting for a small pill is not
+        // it — but it stays a tap, never a drag, so turning still works.
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .onTapGesture(perform: onLockedTap)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page \(page + 1), unlocks with Pro")
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+// MARK: - The crown lock
+
+/// The little gold padlock, crown and all, that sits on a page waiting for
+/// Pro. Drawn rather than painted so it costs nothing and scales to any page.
+private struct CrownLock: View {
+    var size: CGFloat = 74
+
+    private var gold: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.90, blue: 0.45),
+            Color(red: 0.97, green: 0.62, blue: 0.09)
+        ], startPoint: .top, endPoint: .bottom)
+    }
+
+    var body: some View {
+        ZStack {
+            // A soft pillow so the gold reads against any page tint.
+            Circle()
+                .fill(Color.white.opacity(0.95))
+                .frame(width: size, height: size)
+                .shadow(color: Color(red: 0.97, green: 0.62, blue: 0.09).opacity(0.45),
+                        radius: size * 0.12, y: size * 0.04)
+
+            Circle()
+                .strokeBorder(gold, lineWidth: size * 0.05)
+                .frame(width: size, height: size)
+
+            Image(systemName: "lock.fill")
+                .font(.system(size: size * 0.46, weight: .black))
+                .foregroundStyle(gold)
+                .offset(y: size * 0.04)
+
+            // The crown, perched on the rim and tipped a little so it looks
+            // put on rather than printed.
+            Image(systemName: "crown.fill")
+                .font(.system(size: size * 0.32, weight: .black))
+                .foregroundStyle(gold)
+                .shadow(color: .white, radius: 2)
+                .rotationEffect(.degrees(-10))
+                .offset(y: -size * 0.46)
+
+            // Two small sparkles, the same ones the shop's epic stickers use.
+            Text("✨")
+                .font(.system(size: size * 0.20))
+                .offset(x: size * 0.42, y: -size * 0.22)
+            Text("✨")
+                .font(.system(size: size * 0.14))
+                .offset(x: -size * 0.44, y: size * 0.26)
+        }
+        .frame(width: size, height: size * 1.3)
     }
 }
 
