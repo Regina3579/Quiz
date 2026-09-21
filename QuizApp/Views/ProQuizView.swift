@@ -3,7 +3,7 @@
 //  QuizApp
 //
 //  Plays one Pro Challenge round: the clock in the corner for timed modes,
-//  a live streak badge for Gem Rush, and a warning banner when a single
+//  a live streak badge for Gems Rush, and a warning banner when a single
 //  wrong answer is about to end everything.
 //
 

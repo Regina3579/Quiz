@@ -52,7 +52,7 @@ struct ProPlansView: View {
     private var perks: [Perk] {
         [Perk(icon: "ProPlanTrophy",
               title: "All \(ProMode.proModes.count)\nPro Challenges",
-              detail: "Timed, Lightning, Perfect Run, Gem Rush & more!"),
+              detail: "Timed, Lightning, Perfect Run, Gems Rush & more!"),
          Perk(icon: "ProPlanStickers",
               title: "All \(StickerCatalog.all.count)\nStickers",
               detail: "Plus all \(StickerBookPages.total) sticker book pages to fill!"),

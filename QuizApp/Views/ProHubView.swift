@@ -22,9 +22,9 @@
 //  which `slots` filters out, rather than silently relabelling somebody
 //  else's picture.
 //
-//  All four titles are painted. They were nearly right already, and the one
-//  that was not — Jewel Rush — was settled by giving the mode the name its
-//  artwork letters rather than re-lettering four pictures.
+//  Three of the four titles are painted. The fourth, whose picture letters
+//  "Jewel Rush" where the mode is Gems Rush, has its title lifted off and
+//  drawn from mode.title instead.
 //
 
 import SwiftUI
@@ -53,6 +53,7 @@ struct ProHubView: View {
     /// at the same size as its neighbours.
     private static let taglineSize: CGFloat = 0.0215
     private static let payoutSize:  CGFloat = 0.0270
+    private static let titleSize:   CGFloat = 0.0730
 
     private static let backAt   = CGRect(x: 0.022, y: 0.010, width: 0.100, height: 0.050)
     private static let gemsAt   = CGRect(x: 0.800, y: 0.011, width: 0.098, height: 0.033)
@@ -64,6 +65,9 @@ struct ProHubView: View {
         let card: CGRect
         let tagline: CGRect
         let payout: CGRect
+        /// Set only on a card whose painted title had to come off, and
+        /// which therefore has its name drawn instead.
+        var title: CGRect? = nil
     }
 
     private static let allSlots: [Slot] = [
@@ -78,7 +82,11 @@ struct ProHubView: View {
         Slot(mode: .gemRush,
              card:    CGRect(x: 0.027, y: 0.545, width: 0.470, height: 0.258),
              tagline: CGRect(x: 0.054, y: 0.711, width: 0.202, height: 0.049),
-             payout:  CGRect(x: 0.128, y: 0.767, width: 0.198, height: 0.039)),
+             payout:  CGRect(x: 0.128, y: 0.767, width: 0.198, height: 0.039),
+             // The picture letters this one "Jewel Rush"; the mode is Gems
+             // Rush. The plate behind that title is a smooth wash, so unlike
+             // the briefing screen it repaints cleanly and the name is drawn.
+             title:   CGRect(x: 0.082, y: 0.548, width: 0.256, height: 0.104)),
         Slot(mode: .categoryMaster,
              card:    CGRect(x: 0.503, y: 0.545, width: 0.470, height: 0.258),
              tagline: CGRect(x: 0.539, y: 0.717, width: 0.218, height: 0.044),
@@ -163,6 +171,10 @@ struct ProHubView: View {
     private func card(_ slot: Slot, _ w: CGFloat, _ h: CGFloat) -> some View {
         let mode = slot.mode
 
+        if let title = slot.title {
+            liveTitle(mode, in: title, w, h)
+        }
+
         // The painting breaks each tagline over two lines; the app's own
         // taglines use a middle dot where that break falls.
         //
@@ -197,6 +209,52 @@ struct ProHubView: View {
             .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleGems) gems")
             .accessibilityAddTraits(.isButton)
     }
+
+    /// A card title drawn rather than painted, matching the lettering the
+    /// artwork uses for the other three: a heavy rounded face over a thick
+    /// dark outline, on the soft plate those titles sit on.
+    private func liveTitle(_ mode: ProMode, in r: CGRect, _ w: CGFloat, _ h: CGFloat) -> some View {
+        let words = mode.title.split(separator: " ").map(String.init)
+        let first = words.first ?? mode.title
+        let rest  = words.dropFirst().joined(separator: " ")
+        let ink   = Color(red: 0.36, green: 0.09, blue: 0.53)
+
+        return VStack(spacing: -w * 0.004) {
+            outlined(first, w * Self.titleSize, ink,
+                     [Color(red: 1.00, green: 0.92, blue: 0.98),
+                      Color(red: 1.00, green: 0.62, blue: 0.86)])
+            if !rest.isEmpty {
+                outlined(rest, w * Self.titleSize, ink,
+                         [Color(red: 1.00, green: 0.93, blue: 0.60),
+                          Color(red: 0.99, green: 0.69, blue: 0.13)])
+            }
+        }
+        .shadow(color: Color(red: 0.26, green: 0.05, blue: 0.40).opacity(0.55),
+                radius: w * 0.008, y: w * 0.006)
+        .padding(.horizontal, w * 0.012)
+        .background(
+            // The soft darker blob the painted titles sit on, so this card
+            // reads as the same design as the other three rather than a
+            // title floating on bare colour.
+            RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
+                .fill(Color(red: 0.42, green: 0.16, blue: 0.62).opacity(0.34))
+                .blur(radius: w * 0.022)
+                .padding(-w * 0.016)
+        )
+        .placed(in: r, w, h)
+    }
+
+    private func outlined(_ text: String, _ size: CGFloat,
+                          _ ink: Color, _ face: [Color]) -> some View {
+        OutlinedText(plain: text,
+                     font: .system(size: size, weight: .black, design: .rounded),
+                     outline: ink,
+                     width: max(1.5, size * 0.085)) {
+            Text(text).foregroundStyle(
+                LinearGradient(colors: face, startPoint: .top, endPoint: .bottom))
+        }
+    }
+
 
     /// The painted back arrow, given something to do.
     private func backTarget(_ w: CGFloat, _ h: CGFloat) -> some View {
@@ -255,8 +313,6 @@ struct ProBriefingSheet: View {
         let sub2: CGRect
         /// The gem purse, on the screen that paints one.
         var purse: CGRect? = nil
-        /// The tile whose wording had to be re-lettered.
-        var note: CGRect? = nil
         /// True where the painted screen lays out the island grid.
         var picksCategory = false
     }
@@ -290,13 +346,12 @@ struct ProBriefingSheet: View {
                           sub1:  CGRect(x: 0.245, y: 0.663, width: 0.545, height: 0.028),
                           sub2:  CGRect(x: 0.245, y: 0.691, width: 0.545, height: 0.029))
         case .gemRush:
-            return Placement(art: "ProBriefJewel", aspect: tall2,
-                          close: CGRect(x: 0.862, y: 0.008, width: 0.126, height: 0.080),
-                          start: CGRect(x: 0.125, y: 0.720, width: 0.750, height: 0.105),
-                          head:  CGRect(x: 0.245, y: 0.600, width: 0.555, height: 0.056),
-                          sub1:  CGRect(x: 0.245, y: 0.654, width: 0.555, height: 0.029),
-                          sub2:  CGRect(x: 0.245, y: 0.683, width: 0.555, height: 0.029),
-                          note:  CGRect(x: 0.058, y: 0.498, width: 0.239, height: 0.090))
+            return Placement(art: "ProBriefGemsRush", aspect: tallCat,
+                          close: CGRect(x: 0.026, y: 0.013, width: 0.092, height: 0.042),
+                          start: CGRect(x: 0.130, y: 0.690, width: 0.740, height: 0.060),
+                          head:  CGRect(x: 0.250, y: 0.588, width: 0.510, height: 0.037),
+                          sub1:  CGRect(x: 0.250, y: 0.626, width: 0.510, height: 0.021),
+                          sub2:  CGRect(x: 0.250, y: 0.647, width: 0.510, height: 0.021))
         case .categoryMaster:
             return Placement(art: "ProBriefCategory", aspect: tallCat,
                           close: CGRect(x: 0.026, y: 0.013, width: 0.092, height: 0.042),
@@ -405,18 +460,6 @@ struct ProBriefingSheet: View {
                     .minimumScaleFactor(0.4)
                     .placed(in: purse, w, h)
                     .accessibilityLabel("\(progress.gems) gems")
-            }
-
-            if let note = spot.note {
-                // This tile said "jewels" where the banner beneath it says
-                // gems. The mode is called Jewel Rush; the currency is not.
-                Text("Every correct answer gives you gems!")
-                    .font(.system(size: w * 0.030, weight: .heavy, design: .rounded))
-                    .foregroundColor(Color(red: 0.16, green: 0.10, blue: 0.38))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.6)
-                    .placed(in: note, w, h)
             }
 
             if spot.picksCategory { categoryTiles(w, h) }

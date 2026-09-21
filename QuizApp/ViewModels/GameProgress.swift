@@ -636,7 +636,7 @@ enum GemRules {
 
     /// Works out the payout for a finished round.
     /// - Parameters:
-    ///   - streakMultiplier: doubles the streak bonuses, for Gem Rush.
+    ///   - streakMultiplier: doubles the streak bonuses, for Gems Rush.
     ///   - awardsStreakBonuses: false for short rounds like the Daily
     ///     Challenge, where five questions would trigger both milestones at
     ///     once and overpay a deliberately modest round.

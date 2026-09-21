@@ -21,11 +21,10 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     case timedChallenge
     case lightningRound
     case perfectRun
-    /// The mode is called Jewel Rush, which is also what its rawValue says
-    /// and what every piece of its artwork letters. The case keeps the
-    /// `gemRush` spelling because the code around it — gemsPerCorrect,
-    /// GemRules, GemIcon — is all about gems, and the currency is gems
-    /// whatever this one mode is called.
+    /// Pinned to its old spelling: the rawValue is the key this mode's
+    /// rounds and best score are saved under, so letting it follow the
+    /// renames — jewelRush to Gem Rush to Jewel Rush to Gems Rush — would
+    /// strand every score already recorded under it.
     case gemRush = "jewelRush"
     case categoryMaster
 
@@ -58,7 +57,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "Timed Challenge"
         case .lightningRound: return "Lightning Round"
         case .perfectRun:     return "Perfect Run"
-        case .gemRush:      return "Jewel Rush"
+        case .gemRush:      return "Gems Rush"
         case .categoryMaster: return "Category Master"
         }
     }
@@ -167,7 +166,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// Gem Rush is the streak mode, so its streak bonuses count double.
+    /// Gems Rush is the streak mode, so its streak bonuses count double.
     /// The bonuses themselves are still paid at most once each.
     var streakMultiplier: Int { self == .gemRush ? 2 : 1 }
 
