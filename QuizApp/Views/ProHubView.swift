@@ -2,8 +2,12 @@
 //  ProHubView.swift
 //  QuizApp
 //
-//  The Pro Challenge room. Five harder ways to play, each paying out in
-//  gems so the sticker shop keeps filling up.
+//  The Pro Challenge room. Harder ways to play, each paying out in gems so
+//  the sticker shop keeps filling up.
+//
+//  The Timed Challenge is Pro too, but it is not listed here: it has its own
+//  button on the adventure map, under the Trophy Room. The room shows
+//  `hubModes` rather than `proModes` for exactly that reason.
 //
 
 import SwiftUI
@@ -119,7 +123,7 @@ struct ProHubView: View {
 
     private var cards: some View {
         VStack(spacing: 12) {
-            ForEach(Array(ProMode.proModes.enumerated()), id: \.element) { pair in
+            ForEach(Array(ProMode.hubModes.enumerated()), id: \.element) { pair in
                 modeCard(pair.element, index: pair.offset)
             }
         }
@@ -178,7 +182,11 @@ struct ProHubView: View {
 // MARK: - How to play
 
 /// The card that explains a mode before the round begins, and starts it.
-private struct ProBriefingSheet: View {
+///
+/// Not private: the Timed Challenge is launched from the adventure map now,
+/// and it should arrive at the same rules card it always did rather than be
+/// dropped straight onto a running fifteen-second clock.
+struct ProBriefingSheet: View {
     let mode: ProMode
     @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss

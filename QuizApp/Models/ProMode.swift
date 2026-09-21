@@ -7,8 +7,10 @@
 //  or deep inside one category. They all pay out in gems, which buy
 //  stickers for the sticker book.
 //
-//  Five of them live in the Pro room. The Daily Challenge is free for
-//  everyone and sits on the adventure map itself.
+//  Four of them live in the Pro room. Two sit on the adventure map itself:
+//  the Daily Challenge, which is free for everyone, and the Timed Challenge,
+//  which still needs Pro but is the one people come back to most — it is
+//  worth a button of its own rather than three taps through the room.
 //
 
 import SwiftUI
@@ -27,12 +29,24 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
-    /// True when the mode belongs to the Pro room. The Daily Challenge is
-    /// free for everyone and lives on the adventure map instead.
+    /// True when the mode needs Pro. The Daily Challenge is free for everyone.
+    ///
+    /// This is about the lock, not about where the mode is played from: the
+    /// Timed Challenge sits on the map beside the free Daily Challenge and is
+    /// still Pro, which is why its button says so.
     var isPro: Bool { self != .dailyChallenge }
 
-    /// The modes listed inside the Pro room.
+    /// True when the mode has a button of its own on the adventure map
+    /// rather than a card inside the Pro room.
+    var livesOnMap: Bool { self == .dailyChallenge || self == .timedChallenge }
+
+    /// Everything Pro unlocks, wherever it is reached from. This is what the
+    /// Pro page and the plans screen count, so moving a mode onto the map
+    /// does not quietly shrink what Pro is advertised as giving.
     static var proModes: [ProMode] { allCases.filter(\.isPro) }
+
+    /// The cards listed inside the Pro room.
+    static var hubModes: [ProMode] { proModes.filter { !$0.livesOnMap } }
 
     // MARK: - Presentation
 
