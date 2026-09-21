@@ -263,6 +263,8 @@ struct ProBriefingSheet: View {
 
     private static let tall: CGFloat = 941.0 / 1671.0
     private static let tall2: CGFloat = 941.0 / 1672.0
+    /// Category Master's screen was drawn to a different shape from the rest.
+    private static let tallCat: CGFloat = 852.0 / 1846.0
 
     private static func placement(_ mode: ProMode) -> Placement? {
         switch mode {
@@ -296,13 +298,13 @@ struct ProBriefingSheet: View {
                           sub2:  CGRect(x: 0.245, y: 0.683, width: 0.555, height: 0.029),
                           note:  CGRect(x: 0.058, y: 0.498, width: 0.239, height: 0.090))
         case .categoryMaster:
-            return Placement(art: "ProBriefCategory", aspect: tall2,
-                          close: CGRect(x: 0.022, y: 0.010, width: 0.106, height: 0.052),
-                          start: CGRect(x: 0.228, y: 0.840, width: 0.550, height: 0.080),
-                          head:  CGRect(x: 0.245, y: 0.304, width: 0.555, height: 0.050),
-                          sub1:  CGRect(x: 0.245, y: 0.355, width: 0.555, height: 0.027),
-                          sub2:  CGRect(x: 0.245, y: 0.382, width: 0.555, height: 0.028),
-                          purse: CGRect(x: 0.795, y: 0.012, width: 0.110, height: 0.033),
+            return Placement(art: "ProBriefCategory", aspect: tallCat,
+                          close: CGRect(x: 0.026, y: 0.013, width: 0.092, height: 0.042),
+                          start: CGRect(x: 0.245, y: 0.848, width: 0.510, height: 0.060),
+                          head:  CGRect(x: 0.245, y: 0.291, width: 0.515, height: 0.036),
+                          sub1:  CGRect(x: 0.245, y: 0.328, width: 0.515, height: 0.020),
+                          sub2:  CGRect(x: 0.245, y: 0.348, width: 0.515, height: 0.020),
+                          purse: CGRect(x: 0.800, y: 0.011, width: 0.100, height: 0.032),
                           picksCategory: true)
         case .dailyChallenge:
             // Free, played from the map, and has no painted screen of its own.
@@ -310,20 +312,20 @@ struct ProBriefingSheet: View {
         }
     }
 
-    /// The nine islands the Category Master screen paints, row by row. The
-    /// tenth is drawn underneath them — see `extraIsland`.
+    /// The ten islands the Category Master screen paints: three rows of
+    /// three, then Champion's Summit on its own underneath. They are in the
+    /// same order as `QuizData.islands`, which is what pairs each tile with
+    /// the island it shows.
     private static let paintedTiles: [CGRect] = {
         var out: [CGRect] = []
-        for (y0, y1) in [(0.400, 0.500), (0.508, 0.608), (0.616, 0.716)] {
-            for (x0, x1) in [(0.038, 0.325), (0.345, 0.655), (0.675, 0.962)] {
+        for (y0, y1) in [(0.375, 0.478), (0.487, 0.590), (0.598, 0.701)] {
+            for (x0, x1) in [(0.030, 0.325), (0.345, 0.655), (0.675, 0.970)] {
                 out.append(CGRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0))
             }
         }
+        out.append(CGRect(x: 0.290, y: 0.710, width: 0.420, height: 0.103))
         return out
     }()
-
-    /// Where the island the painting has no tile for is drawn.
-    private static let extraTile = CGRect(x: 0.345, y: 0.726, width: 0.310, height: 0.086)
 
     // MARK: - Body
 
@@ -467,37 +469,25 @@ struct ProBriefingSheet: View {
 
     // MARK: - Category Master's island grid
 
-    /// The painted tiles, made to answer to a tap, plus the island the
-    /// painting has no tile for.
+    /// The painted tiles, made to answer to a tap.
     ///
-    /// The grid was painted with nine islands and the game has ten. Rather
-    /// than quietly drop the tenth — Champion's Summit, the one island a
-    /// child reaches last and most wants to be tested on — it is drawn under
-    /// the grid in the same shape as the painted ones.
-    @ViewBuilder
+    /// Paired with the islands by position, and cut short by `zip` if the
+    /// two ever stop matching: a game with an eleventh island would leave it
+    /// off this screen until the picture catches up, which is better than
+    /// putting its name on somebody else's tile.
     private func categoryTiles(_ w: CGFloat, _ h: CGFloat) -> some View {
-        ForEach(Array(zip(islands.prefix(Self.paintedTiles.count), Self.paintedTiles)),
-                id: \.0.id) { island, rect in
-            tileTarget(island, in: rect, w, h, painted: true)
-        }
-
-        ForEach(Array(islands.dropFirst(Self.paintedTiles.count).prefix(1)), id: \.id) { island in
-            tileTarget(island, in: Self.extraTile, w, h, painted: false)
+        ForEach(Array(zip(islands, Self.paintedTiles)), id: \.0.id) { island, rect in
+            tileTarget(island, in: rect, w, h)
         }
     }
 
+    /// Nothing to draw — the picture already shows this island. All this
+    /// adds is somewhere to tap, and a ring round the one chosen.
     private func tileTarget(_ island: Island, in rect: CGRect,
-                            _ w: CGFloat, _ h: CGFloat, painted: Bool) -> some View {
+                            _ w: CGFloat, _ h: CGFloat) -> some View {
         let picked = chosenIsland?.id == island.id
 
-        return Group {
-            if painted {
-                // Nothing to draw: the picture already shows this island.
-                Color.clear
-            } else {
-                drawnTile(island, w: w)
-            }
-        }
+        return Color.clear
         .overlay {
             if picked {
                 RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
@@ -518,43 +508,6 @@ struct ProBriefingSheet: View {
         .placed(in: rect, w, h)
         .accessibilityLabel("\(island.name)\(picked ? ", chosen" : "")")
         .accessibilityAddTraits(.isButton)
-    }
-
-    /// A tile for the island the artwork has no picture of, built to match
-    /// the painted ones: a bright rounded card with the island's emoji and
-    /// its name on a parchment label.
-    private func drawnTile(_ island: Island, w: CGFloat) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
-                .fill(island.palette.gradient)
-                .overlay(
-                    RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
-                        .strokeBorder(.white.opacity(0.9), lineWidth: max(2, w * 0.006))
-                )
-                .shadow(color: .black.opacity(0.35), radius: w * 0.012, y: w * 0.005)
-
-            VStack(spacing: 0) {
-                Text(island.emoji)
-                    .font(.system(size: w * 0.055))
-                    .padding(.top, w * 0.008)
-                Spacer(minLength: 0)
-                Text(island.name)
-                    .font(.system(size: w * 0.026, weight: .heavy, design: .rounded))
-                    .foregroundColor(Color(red: 0.30, green: 0.17, blue: 0.05))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .padding(.horizontal, w * 0.016)
-                    .padding(.vertical, w * 0.007)
-                    .background(
-                        RoundedRectangle(cornerRadius: w * 0.012, style: .continuous)
-                            .fill(LinearGradient(colors: [
-                                Color(red: 0.99, green: 0.94, blue: 0.80),
-                                Color(red: 0.93, green: 0.84, blue: 0.64)
-                            ], startPoint: .top, endPoint: .bottom))
-                    )
-                    .padding(.bottom, w * 0.010)
-            }
-        }
     }
 
     // MARK: - The plain screen
