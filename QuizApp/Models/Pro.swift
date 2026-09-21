@@ -16,6 +16,11 @@
 //  worth coming back to, and it shows them exactly what the rest would be.
 //  A locked door shows them nothing.
 //
+//  What Pro adds to the book is its length: five of its twenty-five pages
+//  turn for everyone, and Pro turns the rest. Five pages is room enough to
+//  arrange ten stickers properly rather than a single page that fills up and
+//  stops. The two numbers live in `StickerBookPages`, in StickerBook.swift.
+//
 
 import Foundation
 

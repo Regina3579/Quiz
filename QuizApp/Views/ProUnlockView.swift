@@ -272,6 +272,23 @@ struct ProUnlockView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
+            // The book itself is part of what Pro opens, and a page saying
+            // every sticker is unlocked owes the player somewhere to put
+            // them. The number comes from the book so the two cannot drift.
+            HStack(spacing: w * 0.014) {
+                Image(systemName: "book.fill")
+                    .font(.system(size: w * 0.036, weight: .black))
+                Text("The full \(StickerBookPages.total)-page sticker book opens — free fills the first \(StickerBookPages.free)")
+                    .font(.system(size: w * 0.034, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+            }
+            .foregroundColor(Self.blueInk)
+            .padding(.horizontal, w * 0.026)
+            .padding(.vertical, w * 0.012)
+            .background(Capsule().fill(Self.blueInk.opacity(0.10)))
+            .padding(.top, w * 0.004)
+
             HStack(spacing: w * 0.008) {
                 ForEach(cuteSample) { StickerGlyph(sticker: $0, size: w * 0.100) }
                 Spacer(minLength: w * 0.010)

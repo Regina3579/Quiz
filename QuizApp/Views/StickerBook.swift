@@ -466,6 +466,28 @@ enum StickerCatalog {
         uniqueKeysWithValues: all.map { ($0.id, $0) })
 }
 
+// MARK: - How much of the book opens
+
+/// How long the sticker book is, and how much of it turns without Pro.
+///
+/// The book is twenty-five pages. Without Pro the first five of them open —
+/// enough room to arrange the ten free stickers properly, not a single page
+/// that fills up and stops. Pro turns the rest.
+///
+/// Both numbers live here rather than inside the book view because the Pro
+/// page quotes them too, and a paywall promising a length the book does not
+/// have would be a lie the moment either number changed.
+enum StickerBookPages {
+    static let total = 25
+    static let free = 5
+
+    /// How many pages this player can actually turn to right now.
+    static var open: Int { Pro.isActive ? total : free }
+
+    /// True while some of the book is still behind Pro.
+    static var isGated: Bool { open < total }
+}
+
 // MARK: - Sticker glyph
 
 /// Draws a sticker: the real artwork if it has one, otherwise the emoji.
@@ -505,9 +527,24 @@ struct StickerBookView: View {
     @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss
 
-    private let totalPages = 25
+    private let totalPages = StickerBookPages.total
+    /// How many pages turn for this player. Read fresh every time the body
+    /// runs, so buying Pro from inside the book opens the rest of it at once.
+    private var openPages: Int { StickerBookPages.open }
+    /// True when the player is standing on the last page they are allowed.
+    private var atFreeEdge: Bool {
+        StickerBookPages.isGated && currentPage == openPages - 1
+    }
+
     @State private var currentPage = 0
     @State private var showShop = false
+    /// Raised by trying to turn past the free pages.
+    @State private var showPageGate = false
+    @State private var showPro = false
+    /// Bumped when the Pro page closes, purely to re-run the body so
+    /// `openPages` is read again. `Pro.isActive` is a UserDefaults read and
+    /// SwiftUI has no way to notice it changing on its own.
+    @State private var proRefresh = 0
     /// The leaf currently being turned, if any.
     @State private var flip: FlipState?
     /// How far the turning leaf has rotated, in degrees.
@@ -569,6 +606,21 @@ struct StickerBookView: View {
                         Spacer(minLength: 6)
                     }
                 }
+
+                // The friendly stop at the end of the free pages. An overlay
+                // rather than a sheet: the book stays visible behind it, so
+                // what is being offered is obvious.
+                if showPageGate {
+                    BookPageGate(freePages: StickerBookPages.free,
+                                 totalPages: totalPages,
+                                 onSeePro: {
+                                     showPageGate = false
+                                     showPro = true
+                                 },
+                                 onClose: { showPageGate = false })
+                        .transition(.opacity)
+                        .zIndex(5)
+                }
             }
         }
         // Turning the page puts away whatever was being typed.
@@ -625,6 +677,11 @@ struct StickerBookView: View {
                     else if value.translation.width > 40 { turn(forward: false) }
                 }
         )
+        // Hung here and not on the root: the root's sheet belongs to the
+        // shop, and two sheets on one view fight each other.
+        .sheet(isPresented: $showPro, onDismiss: { proRefresh += 1 }) {
+            ProUnlockView(reason: .sticker)
+        }
     }
 
     /// The thick pink/purple book cover.
@@ -719,14 +776,26 @@ struct StickerBookView: View {
     }
 
     /// The page-turn arrows on the left and right sides.
+    ///
+    /// On the last free page the right-hand one wears a padlock instead of an
+    /// arrow — still lit, still tappable. A greyed-out button would look like
+    /// the end of the book rather than a door.
     private var arrowsOverlay: some View {
         HStack {
             roundButton(system: "chevron.left", enabled: currentPage > 0) {
                 turn(forward: false)
             }
             Spacer()
-            roundButton(system: "chevron.right", enabled: currentPage < totalPages - 1) {
-                turn(forward: true)
+            if atFreeEdge {
+                roundButton(system: "lock.fill", enabled: true, gold: true) {
+                    Haptics.play(.light)
+                    withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
+                }
+                .accessibilityLabel("More pages with Pro")
+            } else {
+                roundButton(system: "chevron.right", enabled: currentPage < openPages - 1) {
+                    turn(forward: true)
+                }
             }
         }
     }
@@ -780,9 +849,29 @@ struct StickerBookView: View {
 
             // Just the page count, with a quiet way to ask how things work.
             HStack(spacing: 8) {
-                Text("Page \(currentPage + 1) of \(totalPages)")
+                Text("Page \(currentPage + 1) of \(openPages)")
                     .font(Theme.medium(11))
                     .foregroundColor(Theme.inkSoft)
+
+                // Says why the count stops where it does, and opens the same
+                // card the padlock does.
+                if StickerBookPages.isGated {
+                    Button {
+                        Haptics.play(.light)
+                        withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "crown.fill").font(.system(size: 9))
+                            Text("\(totalPages) pages with Pro").font(Theme.bold(11))
+                        }
+                        .foregroundColor(Color(red: 0.62, green: 0.38, blue: 0.02))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color(red: 1.00, green: 0.88, blue: 0.52)))
+                        .overlay(Capsule().stroke(.white.opacity(0.9), lineWidth: 1))
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
 
                 Button {
                     Haptics.play(.light)
@@ -806,14 +895,24 @@ struct StickerBookView: View {
         .padding(.bottom, 8)
     }
 
-    private func roundButton(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    /// The gold button, worn only by the padlock at the end of the free pages.
+    private var goldButton: LinearGradient {
+        LinearGradient(colors: [
+            Color(red: 1.00, green: 0.85, blue: 0.30),
+            Color(red: 0.97, green: 0.62, blue: 0.09)
+        ], startPoint: .top, endPoint: .bottom)
+    }
+
+    private func roundButton(system: String, enabled: Bool, gold: Bool = false,
+                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: system)
                 .font(Theme.bold(18))
                 .foregroundColor(.white)
                 .frame(width: 46, height: 46)
-                .background(Circle().fill(enabled ? AnyShapeStyle(pinkButton)
-                                                  : AnyShapeStyle(Color.gray.opacity(0.4))))
+                .background(Circle().fill(!enabled ? AnyShapeStyle(Color.gray.opacity(0.4))
+                                          : gold ? AnyShapeStyle(goldButton)
+                                                 : AnyShapeStyle(pinkButton)))
                 .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 2))
                 .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
         }
@@ -829,6 +928,15 @@ struct StickerBookView: View {
         guard !isFlipping else { return }
         let target = currentPage + (forward ? 1 : -1)
         guard target >= 0 && target < totalPages else { return }
+
+        // Swiping is gated exactly where the arrow is. Gating only the button
+        // would leave the limit one flick away, which is worse than no limit
+        // at all: the child finds the page, fills it, and loses it next time.
+        guard target < openPages else {
+            Haptics.play(.light)
+            withAnimation(.easeOut(duration: 0.2)) { showPageGate = true }
+            return
+        }
 
         isFlipping = true
         Haptics.play(.light)
@@ -940,6 +1048,107 @@ private struct StickerBookTipsCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - The end of the free pages
+
+/// The card that appears when the book will not turn any further.
+///
+/// It says what is there rather than what is missing: the pages already open
+/// are the child's, and the rest of the book is what Pro adds. There is no
+/// countdown and no nagging — it shows up when the page is asked for, and a
+/// tap anywhere else puts it away.
+private struct BookPageGate: View {
+    let freePages: Int
+    let totalPages: Int
+    let onSeePro: () -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.32)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { Haptics.play(.light); onClose() }
+
+            VStack(spacing: 10) {
+                ZStack {
+                    Text("📖").font(.system(size: 44))
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 15, weight: .black))
+                        .foregroundColor(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(LinearGradient(
+                            colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
+                                     Color(red: 0.97, green: 0.62, blue: 0.09)],
+                            startPoint: .top, endPoint: .bottom)))
+                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                        .offset(x: 26, y: 16)
+                }
+                .padding(.top, 4)
+
+                Text("Unlock full sticker book with Pro.")
+                    .font(Theme.display(19))
+                    .foregroundColor(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("The first \(freePages) pages are yours to fill. Pro opens all \(totalPages), plus every sticker in the shop.")
+                    .font(Theme.medium(13))
+                    .foregroundColor(Theme.inkSoft)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 6)
+
+                Button {
+                    Haptics.play(.light)
+                    onSeePro()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "crown.fill").font(.system(size: 15, weight: .black))
+                        Text("See Pro").font(Theme.bold(17))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Capsule().fill(LinearGradient(
+                        colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
+                                 Color(red: 0.97, green: 0.62, blue: 0.09)],
+                        startPoint: .top, endPoint: .bottom)))
+                    .overlay(Capsule().stroke(.white.opacity(0.85), lineWidth: 2))
+                    .shadow(color: .black.opacity(0.22), radius: 6, y: 3)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .padding(.top, 6)
+
+                Button {
+                    Haptics.play(.light)
+                    onClose()
+                } label: {
+                    Text("Keep sticking")
+                        .font(Theme.bold(14))
+                        .foregroundColor(Theme.inkSoft)
+                        .padding(.vertical, 4)
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
+            .frame(maxWidth: 320)
+            .background(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(LinearGradient(colors: [
+                        Color(red: 1.00, green: 0.99, blue: 0.95),
+                        Color(red: 1.00, green: 0.94, blue: 0.96)
+                    ], startPoint: .top, endPoint: .bottom))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(.white, lineWidth: 3)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 18, y: 10)
+            .padding(.horizontal, 28)
         }
     }
 }

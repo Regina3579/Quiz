@@ -55,7 +55,7 @@ struct ProPlansView: View {
               detail: "Timed, Lightning, Perfect Run, Gem Rush & more!"),
          Perk(icon: "ProPlanStickers",
               title: "All \(StickerCatalog.all.count)\nStickers",
-              detail: "Collect, customize and create your own collection!"),
+              detail: "Plus all \(StickerBookPages.total) sticker book pages to fill!"),
          Perk(icon: "ProPlanChest",
               title: "Extra\nRewards",
               detail: "More gems from every Pro round you play!"),
