@@ -189,19 +189,11 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     }
 
     // MARK: - Look
-
-    /// The card artwork cut from the design mockup, so each row on the Pro
-    /// page is the illustration itself rather than a rebuild of it.
-    var cardImageName: String? {
-        switch self {
-        case .timedChallenge: return "ProCardTimed"
-        case .lightningRound: return "ProCardLightning"
-        case .perfectRun:     return "ProCardPerfect"
-        case .gemRush:      return "ProCardJewel"
-        case .categoryMaster: return "ProCardCategory"
-        case .dailyChallenge: return nil   // lives on the map, drawn there
-        }
-    }
+    //
+    // There is no per-mode card picture any more. The Pro room used to stack
+    // five separate card illustrations; it is now one painted scene with the
+    // four cards already in it, so the only thing a mode still has to say
+    // about its looks is its colour.
 
     var palette: Island.Palette {
         switch self {

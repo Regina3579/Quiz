@@ -2,12 +2,25 @@
 //  ProHubView.swift
 //  QuizApp
 //
-//  The Pro Challenge room. Harder ways to play, each paying out in gems so
-//  the sticker shop keeps filling up.
+//  The Pro Challenge room: four harder ways to play, each paying out in gems
+//  so the sticker shop keeps filling up.
 //
-//  The Timed Challenge is Pro too, but it is not listed here: it has its own
-//  button on the adventure map, under the Trophy Room. The room shows
-//  `hubModes` rather than `proModes` for exactly that reason.
+//  The page is one painted scene — jungle, header, four cards, lanterns and
+//  the bridge at the foot — with the wording that has to follow the data laid
+//  over it at fractions of the picture. Everything fixed stays part of the
+//  painting; everything that could ever differ from what the app knows is
+//  live. That is why the mode names, the taglines and the "up to N gems"
+//  payouts are drawn here rather than lettered into the artwork.
+//
+//  The Timed Challenge is Pro too, but it is not one of these four: it has a
+//  button of its own on the adventure map, under the Trophy Room. The room
+//  shows `hubModes` rather than `proModes` for exactly that reason.
+//
+//  The scene paints four cards in a fixed order, so each slot below names the
+//  mode it was painted for instead of being matched up by position. A mode
+//  leaving `hubModes` then leaves a painted card with nothing behind it,
+//  which `slots` filters out, rather than silently relabelling somebody
+//  else's picture.
 //
 
 import SwiftUI
@@ -18,164 +31,235 @@ struct ProHubView: View {
 
     /// The mode whose "how to play" card is open, if any.
     @State private var briefing: ProMode?
-    @State private var appeared = false
 
-    /// The header artwork is 941 x 534, cropped to include the whole crown,
-    /// and the back button and gem pill sit at these fractions of it.
-    /// Overlaying them here keeps them live while the rest of the header
-    /// stays the original picture.
-    private let headerAspect: CGFloat = 941.0 / 534.0
-    private let backButtonAt = CGPoint(x: 0.080, y: 0.182)
-    private let gemPillAt  = CGPoint(x: 0.869, y: 0.176)
+    // MARK: - Where everything sits on the painting
+    //
+    // The scene is 941 x 1672. Every rectangle below is a fraction of that,
+    // measured off the picture itself, so the live pieces land on the painted
+    // ones at any width.
+
+    private static let sceneAspect: CGFloat = 941.0 / 1672.0
+
+    /// Deep jungle green from the painting's own edge, for the bars above and
+    /// below it on a screen that is a different shape.
+    private static let surround = Color(red: 0.035, green: 0.149, blue: 0.145)
+
+    /// Type sizes, as fractions of the picture's width. Each is the largest
+    /// that the longest string of its kind still fits, so every card letters
+    /// at the same size as its neighbours.
+    private static let taglineSize: CGFloat = 0.0215
+    private static let payoutSize:  CGFloat = 0.0270
+    private static let titleSize:   CGFloat = 0.0730
+
+    private static let backAt   = CGRect(x: 0.022, y: 0.010, width: 0.100, height: 0.050)
+    private static let gemsAt   = CGRect(x: 0.800, y: 0.011, width: 0.098, height: 0.033)
+
+    /// One painted card: the mode it shows, the whole card as a tap target,
+    /// the parchment plaque, and the dark payout capsule beside the gem.
+    private struct Slot {
+        let mode: ProMode
+        let card: CGRect
+        let tagline: CGRect
+        let payout: CGRect
+        /// Set only on a card whose painted title had to be taken off, and
+        /// which therefore has its name drawn instead.
+        var title: CGRect? = nil
+    }
+
+    private static let allSlots: [Slot] = [
+        Slot(mode: .lightningRound,
+             card:    CGRect(x: 0.027, y: 0.264, width: 0.470, height: 0.258),
+             tagline: CGRect(x: 0.054, y: 0.417, width: 0.193, height: 0.047),
+             payout:  CGRect(x: 0.128, y: 0.477, width: 0.198, height: 0.034)),
+        Slot(mode: .perfectRun,
+             card:    CGRect(x: 0.503, y: 0.264, width: 0.470, height: 0.258),
+             tagline: CGRect(x: 0.550, y: 0.417, width: 0.190, height: 0.047),
+             payout:  CGRect(x: 0.628, y: 0.474, width: 0.202, height: 0.037)),
+        Slot(mode: .gemRush,
+             card:    CGRect(x: 0.027, y: 0.545, width: 0.470, height: 0.258),
+             tagline: CGRect(x: 0.054, y: 0.711, width: 0.202, height: 0.049),
+             payout:  CGRect(x: 0.128, y: 0.767, width: 0.198, height: 0.039),
+             // The artwork lettered this one "Jewel Rush". The app has called
+             // the currency gems since long before this picture arrived, so
+             // the title came off and is drawn here instead. The other three
+             // were already right and keep their painted lettering.
+             title:   CGRect(x: 0.082, y: 0.548, width: 0.256, height: 0.104)),
+        Slot(mode: .categoryMaster,
+             card:    CGRect(x: 0.503, y: 0.545, width: 0.470, height: 0.258),
+             tagline: CGRect(x: 0.539, y: 0.717, width: 0.218, height: 0.044),
+             payout:  CGRect(x: 0.628, y: 0.770, width: 0.202, height: 0.039))
+    ]
+
+    /// Only the painted cards whose mode the app still lists.
+    private var slots: [Slot] {
+        let listed = Set(ProMode.hubModes)
+        return Self.allSlots.filter { listed.contains($0.mode) }
+    }
+
+    // MARK: - Body
 
     var body: some View {
-        ZStack {
-            ProBackground().ignoresSafeArea()
-
+        GeometryReader { geo in
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    headerArt
-                        .padding(.top, 8)
-                    cards
-                    Image("ProFooterArt")
-                        .resizable()
-                        .scaledToFit()
-                        .padding(.top, 4)
-                }
+                scene(width: geo.size.width)
             }
-            .ignoresSafeArea(edges: .bottom)
             .bounceOnlyWhenScrollable()
+            .frame(width: geo.size.width, height: geo.size.height)
         }
+        .background(Self.surround.ignoresSafeArea())
+        // The bottom only. The painting puts the back arrow and the gem
+        // purse hard against its top edge, and running that under a notch
+        // would hide both of them behind the clock.
+        .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $briefing) { mode in
             ProBriefingSheet(mode: mode)
                 .environmentObject(progress)
         }
-        .onAppear {
-            appeared = true
-            Music.shared.play(Music.proTrack)
-        }
+        .onAppear { Music.shared.play(Music.proTrack) }
     }
 
-    // MARK: - Header
+    /// The painting at full width, with everything live laid over it.
+    private func scene(width w: CGFloat) -> some View {
+        let h = w / Self.sceneAspect
 
-    /// The illustrated header, with the two live controls sitting exactly
-    /// where the design draws them.
-    private var headerArt: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = w / headerAspect
-
-            Image("ProHeaderArt")
+        return ZStack(alignment: .topLeading) {
+            Image("ProHubScene")
                 .resizable()
                 .scaledToFit()
                 .frame(width: w, height: h)
-                .overlay(alignment: .topLeading) {
-                    backButton
-                        .position(x: w * backButtonAt.x, y: h * backButtonAt.y)
-                }
-                .overlay(alignment: .topLeading) {
-                    gemPill
-                        .position(x: w * gemPillAt.x, y: h * gemPillAt.y)
-                }
-        }
-        // Reserve the picture's own height so the scroll view lays out right.
-        .aspectRatio(headerAspect, contentMode: .fit)
-    }
 
-    private var backButton: some View {
-        Button {
-            Haptics.play(.light)
-            dismiss()
-        } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 19, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 42, height: 42)
-                .background(Circle().fill(Color(red: 0.36, green: 0.22, blue: 0.62)))
-                .overlay(Circle().stroke(Color(red: 0.69, green: 0.55, blue: 0.98),
-                                         lineWidth: 2.5))
-                .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("Back")
-    }
+            gemCount(w, h)
 
-    private var gemPill: some View {
-        HStack(spacing: 7) {
-            GemIcon(size: 21, sparkle: true)
-            Text("\(progress.gems)")
-                .font(Theme.display(21))
-                .foregroundColor(.white)
-                .contentTransition(.numericText())
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 42)
-        .background(Capsule().fill(Color(red: 0.20, green: 0.12, blue: 0.38)))
-        .overlay(Capsule().stroke(Color(red: 0.69, green: 0.55, blue: 0.98),
-                                  lineWidth: 2.5))
-        .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
-        .accessibilityLabel("\(progress.gems) gems")
-    }
-
-    // MARK: - Mode cards
-
-    private var cards: some View {
-        VStack(spacing: 12) {
-            ForEach(Array(ProMode.hubModes.enumerated()), id: \.element) { pair in
-                modeCard(pair.element, index: pair.offset)
+            ForEach(slots, id: \.mode) { slot in
+                card(slot, w, h)
             }
+
+            // Last, so it stays above any card that reaches near it.
+            backTarget(w, h)
         }
-        .padding(.horizontal, 6)
-        .padding(.top, 10)
-        .padding(.bottom, 4)
+        .frame(width: w, height: h)
     }
 
-    /// Each row is the card illustration itself. Everything on it — icon,
-    /// title, tagline, gem total — is fixed for that mode, so the picture
-    /// can be used whole. Only a personal best is added on top.
-    private func modeCard(_ mode: ProMode, index: Int) -> some View {
-        let best = progress.proBest(mode)
+    // MARK: - The live pieces
 
-        return Button {
-            Haptics.play(.light)
-            briefing = mode
-        } label: {
-            Group {
-                if let art = mode.cardImageName {
-                    Image(art).resizable().scaledToFit()
-                } else {
-                    Color.clear.frame(height: 1)
-                }
-            }
-            .overlay(alignment: .bottomTrailing) {
-                if best > 0 { bestTag(best, of: mode.questionCount) }
-            }
-            // The card art has soft, partly transparent corners; without this
-            // a tap near the edge of the row would fall through.
+    /// The gem purse at the top of the page. The painted pill keeps its gem
+    /// and its plus; only the number is live, because only the number moves.
+    private func gemCount(_ w: CGFloat, _ h: CGFloat) -> some View {
+        Text("\(progress.gems)")
+            .font(.system(size: w * 0.044, weight: .heavy, design: .rounded))
+            .foregroundColor(.white)
+            .shadow(color: .black.opacity(0.45), radius: w * 0.004, y: 1)
+            .lineLimit(1)
+            .minimumScaleFactor(0.4)
+            .contentTransition(.numericText())
+            .placed(in: Self.gemsAt, w, h)
+            .accessibilityLabel("\(progress.gems) gems")
+    }
+
+    /// One card: the wording that belongs to its mode, and the whole card as
+    /// the thing you tap. The painted play button is inside that target, so a
+    /// child who aims for the arrow and misses still starts the round.
+    @ViewBuilder
+    private func card(_ slot: Slot, _ w: CGFloat, _ h: CGFloat) -> some View {
+        let mode = slot.mode
+
+        if let title = slot.title {
+            liveTitle(mode, in: title, w, h)
+        }
+
+        // The painting breaks each tagline over two lines; the app's own
+        // taglines use a middle dot where that break falls.
+        //
+        // One size for all four rather than letting each shrink to its own
+        // plaque: four cards side by side with four different type sizes
+        // reads as a mistake, so the size is the one the longest of them
+        // can take and the rest simply have room to spare.
+        Text(mode.tagline.replacingOccurrences(of: " · ", with: "\n"))
+            .font(.system(size: w * Self.taglineSize, weight: .bold, design: .rounded))
+            .foregroundColor(Color(red: 0.16, green: 0.14, blue: 0.34))
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.7)
+            .placed(in: slot.tagline, w, h)
+
+        Text("up to \(mode.bestPossibleGems) gems")
+            .font(.system(size: w * Self.payoutSize, weight: .heavy, design: .rounded))
+            .foregroundColor(.white)
+            .shadow(color: .black.opacity(0.40), radius: w * 0.003, y: 1)
+            .lineLimit(1)
+            .minimumScaleFactor(0.45)
+            .placed(in: slot.payout, w, h)
+
+        Color.clear
             .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleGems) gems")
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 18)
-        .animation(.spring(response: 0.5, dampingFraction: 0.85)
-            .delay(Double(index) * 0.06), value: appeared)
+            .onTapGesture {
+                Haptics.play(.light)
+                briefing = mode
+            }
+            .placed(in: slot.card, w, h)
+            .accessibilityElement()
+            .accessibilityLabel("\(mode.title). \(mode.tagline). Up to \(mode.bestPossibleGems) gems")
+            .accessibilityAddTraits(.isButton)
     }
 
-    private func bestTag(_ best: Int, of total: Int) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "rosette").font(.system(size: 10))
-            Text("best \(best)/\(total)").font(Theme.bold(11))
+    /// A card title drawn rather than painted, matching the lettering the
+    /// artwork uses for the other three: a heavy rounded face over a thick
+    /// dark outline, on the soft plate those titles sit on.
+    private func liveTitle(_ mode: ProMode, in r: CGRect, _ w: CGFloat, _ h: CGFloat) -> some View {
+        let words = mode.title.split(separator: " ").map(String.init)
+        let first = words.first ?? mode.title
+        let rest  = words.dropFirst().joined(separator: " ")
+        let ink   = Color(red: 0.36, green: 0.09, blue: 0.53)
+
+        return VStack(spacing: -w * 0.004) {
+            outlined(first, w * Self.titleSize, ink,
+                     [Color(red: 1.00, green: 0.92, blue: 0.98),
+                      Color(red: 1.00, green: 0.62, blue: 0.86)])
+            if !rest.isEmpty {
+                outlined(rest, w * Self.titleSize, ink,
+                         [Color(red: 1.00, green: 0.93, blue: 0.60),
+                          Color(red: 0.99, green: 0.69, blue: 0.13)])
+            }
         }
-        .foregroundColor(.white)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(.black.opacity(0.34)))
-        .overlay(Capsule().stroke(.white.opacity(0.4), lineWidth: 1))
-        .padding(.trailing, 52)
-        .padding(.bottom, 8)
+        .shadow(color: Color(red: 0.26, green: 0.05, blue: 0.40).opacity(0.55),
+                radius: w * 0.008, y: w * 0.006)
+        .padding(.horizontal, w * 0.012)
+        .background(
+            // The soft darker blob the painted titles sit on, so this card
+            // reads as the same design as the other three rather than a
+            // title floating on bare colour.
+            RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
+                .fill(Color(red: 0.42, green: 0.16, blue: 0.62).opacity(0.34))
+                .blur(radius: w * 0.022)
+                .padding(-w * 0.016)
+        )
+        .placed(in: r, w, h)
+    }
+
+    private func outlined(_ text: String, _ size: CGFloat,
+                          _ ink: Color, _ face: [Color]) -> some View {
+        OutlinedText(plain: text,
+                     font: .system(size: size, weight: .black, design: .rounded),
+                     outline: ink,
+                     width: max(1.5, size * 0.085)) {
+            Text(text).foregroundStyle(
+                LinearGradient(colors: face, startPoint: .top, endPoint: .bottom))
+        }
+    }
+
+    /// The painted back arrow, given something to do.
+    private func backTarget(_ w: CGFloat, _ h: CGFloat) -> some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                dismiss()
+            }
+            .placed(in: Self.backAt, w, h)
+            .accessibilityLabel("Back to the map")
+            .accessibilityAddTraits(.isButton)
     }
 }
 
