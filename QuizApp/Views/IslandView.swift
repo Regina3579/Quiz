@@ -111,6 +111,18 @@ struct IslandView: View {
         return CGPoint(x: x, y: y)
     }
 
+    /// The lowest level that is open and not yet cleared — the one to play
+    /// next. It is the only badge that wears the ring, so the trail still
+    /// points somewhere now that every stop keeps its number.
+    private var nextLevel: Int? {
+        guard island.authoredLevels > 0 else { return nil }
+        return (1...island.authoredLevels).first { n in
+            progress.isLevelUnlocked(island: island, level: n,
+                                     allIslands: QuizData.islands)
+                && progress.stars(islandID: island.id, level: n) == 0
+        }
+    }
+
     @ViewBuilder
     private func levelNode(number: Int) -> some View {
         let authored = number <= island.authoredLevels
@@ -121,7 +133,7 @@ struct IslandView: View {
         if authored && unlocked {
             NavigationLink(value: LevelRoute(islandID: island.id, levelNumber: number)) {
                 LevelBadge(number: number, state: .playable, stars: stars,
-                           tint: island.palette.end)
+                           tint: island.palette.end, isNext: number == nextLevel)
             }
             .buttonStyle(PressableButtonStyle())
             .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
@@ -135,6 +147,18 @@ struct IslandView: View {
 
 // MARK: - Level badge
 
+/// One stop on the trail.
+///
+/// The number is always on the face of it. It used to be swapped out for a
+/// play arrow on any level not yet cleared, which on a fresh island meant
+/// nine stops in a row with no number on them at all — you could not tell
+/// level 4 from level 9 without counting down the trail.
+///
+/// Everything else the badge has to say now lives on a small mark in the
+/// corner: a play arrow on the level to do next, a padlock on one not open
+/// yet, an hourglass on one not written yet. The invitation the play arrow
+/// used to give is carried by the ring instead, which does not cost the
+/// number its place.
 private struct LevelBadge: View {
     enum State { case playable, locked, comingSoon }
 
@@ -142,6 +166,14 @@ private struct LevelBadge: View {
     let state: State
     let stars: Int
     let tint: Color
+    /// The lowest level that is open and not yet cleared: the one to play now.
+    var isNext: Bool = false
+
+    @State private var pulse = false
+
+    private var numberColour: Color {
+        state == .playable ? tint : .gray.opacity(0.55)
+    }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -151,24 +183,23 @@ private struct LevelBadge: View {
                     .frame(width: 78, height: 78)
                     .shadow(color: .black.opacity(0.2), radius: 6, y: 4)
 
-                switch state {
-                case .playable:
-                    if stars > 0 {
-                        Text("\(number)").font(Theme.display(26)).foregroundColor(tint)
-                    } else {
-                        // The "next up" level gets a play icon to invite a tap.
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 26))
-                            .foregroundColor(tint)
-                    }
-                case .locked:
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 26)).foregroundColor(.gray)
-                case .comingSoon:
-                    Image(systemName: "hourglass")
-                        .font(.system(size: 24)).foregroundColor(.gray.opacity(0.7))
+                Text("\(number)")
+                    .font(Theme.display(30))
+                    .foregroundColor(numberColour)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+            .overlay {
+                if isNext {
+                    Circle()
+                        .strokeBorder(tint, lineWidth: 4)
+                        .frame(width: 78, height: 78)
+                        .shadow(color: tint.opacity(0.9), radius: pulse ? 10 : 3)
+                        .scaleEffect(pulse ? 1.06 : 1)
                 }
             }
+            .overlay(alignment: .bottomTrailing) { cornerMark }
+            .frame(width: 78, height: 78)
 
             // Star row for cleared levels.
             if state == .playable && stars > 0 {
@@ -186,6 +217,50 @@ private struct LevelBadge: View {
             }
         }
         .frame(width: 110)
+        .onAppear {
+            guard isNext else { return }
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenLabel)
+    }
+
+    /// The small badge on the rim, saying what this stop is doing.
+    @ViewBuilder
+    private var cornerMark: some View {
+        switch state {
+        case .playable where isNext:
+            mark("play.fill", tint, .white)
+        case .locked:
+            mark("lock.fill", .white, .gray)
+        case .comingSoon:
+            mark("hourglass", .white, .gray.opacity(0.8))
+        default:
+            EmptyView()
+        }
+    }
+
+    private func mark(_ symbol: String, _ fill: Color, _ ink: Color) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 12, weight: .black))
+            .foregroundColor(ink)
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(fill))
+            .overlay(Circle().strokeBorder(.white.opacity(0.9), lineWidth: 2))
+            .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+            .offset(x: 3, y: 3)
+    }
+
+    private var spokenLabel: String {
+        switch state {
+        case .comingSoon: return "Level \(number), coming soon"
+        case .locked:     return "Level \(number), locked"
+        case .playable:
+            if stars > 0 { return "Level \(number), \(stars) of 3 stars" }
+            return isNext ? "Level \(number), play next" : "Level \(number), not played yet"
+        }
     }
 }
 
