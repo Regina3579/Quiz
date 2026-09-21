@@ -11,9 +11,10 @@
 //     Connect, in one subscription group, with the prices set there. The
 //     identifiers below are placeholders and almost certainly not the ones
 //     the account will use.
-//  2. `Pro.forceLocked` must go back to false. While it is true, `isActive`
-//     reads false whatever is bought, so a real purchase would be recorded
-//     and then ignored.
+//  2. `Pro.testing` must go back to `.off`. While it is `.alwaysLocked`,
+//     `isActive` reads false whatever is bought, so a real purchase would be
+//     recorded and then ignored; while it is `.alwaysUnlocked`, everyone has
+//     the whole of Pro and there is nothing left to sell.
 //
 //  Until the products exist, `Product.products(for:)` returns nothing. The
 //  screen then shows the prices it was designed with, says plainly that

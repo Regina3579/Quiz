@@ -28,25 +28,43 @@ import Foundation
 enum Pro {
     static let activeKey = "quizspark.pro.active"
 
-    /// TESTING: when true, Pro reads as locked no matter what is saved, so the
-    /// whole app can be looked at the way a player without Pro sees it. Set back
-    /// to false to let the saved flag decide again.
+    /// TESTING ONLY: forces Pro on or off, whatever is saved on the phone.
     ///
-    /// This is here because there is no way to give Pro back once it has been
-    /// taken: `unlock()` can be reached from the paywall, nothing in the app
-    /// undoes it, and a phone that has tapped it once would otherwise never
-    /// show the locked state again without deleting the app.
+    /// This exists because neither state can otherwise be got back to at will.
+    /// There is no way to give Pro back once it has been taken — nothing in the
+    /// app undoes `unlock()` — and no way to take it away again short of
+    /// deleting the app, so looking at both halves of the game needs a switch
+    /// that does not depend on what happens to be saved.
     ///
-    /// While it is on, tapping "Unlock Pro" still writes the saved flag but
-    /// changes nothing on screen — the override wins. That is the point of it,
-    /// not a fault.
-    static let forceLocked = true
+    /// While an override is on, tapping "Unlock Pro" still writes the saved
+    /// flag but changes nothing on screen: the override wins. That is the
+    /// point of it, not a fault.
+    enum Testing {
+        /// The saved flag decides. **This is the setting to ship.**
+        case off
+        /// Everything Pro reads as locked: the game as a player without Pro
+        /// sees it.
+        case alwaysLocked
+        /// Everything Pro is open: the game as a subscriber sees it.
+        case alwaysUnlocked
+    }
+
+    /// MUST be `.off` before the App Store build. `.alwaysUnlocked` gives the
+    /// whole of Pro away to everyone; `.alwaysLocked` makes a real purchase
+    /// appear to do nothing.
+    static let testing: Testing = .alwaysUnlocked
 
     /// The single source of truth. Everything that gates on Pro reads this
     /// and nothing else, so there is one place to change when the purchase
     /// is real and one place to look when something is unexpectedly locked.
     static var isActive: Bool {
-        get { !forceLocked && UserDefaults.standard.bool(forKey: activeKey) }
+        get {
+            switch testing {
+            case .alwaysUnlocked: return true
+            case .alwaysLocked:   return false
+            case .off:            return UserDefaults.standard.bool(forKey: activeKey)
+            }
+        }
         set { UserDefaults.standard.set(newValue, forKey: activeKey) }
     }
 
