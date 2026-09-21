@@ -9,8 +9,8 @@
 //  the bridge at the foot — with the wording that has to follow the data laid
 //  over it at fractions of the picture. Everything fixed stays part of the
 //  painting; everything that could ever differ from what the app knows is
-//  live. That is why the mode names, the taglines and the "up to N gems"
-//  payouts are drawn here rather than lettered into the artwork.
+//  live. That is why the taglines and the "up to N gems" payouts are drawn
+//  here rather than lettered into the artwork.
 //
 //  The Timed Challenge is Pro too, but it is not one of these four: it has a
 //  button of its own on the adventure map, under the Trophy Room. The room
@@ -21,6 +21,10 @@
 //  leaving `hubModes` then leaves a painted card with nothing behind it,
 //  which `slots` filters out, rather than silently relabelling somebody
 //  else's picture.
+//
+//  All four titles are painted. They were nearly right already, and the one
+//  that was not — Jewel Rush — was settled by giving the mode the name its
+//  artwork letters rather than re-lettering four pictures.
 //
 
 import SwiftUI
@@ -49,7 +53,6 @@ struct ProHubView: View {
     /// at the same size as its neighbours.
     private static let taglineSize: CGFloat = 0.0215
     private static let payoutSize:  CGFloat = 0.0270
-    private static let titleSize:   CGFloat = 0.0730
 
     private static let backAt   = CGRect(x: 0.022, y: 0.010, width: 0.100, height: 0.050)
     private static let gemsAt   = CGRect(x: 0.800, y: 0.011, width: 0.098, height: 0.033)
@@ -61,9 +64,6 @@ struct ProHubView: View {
         let card: CGRect
         let tagline: CGRect
         let payout: CGRect
-        /// Set only on a card whose painted title had to be taken off, and
-        /// which therefore has its name drawn instead.
-        var title: CGRect? = nil
     }
 
     private static let allSlots: [Slot] = [
@@ -78,12 +78,7 @@ struct ProHubView: View {
         Slot(mode: .gemRush,
              card:    CGRect(x: 0.027, y: 0.545, width: 0.470, height: 0.258),
              tagline: CGRect(x: 0.054, y: 0.711, width: 0.202, height: 0.049),
-             payout:  CGRect(x: 0.128, y: 0.767, width: 0.198, height: 0.039),
-             // The artwork lettered this one "Jewel Rush". The app has called
-             // the currency gems since long before this picture arrived, so
-             // the title came off and is drawn here instead. The other three
-             // were already right and keep their painted lettering.
-             title:   CGRect(x: 0.082, y: 0.548, width: 0.256, height: 0.104)),
+             payout:  CGRect(x: 0.128, y: 0.767, width: 0.198, height: 0.039)),
         Slot(mode: .categoryMaster,
              card:    CGRect(x: 0.503, y: 0.545, width: 0.470, height: 0.258),
              tagline: CGRect(x: 0.539, y: 0.717, width: 0.218, height: 0.044),
@@ -113,7 +108,10 @@ struct ProHubView: View {
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(item: $briefing) { mode in
+        // Full screen, not a sheet: each mode's briefing is a painted page
+        // that runs to all four edges, and a page sheet would crop the top
+        // of it and leave the map showing behind the corners.
+        .fullScreenCover(item: $briefing) { mode in
             ProBriefingSheet(mode: mode)
                 .environmentObject(progress)
         }
@@ -165,10 +163,6 @@ struct ProHubView: View {
     private func card(_ slot: Slot, _ w: CGFloat, _ h: CGFloat) -> some View {
         let mode = slot.mode
 
-        if let title = slot.title {
-            liveTitle(mode, in: title, w, h)
-        }
-
         // The painting breaks each tagline over two lines; the app's own
         // taglines use a middle dot where that break falls.
         //
@@ -204,51 +198,6 @@ struct ProHubView: View {
             .accessibilityAddTraits(.isButton)
     }
 
-    /// A card title drawn rather than painted, matching the lettering the
-    /// artwork uses for the other three: a heavy rounded face over a thick
-    /// dark outline, on the soft plate those titles sit on.
-    private func liveTitle(_ mode: ProMode, in r: CGRect, _ w: CGFloat, _ h: CGFloat) -> some View {
-        let words = mode.title.split(separator: " ").map(String.init)
-        let first = words.first ?? mode.title
-        let rest  = words.dropFirst().joined(separator: " ")
-        let ink   = Color(red: 0.36, green: 0.09, blue: 0.53)
-
-        return VStack(spacing: -w * 0.004) {
-            outlined(first, w * Self.titleSize, ink,
-                     [Color(red: 1.00, green: 0.92, blue: 0.98),
-                      Color(red: 1.00, green: 0.62, blue: 0.86)])
-            if !rest.isEmpty {
-                outlined(rest, w * Self.titleSize, ink,
-                         [Color(red: 1.00, green: 0.93, blue: 0.60),
-                          Color(red: 0.99, green: 0.69, blue: 0.13)])
-            }
-        }
-        .shadow(color: Color(red: 0.26, green: 0.05, blue: 0.40).opacity(0.55),
-                radius: w * 0.008, y: w * 0.006)
-        .padding(.horizontal, w * 0.012)
-        .background(
-            // The soft darker blob the painted titles sit on, so this card
-            // reads as the same design as the other three rather than a
-            // title floating on bare colour.
-            RoundedRectangle(cornerRadius: w * 0.05, style: .continuous)
-                .fill(Color(red: 0.42, green: 0.16, blue: 0.62).opacity(0.34))
-                .blur(radius: w * 0.022)
-                .padding(-w * 0.016)
-        )
-        .placed(in: r, w, h)
-    }
-
-    private func outlined(_ text: String, _ size: CGFloat,
-                          _ ink: Color, _ face: [Color]) -> some View {
-        OutlinedText(plain: text,
-                     font: .system(size: size, weight: .black, design: .rounded),
-                     outline: ink,
-                     width: max(1.5, size * 0.085)) {
-            Text(text).foregroundStyle(
-                LinearGradient(colors: face, startPoint: .top, endPoint: .bottom))
-        }
-    }
-
     /// The painted back arrow, given something to do.
     private func backTarget(_ w: CGFloat, _ h: CGFloat) -> some View {
         Color.clear
@@ -265,11 +214,16 @@ struct ProHubView: View {
 
 // MARK: - How to play
 
-/// The card that explains a mode before the round begins, and starts it.
+/// The screen that explains a mode before the round begins, and starts it.
 ///
-/// Not private: the Timed Challenge is launched from the adventure map now,
-/// and it should arrive at the same rules card it always did rather than be
-/// dropped straight onto a running fifteen-second clock.
+/// Each mode has a painted screen of its own — its hero, its rules laid out
+/// in tiles, its reward banner and its start button. As on the Pro room, the
+/// picture carries everything fixed and only what the app knows is drawn on
+/// top: the "Up to N gems!" line and the two lines under it, because those
+/// come from GemRules and a painted number would quietly go stale.
+///
+/// Not private: the Timed Challenge is launched from the adventure map, so
+/// this has to be reachable from HomeView as well as from the Pro room.
 struct ProBriefingSheet: View {
     let mode: ProMode
     @EnvironmentObject private var progress: GameProgress
@@ -281,7 +235,334 @@ struct ProBriefingSheet: View {
 
     private var islands: [Island] { QuizData.islands }
 
+    // MARK: - Where everything sits on each painting
+
+    /// One mode's painted screen and the handful of places something live
+    /// has to land on it. Every rectangle is a fraction of the picture.
+    ///
+    /// Named Placement, not Layout: SwiftUI has a Layout protocol, and a
+    /// nested type of that name shadows it inside this struct.
+    private struct Placement {
+        let art: String
+        let aspect: CGFloat
+        /// The close cross, or the back chevron on Category Master.
+        let close: CGRect
+        /// The big action button along the foot of the screen.
+        let start: CGRect
+        /// The three lines inside the purple reward banner.
+        let head: CGRect
+        let sub1: CGRect
+        let sub2: CGRect
+        /// The gem purse, on the screen that paints one.
+        var purse: CGRect? = nil
+        /// The tile whose wording had to be re-lettered.
+        var note: CGRect? = nil
+        /// True where the painted screen lays out the island grid.
+        var picksCategory = false
+    }
+
+    private static let tall: CGFloat = 941.0 / 1671.0
+    private static let tall2: CGFloat = 941.0 / 1672.0
+
+    private static func placement(_ mode: ProMode) -> Placement? {
+        switch mode {
+        case .timedChallenge:
+            return Placement(art: "ProBriefTimed", aspect: tall,
+                          close: CGRect(x: 0.862, y: 0.008, width: 0.126, height: 0.080),
+                          start: CGRect(x: 0.034, y: 0.758, width: 0.932, height: 0.114),
+                          head:  CGRect(x: 0.245, y: 0.620, width: 0.550, height: 0.056),
+                          sub1:  CGRect(x: 0.245, y: 0.679, width: 0.550, height: 0.029),
+                          sub2:  CGRect(x: 0.245, y: 0.708, width: 0.550, height: 0.030))
+        case .lightningRound:
+            return Placement(art: "ProBriefLightning", aspect: tall,
+                          close: CGRect(x: 0.862, y: 0.008, width: 0.126, height: 0.080),
+                          start: CGRect(x: 0.060, y: 0.752, width: 0.880, height: 0.100),
+                          head:  CGRect(x: 0.245, y: 0.623, width: 0.550, height: 0.056),
+                          sub1:  CGRect(x: 0.245, y: 0.681, width: 0.550, height: 0.029),
+                          sub2:  CGRect(x: 0.245, y: 0.710, width: 0.550, height: 0.030))
+        case .perfectRun:
+            return Placement(art: "ProBriefPerfect", aspect: tall,
+                          close: CGRect(x: 0.862, y: 0.008, width: 0.126, height: 0.082),
+                          start: CGRect(x: 0.150, y: 0.728, width: 0.710, height: 0.117),
+                          head:  CGRect(x: 0.245, y: 0.606, width: 0.545, height: 0.054),
+                          sub1:  CGRect(x: 0.245, y: 0.663, width: 0.545, height: 0.028),
+                          sub2:  CGRect(x: 0.245, y: 0.691, width: 0.545, height: 0.029))
+        case .gemRush:
+            return Placement(art: "ProBriefJewel", aspect: tall2,
+                          close: CGRect(x: 0.862, y: 0.008, width: 0.126, height: 0.080),
+                          start: CGRect(x: 0.125, y: 0.720, width: 0.750, height: 0.105),
+                          head:  CGRect(x: 0.245, y: 0.600, width: 0.555, height: 0.056),
+                          sub1:  CGRect(x: 0.245, y: 0.654, width: 0.555, height: 0.029),
+                          sub2:  CGRect(x: 0.245, y: 0.683, width: 0.555, height: 0.029),
+                          note:  CGRect(x: 0.058, y: 0.498, width: 0.239, height: 0.090))
+        case .categoryMaster:
+            return Placement(art: "ProBriefCategory", aspect: tall2,
+                          close: CGRect(x: 0.022, y: 0.010, width: 0.106, height: 0.052),
+                          start: CGRect(x: 0.228, y: 0.840, width: 0.550, height: 0.080),
+                          head:  CGRect(x: 0.245, y: 0.304, width: 0.555, height: 0.050),
+                          sub1:  CGRect(x: 0.245, y: 0.355, width: 0.555, height: 0.027),
+                          sub2:  CGRect(x: 0.245, y: 0.382, width: 0.555, height: 0.028),
+                          purse: CGRect(x: 0.795, y: 0.012, width: 0.110, height: 0.033),
+                          picksCategory: true)
+        case .dailyChallenge:
+            // Free, played from the map, and has no painted screen of its own.
+            return nil
+        }
+    }
+
+    /// The nine islands the Category Master screen paints, row by row. The
+    /// tenth is drawn underneath them — see `extraIsland`.
+    private static let paintedTiles: [CGRect] = {
+        var out: [CGRect] = []
+        for (y0, y1) in [(0.400, 0.500), (0.508, 0.608), (0.616, 0.716)] {
+            for (x0, x1) in [(0.038, 0.325), (0.345, 0.655), (0.675, 0.962)] {
+                out.append(CGRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0))
+            }
+        }
+        return out
+    }()
+
+    /// Where the island the painting has no tile for is drawn.
+    private static let extraTile = CGRect(x: 0.345, y: 0.726, width: 0.310, height: 0.086)
+
+    // MARK: - Body
+
     var body: some View {
+        if let spot = Self.placement(mode) {
+            painted(spot)
+        } else {
+            plain
+        }
+    }
+
+    private func painted(_ spot: Placement) -> some View {
+        NavigationStack {
+            GeometryReader { geo in
+                ScrollView(showsIndicators: false) {
+                    scene(spot, width: geo.size.width)
+                }
+                .bounceOnlyWhenScrollable()
+                .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .background(backdrop.ignoresSafeArea())
+            .ignoresSafeArea(edges: .bottom)
+            .navigationDestination(isPresented: $playing) {
+                ProQuizView(route: ProRoute(mode: mode, islandID: chosenIsland?.id))
+            }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    /// A flat colour taken from the picture's own edge, for the strip above
+    /// it on a screen taller than the artwork.
+    private var backdrop: Color {
+        switch mode {
+        case .timedChallenge: return Color(red: 0.294, green: 0.510, blue: 0.706)
+        case .lightningRound: return Color(red: 0.180, green: 0.475, blue: 0.788)
+        case .perfectRun:     return Color(red: 0.310, green: 0.596, blue: 0.831)
+        case .gemRush:        return Color(red: 0.157, green: 0.110, blue: 0.290)
+        default:              return Color(red: 0.180, green: 0.475, blue: 0.788)
+        }
+    }
+
+    private func scene(_ spot: Placement, width w: CGFloat) -> some View {
+        let h = w / spot.aspect
+        let bonus = mode.bestPossibleGems - mode.questionCount * GemRules.perCorrect
+
+        return ZStack(alignment: .topLeading) {
+            Image(spot.art)
+                .resizable()
+                .scaledToFit()
+                .frame(width: w, height: h)
+
+            // The reward banner: the total and the two lines under it all
+            // come from GemRules, so none of them can drift from what a
+            // round actually pays.
+            ResultLine(pieces: [("Up to ", false),
+                                ("\(mode.bestPossibleGems)", true),
+                                (" gems!", false)],
+                       size: w * 0.058, outlineWidth: max(2, w * 0.006))
+                .placed(in: spot.head, w, h)
+
+            ResultLine(pieces: [("\(GemRules.perCorrect) gems", true),
+                                (" per correct answer", false)],
+                       size: w * 0.030, weight: .bold, outlineWidth: max(1, w * 0.003))
+                .placed(in: spot.sub1, w, h)
+
+            ResultLine(pieces: [("+ \(bonus) bonus gems", true),
+                                (" for a perfect run!", false)],
+                       size: w * 0.030, weight: .bold, outlineWidth: max(1, w * 0.003))
+                .placed(in: spot.sub2, w, h)
+
+            if let purse = spot.purse {
+                Text("\(progress.gems)")
+                    .font(.system(size: w * 0.044, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.45), radius: w * 0.004, y: 1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+                    .placed(in: purse, w, h)
+                    .accessibilityLabel("\(progress.gems) gems")
+            }
+
+            if let note = spot.note {
+                // This tile said "jewels" where the banner beneath it says
+                // gems. The mode is called Jewel Rush; the currency is not.
+                Text("Every correct answer gives you gems!")
+                    .font(.system(size: w * 0.030, weight: .heavy, design: .rounded))
+                    .foregroundColor(Color(red: 0.16, green: 0.10, blue: 0.38))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.6)
+                    .placed(in: note, w, h)
+            }
+
+            if spot.picksCategory { categoryTiles(w, h) }
+
+            startTarget(spot, w, h)
+            closeTarget(spot, w, h)
+        }
+        .frame(width: w, height: h)
+    }
+
+    // MARK: - Live pieces
+
+    private func closeTarget(_ spot: Placement, _ w: CGFloat, _ h: CGFloat) -> some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                dismiss()
+            }
+            .placed(in: spot.close, w, h)
+            .accessibilityLabel("Close")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    /// The painted action button. On Category Master it cannot do anything
+    /// until an island is chosen, so it says so rather than going quiet.
+    private func startTarget(_ spot: Placement, _ w: CGFloat, _ h: CGFloat) -> some View {
+        let ready = !mode.needsCategory || chosenIsland != nil
+
+        return Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard ready else { Haptics.play(.error); return }
+                Haptics.play(.light)
+                playing = true
+            }
+            .overlay(alignment: .bottom) {
+                if !ready {
+                    Text("Pick a category first")
+                        .font(.system(size: w * 0.030, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.6), radius: 3, y: 1)
+                        .offset(y: h * 0.052)
+                }
+            }
+            .placed(in: spot.start, w, h)
+            .accessibilityLabel(ready ? "Start the challenge" : "Pick a category first")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    // MARK: - Category Master's island grid
+
+    /// The painted tiles, made to answer to a tap, plus the island the
+    /// painting has no tile for.
+    ///
+    /// The grid was painted with nine islands and the game has ten. Rather
+    /// than quietly drop the tenth — Champion's Summit, the one island a
+    /// child reaches last and most wants to be tested on — it is drawn under
+    /// the grid in the same shape as the painted ones.
+    @ViewBuilder
+    private func categoryTiles(_ w: CGFloat, _ h: CGFloat) -> some View {
+        ForEach(Array(zip(islands.prefix(Self.paintedTiles.count), Self.paintedTiles)),
+                id: \.0.id) { island, rect in
+            tileTarget(island, in: rect, w, h, painted: true)
+        }
+
+        ForEach(Array(islands.dropFirst(Self.paintedTiles.count).prefix(1)), id: \.id) { island in
+            tileTarget(island, in: Self.extraTile, w, h, painted: false)
+        }
+    }
+
+    private func tileTarget(_ island: Island, in rect: CGRect,
+                            _ w: CGFloat, _ h: CGFloat, painted: Bool) -> some View {
+        let picked = chosenIsland?.id == island.id
+
+        return Group {
+            if painted {
+                // Nothing to draw: the picture already shows this island.
+                Color.clear
+            } else {
+                drawnTile(island, w: w)
+            }
+        }
+        .overlay {
+            if picked {
+                RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
+                    .strokeBorder(LinearGradient(
+                        colors: [Color(red: 1.00, green: 0.93, blue: 0.55),
+                                 Color(red: 0.98, green: 0.68, blue: 0.10)],
+                        startPoint: .top, endPoint: .bottom),
+                        lineWidth: max(3, w * 0.010))
+                    .shadow(color: Color(red: 1.00, green: 0.80, blue: 0.20).opacity(0.9),
+                            radius: w * 0.02)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            Haptics.play(.light)
+            chosenIsland = island
+        }
+        .placed(in: rect, w, h)
+        .accessibilityLabel("\(island.name)\(picked ? ", chosen" : "")")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// A tile for the island the artwork has no picture of, built to match
+    /// the painted ones: a bright rounded card with the island's emoji and
+    /// its name on a parchment label.
+    private func drawnTile(_ island: Island, w: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
+                .fill(island.palette.gradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: w * 0.032, style: .continuous)
+                        .strokeBorder(.white.opacity(0.9), lineWidth: max(2, w * 0.006))
+                )
+                .shadow(color: .black.opacity(0.35), radius: w * 0.012, y: w * 0.005)
+
+            VStack(spacing: 0) {
+                Text(island.emoji)
+                    .font(.system(size: w * 0.055))
+                    .padding(.top, w * 0.008)
+                Spacer(minLength: 0)
+                Text(island.name)
+                    .font(.system(size: w * 0.026, weight: .heavy, design: .rounded))
+                    .foregroundColor(Color(red: 0.30, green: 0.17, blue: 0.05))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .padding(.horizontal, w * 0.016)
+                    .padding(.vertical, w * 0.007)
+                    .background(
+                        RoundedRectangle(cornerRadius: w * 0.012, style: .continuous)
+                            .fill(LinearGradient(colors: [
+                                Color(red: 0.99, green: 0.94, blue: 0.80),
+                                Color(red: 0.93, green: 0.84, blue: 0.64)
+                            ], startPoint: .top, endPoint: .bottom))
+                    )
+                    .padding(.bottom, w * 0.010)
+            }
+        }
+    }
+
+    // MARK: - The plain screen
+
+    /// The Daily Challenge has no painted screen, so it keeps a simple one.
+    /// It is free and lives on the map, and it is the only mode that lands
+    /// here.
+    private var plain: some View {
         NavigationStack {
             ZStack {
                 mode.palette.gradient.ignoresSafeArea()

@@ -21,9 +21,11 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
     case timedChallenge
     case lightningRound
     case perfectRun
-    /// Pinned to its old spelling: the rawValue is the key this mode's
-    /// rounds and best score are saved under, so letting it follow the
-    /// rename would strand both.
+    /// The mode is called Jewel Rush, which is also what its rawValue says
+    /// and what every piece of its artwork letters. The case keeps the
+    /// `gemRush` spelling because the code around it — gemsPerCorrect,
+    /// GemRules, GemIcon — is all about gems, and the currency is gems
+    /// whatever this one mode is called.
     case gemRush = "jewelRush"
     case categoryMaster
 
@@ -56,7 +58,7 @@ enum ProMode: String, CaseIterable, Identifiable, Hashable {
         case .timedChallenge: return "Timed Challenge"
         case .lightningRound: return "Lightning Round"
         case .perfectRun:     return "Perfect Run"
-        case .gemRush:      return "Gem Rush"
+        case .gemRush:      return "Jewel Rush"
         case .categoryMaster: return "Category Master"
         }
     }

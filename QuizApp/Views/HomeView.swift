@@ -149,7 +149,7 @@ struct HomeView: View {
         .sheet(isPresented: $showPro) {
             ProUnlockView(reason: .proChallenges)
         }
-        .sheet(item: $briefing) { mode in
+        .fullScreenCover(item: $briefing) { mode in
             ProBriefingSheet(mode: mode)
                 .environmentObject(progress)
         }

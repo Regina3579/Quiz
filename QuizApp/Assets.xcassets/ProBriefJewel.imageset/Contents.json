@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "ProBriefJewel.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
