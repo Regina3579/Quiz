@@ -519,8 +519,9 @@ struct ProBriefingSheet: View {
     /// off this screen until the picture catches up, which is better than
     /// putting its name on somebody else's tile.
     private func categoryTiles(_ w: CGFloat, _ h: CGFloat) -> some View {
-        ForEach(Array(zip(islands, Self.paintedTiles)), id: \.0.id) { island, rect in
-            tileTarget(island, in: rect, w, h)
+        ForEach(Array(islands.prefix(Self.paintedTiles.count).enumerated()),
+                id: \.element.id) { pair in
+            tileTarget(pair.element, in: Self.paintedTiles[pair.offset], w, h)
         }
     }
 
