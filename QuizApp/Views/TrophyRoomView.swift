@@ -184,8 +184,16 @@ struct TrophyRoomView: View {
 
     private static let backAt  = CGRect(x: 0.028, y: 0.013, width: 0.094, height: 0.051)
     private static let closeAt = CGRect(x: 0.878, y: 0.013, width: 0.094, height: 0.051)
-    /// The child's name on the wooden sign, in front of "Trophy Room".
-    private static let nameAt  = CGRect(x: 0.283, y: 0.052, width: 0.362, height: 0.060)
+    /// The child's name on the plank above "Trophy Room".
+    ///
+    /// Sized and placed against the glyphs, not the line box. A Text is
+    /// centred on its ascender-to-descender box, which sits lower than the
+    /// letters look like they do, and at the painted size that dropped the
+    /// tail of a "g" fourteen points into "Trophy Room" below. The name is a
+    /// shade smaller and higher than the artwork drew it, and clears the
+    /// blue lettering — which starts at y 0.108 — by about eleven points.
+    private static let nameAt  = CGRect(x: 0.283, y: 0.044, width: 0.362, height: 0.054)
+    private static let nameSize: CGFloat = 0.078
     private static let wonAt   = CGRect(x: 0.375, y: 0.193, width: 0.250, height: 0.032)
 
     /// One Grand Cup card: where its tally is written and where its bar runs.
@@ -298,7 +306,7 @@ struct TrophyRoomView: View {
 
         if !playerName.isEmpty {
             OutlinedText(plain: "\(playerName)'s",
-                         font: .system(size: w * 0.088, weight: .black, design: .rounded),
+                         font: .system(size: w * Self.nameSize, weight: .black, design: .rounded),
                          outline: Color(red: 0.36, green: 0.16, blue: 0.05),
                          width: max(2, w * 0.007)) {
                 Text("\(playerName)'s").foregroundStyle(LinearGradient(
