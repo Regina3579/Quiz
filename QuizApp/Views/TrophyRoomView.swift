@@ -142,18 +142,17 @@ struct ArchShape: InsettableShape {
     }
 }
 
-// MARK: - The room
-/// The Trophy Room, as painted.
+// MARK: - The room/// The Trophy Room, as painted: one page that scrolls.
 ///
-/// Two painted screens carry it. The first is the room itself: the child's
-/// name over the door, how many awards are won, the four Grand Cups with
-/// their progress, and the ten adventures along the foot. The second is the
-/// Special Achievements list, which pages sideways.
+/// The room is at the top — the child's name over the door, how many awards
+/// are won, the four Grand Cups and the ten adventures. Below it the hall
+/// carries straight on into Special Achievements, and the whole thing is one
+/// scroll rather than pages to swipe between.
 ///
 /// Everything fixed belongs to the pictures. What the app knows is drawn on
 /// top at fractions of them — the name, the counts, the four cup bars — and
-/// the achievement rows are drawn outright, because there are nine of them
-/// and the artwork has room for four to a page.
+/// the achievement rows are drawn outright so the list is as long as the
+/// catalogue is, however many that comes to.
 ///
 /// The room's ten island badges are all bright, none of them locked. That is
 /// deliberate: this is a room for showing what a child has, and a wall of
@@ -163,28 +162,25 @@ struct TrophyRoomView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(Player.nameKey) private var playerName = ""
 
-    @State private var page = 0
     @State private var openIsland: Island?
 
     private let islands = QuizData.islands
     private var cups: [Achievement] { AchievementCatalog.grandCups }
     private var badges: [Achievement] { AchievementCatalog.badges }
 
-    /// Four achievements to a page, the way the artwork lays them out.
-    private static let perPage = 4
-    private var awardPages: Int {
-        max(1, (badges.count + Self.perPage - 1) / Self.perPage)
-    }
-
     // MARK: - Where things sit on the paintings
     //
-    // Both scenes are 941 x 1672 and every rectangle below is a fraction of
-    // that, measured off the pictures themselves.
+    // The room is 941 x 1672 and the two achievement pieces are cut from
+    // pictures of the same width, so every rectangle below is a fraction of
+    // the picture it belongs to.
 
-    private static let sceneAspect: CGFloat = 941.0 / 1672.0
-    /// Deep warm stone from the hall's own shadows, for the strip above and
-    /// below the picture on a screen of a different shape.
-    private static let hall = Color(red: 0.272, green: 0.153, blue: 0.090)
+    private static let roomAspect: CGFloat = 941.0 / 1672.0
+    private static let headAspect: CGFloat = 941.0 / 305.0
+    private static let footAspect: CGFloat = 941.0 / 368.0
+
+    /// The hall's own stone, read from the slivers either side of the painted
+    /// rows. It backs the drawn rows and fills the screen behind the scroll.
+    private static let wall = Color(red: 0.365, green: 0.243, blue: 0.192)
 
     private static let backAt  = CGRect(x: 0.028, y: 0.013, width: 0.094, height: 0.051)
     private static let closeAt = CGRect(x: 0.878, y: 0.013, width: 0.094, height: 0.051)
@@ -224,72 +220,76 @@ struct TrophyRoomView: View {
         return out
     }()
 
-    /// The achievement list: where the first row starts, how tall each is and
-    /// how far apart, plus where the page dots go.
-    private static let rowTop: CGFloat = 0.2480
-    private static let rowHeight: CGFloat = 0.1245
-    private static let rowPitch: CGFloat = 0.1335
-    private static let rowX: CGFloat = 0.014
-    private static let rowW: CGFloat = 0.972
-    private static let dotsAt = CGRect(x: 0.380, y: 0.921, width: 0.240, height: 0.030)
-    /// The chip the second painted page wears, which every page now gets.
-    private static let pageChipAt = CGRect(x: 0.330, y: 0.212, width: 0.340, height: 0.034)
-
-    /// The eight row colours the artwork uses, in order, then round again.
+    /// The nine row colours the artwork uses, in order.
     private static let rowFace: [[Color]] = [
         [Color(red: 1.00, green: 0.95, blue: 0.62), Color(red: 0.97, green: 0.85, blue: 0.36)],
         [Color(red: 0.36, green: 0.82, blue: 0.99), Color(red: 0.13, green: 0.62, blue: 0.93)],
         [Color(red: 0.99, green: 0.65, blue: 0.56), Color(red: 0.94, green: 0.38, blue: 0.33)],
         [Color(red: 0.82, green: 0.55, blue: 0.98), Color(red: 0.62, green: 0.34, blue: 0.92)],
-        [Color(red: 0.24, green: 0.76, blue: 0.36), Color(red: 0.02, green: 0.55, blue: 0.19)],
+        [Color(red: 0.42, green: 0.85, blue: 0.48), Color(red: 0.13, green: 0.66, blue: 0.27)],
         [Color(red: 0.93, green: 0.24, blue: 0.47), Color(red: 0.78, green: 0.07, blue: 0.31)],
         [Color(red: 0.20, green: 0.55, blue: 0.90), Color(red: 0.02, green: 0.38, blue: 0.76)],
-        [Color(red: 0.98, green: 0.62, blue: 0.10), Color(red: 0.88, green: 0.42, blue: 0.01)]
+        [Color(red: 0.98, green: 0.62, blue: 0.10), Color(red: 0.88, green: 0.42, blue: 0.01)],
+        [Color(red: 0.72, green: 0.52, blue: 0.99), Color(red: 0.52, green: 0.28, blue: 0.90)]
     ]
 
     // MARK: - Body
 
     var body: some View {
         GeometryReader { geo in
-            TabView(selection: $page) {
-                scene(geo, "TrophyRoomScene") { w, h in roomLayer(w, h) }
-                    .tag(0)
+            let w = geo.size.width
 
-                ForEach(0..<awardPages, id: \.self) { i in
-                    scene(geo, "TrophyAchieveScene") { w, h in awardLayer(i, w, h) }
-                        .tag(i + 1)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    roomScene(w)
+
+                    Image("TrophyAchieveHead")
+                        .resizable().scaledToFit().frame(width: w)
+
+                    VStack(spacing: w * 0.021) {
+                        ForEach(Array(badges.enumerated()), id: \.element.id) { pair in
+                            awardRow(pair.element,
+                                     face: Self.rowFace[pair.offset % Self.rowFace.count],
+                                     w: w)
+                        }
+                    }
+                    .padding(.horizontal, w * 0.014)
+                    .padding(.vertical, w * 0.021)
+                    .frame(width: w)
+                    .background(Self.wall)
+
+                    Image("TrophyAchieveFoot")
+                        .resizable().scaledToFit().frame(width: w)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
+            // Always reachable, however far down the hall you have scrolled,
+            // and sitting exactly where the room's painted cross is so that
+            // at the top of the scroll it reads as that one button.
+            .overlay(alignment: .topTrailing) {
+                closeButton(w)
+                    .padding(.trailing, w * 0.028)
+                    .padding(.top, w * 0.023)
+            }
         }
-        .background(Self.hall.ignoresSafeArea())
+        .background(Self.wall.ignoresSafeArea())
         .sheet(item: $openIsland) { island in
             AdventureLadderSheet(island: island)
                 .environmentObject(progress)
         }
     }
 
-    /// One painted page, shown whole and centred. The pictures are a squarer
-    /// shape than a phone, so there is stone above and below rather than a
-    /// cropped picture.
-    private func scene<Overlay: View>(_ geo: GeometryProxy, _ art: String,
-                                      @ViewBuilder overlay: @escaping (CGFloat, CGFloat) -> Overlay)
-    -> some View {
-        let w = min(geo.size.width, geo.size.height * Self.sceneAspect)
-        let h = w / Self.sceneAspect
+    // MARK: - The room
+
+    private func roomScene(_ w: CGFloat) -> some View {
+        let h = w / Self.roomAspect
 
         return ZStack(alignment: .topLeading) {
-            Image(art)
-                .resizable()
-                .scaledToFit()
-                .frame(width: w, height: h)
-            overlay(w, h)
+            Image("TrophyRoomScene")
+                .resizable().scaledToFit().frame(width: w, height: h)
+            roomLayer(w, h)
         }
         .frame(width: w, height: h)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-
-    // MARK: - The room
 
     @ViewBuilder
     private func roomLayer(_ w: CGFloat, _ h: CGFloat) -> some View {
@@ -339,8 +339,15 @@ struct TrophyRoomView: View {
                 .accessibilityAddTraits(.isButton)
         }
 
-        closeTarget(Self.backAt, w, h, "Back")
-        closeTarget(Self.closeAt, w, h, "Close the trophy room")
+        Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.play(.light)
+                dismiss()
+            }
+            .placed(in: Self.backAt, w, h)
+            .accessibilityLabel("Back")
+            .accessibilityAddTraits(.isButton)
     }
 
     /// The tally and the bar on one Grand Cup card. The card, its trophy and
@@ -360,17 +367,11 @@ struct TrophyRoomView: View {
             .placed(in: slot.num, w, h)
 
         GeometryReader { bar in
-            let full = bar.size.width
             Capsule()
                 .fill(LinearGradient(colors: face, startPoint: .top, endPoint: .bottom))
-                .frame(width: max(share > 0 ? bar.size.height : 0, full * share))
-                .overlay(alignment: .top) {
-                    Capsule()
-                        .fill(.white.opacity(0.45))
-                        .frame(width: max(0, full * share - bar.size.height * 0.6),
-                               height: bar.size.height * 0.28)
-                        .padding(.top, bar.size.height * 0.16)
-                }
+                .frame(width: share > 0
+                       ? max(bar.size.height, bar.size.width * share)
+                       : 0)
         }
         .placed(in: slot.bar, w, h)
         .accessibilityHidden(true)
@@ -384,48 +385,6 @@ struct TrophyRoomView: View {
 
     // MARK: - Special achievements
 
-    @ViewBuilder
-    private func awardLayer(_ index: Int, _ w: CGFloat, _ h: CGFloat) -> some View {
-        let start = index * Self.perPage
-        let slice = Array(badges.dropFirst(start).prefix(Self.perPage))
-
-        if awardPages > 1 {
-            Text("Page \(index + 1) of \(awardPages)")
-                .font(.system(size: w * 0.036, weight: .heavy, design: .rounded))
-                .foregroundColor(Color(red: 1.00, green: 0.93, blue: 0.78))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .padding(.horizontal, w * 0.035)
-                .padding(.vertical, w * 0.012)
-                .background(Capsule().fill(Color(red: 0.31, green: 0.15, blue: 0.06)))
-                .overlay(Capsule().strokeBorder(Color(red: 0.85, green: 0.65, blue: 0.30),
-                                                lineWidth: max(1.5, w * 0.004)))
-                .placed(in: Self.pageChipAt, w, h)
-        }
-
-        ForEach(Array(slice.enumerated()), id: \.element.id) { pair in
-            awardRow(pair.element,
-                     face: Self.rowFace[(start + pair.offset) % Self.rowFace.count], w: w)
-                .placed(in: CGRect(x: Self.rowX,
-                                   y: Self.rowTop + CGFloat(pair.offset) * Self.rowPitch,
-                                   width: Self.rowW,
-                                   height: Self.rowHeight), w, h)
-        }
-
-        // The dots say how many pages there are, so they are drawn rather
-        // than painted — the artwork's four were only ever a guess at it.
-        HStack(spacing: w * 0.018) {
-            ForEach(0..<awardPages, id: \.self) { i in
-                Circle()
-                    .fill(i == index ? Color(red: 1.00, green: 0.82, blue: 0.25)
-                                     : Color.white.opacity(0.45))
-                    .frame(width: w * 0.020, height: w * 0.020)
-            }
-        }
-        .placed(in: Self.dotsAt, w, h)
-        .accessibilityHidden(true)
-    }
-
     /// One achievement, drawn in the artwork's shape: a coloured card with a
     /// gold medal at the left, what it asks in the middle, and the chest it
     /// pays out at the right.
@@ -438,7 +397,7 @@ struct TrophyRoomView: View {
         return HStack(spacing: w * 0.018) {
             medal(award, w: w)
 
-            VStack(alignment: .leading, spacing: w * 0.006) {
+            VStack(alignment: .leading, spacing: w * 0.007) {
                 Text(award.title)
                     .font(.system(size: w * 0.046, weight: .black, design: .rounded))
                     .foregroundColor(Color(red: 0.13, green: 0.09, blue: 0.25))
@@ -464,8 +423,8 @@ struct TrophyRoomView: View {
             reward(award, won: won, w: w)
         }
         .padding(.horizontal, w * 0.022)
-        .padding(.vertical, w * 0.012)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, w * 0.016)
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: w * 0.042, style: .continuous)
                 .fill(LinearGradient(colors: face, startPoint: .topLeading,
@@ -495,7 +454,7 @@ struct TrophyRoomView: View {
                                      center: .topLeading, startRadius: 0, endRadius: w * 0.09))
             Text(award.emoji).font(.system(size: w * 0.055))
         }
-        .frame(width: w * 0.110, height: w * 0.110)
+        .frame(width: w * 0.115, height: w * 0.115)
         .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
     }
 
@@ -507,8 +466,9 @@ struct TrophyRoomView: View {
                     .fill(LinearGradient(colors: [Color(red: 0.70, green: 0.98, blue: 0.42),
                                                   Color(red: 0.32, green: 0.80, blue: 0.16)],
                                          startPoint: .top, endPoint: .bottom))
-                    .frame(width: max(share > 0 ? bar.size.height : 0,
-                                      bar.size.width * share))
+                    .frame(width: share > 0
+                           ? max(bar.size.height, bar.size.width * share)
+                           : 0)
             }
             .overlay(Capsule().strokeBorder(.white.opacity(0.6), lineWidth: 1.5))
         }
@@ -537,9 +497,7 @@ struct TrophyRoomView: View {
             .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
         } else if award.opensChest {
             Image("TrophyChest")
-                .resizable()
-                .scaledToFit()
-                .frame(width: w * 0.115)
+                .resizable().scaledToFit().frame(width: w * 0.115)
                 .shadow(color: .black.opacity(0.3), radius: w * 0.008, y: w * 0.003)
         } else {
             Image(systemName: "chevron.right")
@@ -552,17 +510,30 @@ struct TrophyRoomView: View {
 
     // MARK: - Shared
 
-    private func closeTarget(_ r: CGRect, _ w: CGFloat, _ h: CGFloat,
-                             _ label: String) -> some View {
-        Color.clear
-            .contentShape(Rectangle())
-            .onTapGesture {
-                Haptics.play(.light)
-                dismiss()
-            }
-            .placed(in: r, w, h)
-            .accessibilityLabel(label)
-            .accessibilityAddTraits(.isButton)
+    /// Drawn to match the cross the room is painted with, so that at the top
+    /// of the scroll the two read as one button and further down it is the
+    /// only one there.
+    private func closeButton(_ w: CGFloat) -> some View {
+        Button {
+            Haptics.play(.light)
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: w * 0.042, weight: .black))
+                .foregroundColor(.white)
+                .frame(width: w * 0.094, height: w * 0.094)
+                .background(
+                    Circle().fill(LinearGradient(
+                        colors: [Color(red: 0.37, green: 0.22, blue: 0.13),
+                                 Color(red: 0.22, green: 0.12, blue: 0.07)],
+                        startPoint: .top, endPoint: .bottom))
+                )
+                .overlay(Circle().strokeBorder(Color(red: 0.85, green: 0.65, blue: 0.30),
+                                               lineWidth: max(2, w * 0.005)))
+                .shadow(color: .black.opacity(0.4), radius: w * 0.010, y: w * 0.004)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Close the trophy room")
     }
 }
 
