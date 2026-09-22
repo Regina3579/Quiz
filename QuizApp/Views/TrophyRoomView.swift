@@ -393,127 +393,11 @@ struct TrophyRoomView: View {
 
     // MARK: - Special achievements
 
-    /// One achievement, drawn in the artwork's shape: a coloured card with a
-    /// gold medal at the left, what it asks in the middle, and the chest it
-    /// pays out at the right.
+    /// One achievement, in the shape both painted lists use.
     private func awardRow(_ award: Achievement, face: [Color], w: CGFloat) -> some View {
-        let won = progress.hasWon(award)
-        let standing = progress.standing(award)
-        let share = award.target > 0
-            ? min(1, CGFloat(standing) / CGFloat(award.target)) : 0
-
-        return HStack(spacing: w * 0.018) {
-            medal(award, w: w)
-
-            VStack(alignment: .leading, spacing: w * 0.007) {
-                Text(award.title)
-                    .font(.system(size: w * 0.046, weight: .black, design: .rounded))
-                    .foregroundColor(Color(red: 0.13, green: 0.09, blue: 0.25))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-
-                Text(award.detail)
-                    .font(.system(size: w * 0.030, weight: .semibold, design: .rounded))
-                    .foregroundColor(Color(red: 0.18, green: 0.14, blue: 0.30))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-
-                trackBar(share: won ? 1 : share, w: w)
-
-                Text(won ? "Completed!" : remainingLine(standing, of: award.target))
-                    .font(.system(size: w * 0.032, weight: .heavy, design: .rounded))
-                    .foregroundColor(Color(red: 0.13, green: 0.09, blue: 0.25))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            reward(award, won: won, w: w)
-        }
-        .padding(.horizontal, w * 0.022)
-        .padding(.vertical, w * 0.016)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: w * 0.042, style: .continuous)
-                .fill(LinearGradient(colors: face, startPoint: .topLeading,
-                                     endPoint: .bottomTrailing))
-                .overlay(
-                    RoundedRectangle(cornerRadius: w * 0.042, style: .continuous)
-                        .strokeBorder(.white.opacity(0.85), lineWidth: max(2, w * 0.005))
-                )
-                .shadow(color: .black.opacity(0.35), radius: w * 0.014, y: w * 0.005)
-        )
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(won
-            ? "\(award.title), completed. \(award.detail)"
-            : "\(award.title). \(award.detail). \(remainingLine(standing, of: award.target))")
-    }
-
-    /// The gold medal at the head of a row, with the award's own emoji in it.
-    private func medal(_ award: Achievement, w: CGFloat) -> some View {
-        let gold = LinearGradient(colors: [Color(red: 1.00, green: 0.91, blue: 0.48),
-                                           Color(red: 0.93, green: 0.62, blue: 0.09)],
-                                  startPoint: .top, endPoint: .bottom)
-        return ZStack {
-            Circle().fill(gold)
-            Circle().strokeBorder(.white.opacity(0.9), lineWidth: max(2, w * 0.005))
-            Circle()
-                .fill(RadialGradient(colors: [.white.opacity(0.75), .clear],
-                                     center: .topLeading, startRadius: 0, endRadius: w * 0.09))
-            Text(award.emoji).font(.system(size: w * 0.055))
-        }
-        .frame(width: w * 0.115, height: w * 0.115)
-        .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
-    }
-
-    private func trackBar(share: CGFloat, w: CGFloat) -> some View {
-        GeometryReader { bar in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.black.opacity(0.32))
-                Capsule()
-                    .fill(LinearGradient(colors: [Color(red: 0.70, green: 0.98, blue: 0.42),
-                                                  Color(red: 0.32, green: 0.80, blue: 0.16)],
-                                         startPoint: .top, endPoint: .bottom))
-                    .frame(width: share > 0
-                           ? max(bar.size.height, bar.size.width * share)
-                           : 0)
-            }
-            .overlay(Capsule().strokeBorder(.white.opacity(0.6), lineWidth: 1.5))
-        }
-        .frame(height: w * 0.028)
-    }
-
-    /// What the row pays: a tick once it is won, otherwise the chest it is
-    /// still worth opening, or an arrow when there is no prize but the badge.
-    @ViewBuilder
-    private func reward(_ award: Achievement, won: Bool, w: CGFloat) -> some View {
-        if won {
-            HStack(spacing: w * 0.010) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: w * 0.036, weight: .black))
-                Text("Done!")
-                    .font(.system(size: w * 0.034, weight: .heavy, design: .rounded))
-            }
-            .foregroundColor(.white)
-            .padding(.horizontal, w * 0.024)
-            .padding(.vertical, w * 0.014)
-            .background(Capsule().fill(LinearGradient(
-                colors: [Color(red: 0.40, green: 0.86, blue: 0.40),
-                         Color(red: 0.10, green: 0.66, blue: 0.26)],
-                startPoint: .top, endPoint: .bottom)))
-            .overlay(Capsule().strokeBorder(.white, lineWidth: max(1.5, w * 0.004)))
-            .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
-        } else if award.opensChest {
-            Image("TrophyChest")
-                .resizable().scaledToFit().frame(width: w * 0.115)
-                .shadow(color: .black.opacity(0.3), radius: w * 0.008, y: w * 0.003)
-        } else {
-            Image(systemName: "chevron.right")
-                .font(.system(size: w * 0.050, weight: .black))
-                .foregroundColor(.white.opacity(0.9))
-                .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
-                .frame(width: w * 0.070)
-        }
+        AwardCard(award: award, face: face, w: w,
+                  won: progress.hasWon(award),
+                  standing: progress.standing(award))
     }
 
     // MARK: - Shared
@@ -1197,56 +1081,353 @@ private struct AdventureNiche: View {
 
 // MARK: - One adventure's ladder, in full
 
+
+// MARK: - One award, as both lists draw it
+
+/// A single achievement laid out the way the paintings do: a coloured card
+/// with a gold medal at the left, what it asks in the middle, and the chest
+/// it pays out at the right.
+///
+/// Shared by the Trophy Room's Special Achievements and by an adventure's
+/// own ladder, which draw the same row from different catalogues.
+struct AwardCard: View {
+    let award: Achievement
+    let face: [Color]
+    let w: CGFloat
+    let won: Bool
+    let standing: Int
+
+    private var share: CGFloat {
+        award.target > 0 ? min(1, CGFloat(standing) / CGFloat(award.target)) : 0
+    }
+
+    var body: some View {
+
+        HStack(spacing: w * 0.018) {
+            medal(award, w: w)
+
+            VStack(alignment: .leading, spacing: w * 0.007) {
+                Text(award.title)
+                    .font(.system(size: w * 0.046, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.13, green: 0.09, blue: 0.25))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+
+                Text(award.detail)
+                    .font(.system(size: w * 0.030, weight: .semibold, design: .rounded))
+                    .foregroundColor(Color(red: 0.18, green: 0.14, blue: 0.30))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+
+                trackBar(share: won ? 1 : share, w: w)
+
+                Text(won ? "Completed!" : remainingLine(standing, of: award.target))
+                    .font(.system(size: w * 0.032, weight: .heavy, design: .rounded))
+                    .foregroundColor(Color(red: 0.13, green: 0.09, blue: 0.25))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            reward(award, won: won, w: w)
+        }
+        .padding(.horizontal, w * 0.022)
+        .padding(.vertical, w * 0.016)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: w * 0.042, style: .continuous)
+                .fill(LinearGradient(colors: face, startPoint: .topLeading,
+                                     endPoint: .bottomTrailing))
+                .overlay(
+                    RoundedRectangle(cornerRadius: w * 0.042, style: .continuous)
+                        .strokeBorder(.white.opacity(0.85), lineWidth: max(2, w * 0.005))
+                )
+                .shadow(color: .black.opacity(0.35), radius: w * 0.014, y: w * 0.005)
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(won
+            ? "\(award.title), completed. \(award.detail)"
+            : "\(award.title). \(award.detail). \(remainingLine(standing, of: award.target))")
+    }
+
+    private func medal(_ award: Achievement, w: CGFloat) -> some View {
+        let gold = LinearGradient(colors: [Color(red: 1.00, green: 0.91, blue: 0.48),
+                                           Color(red: 0.93, green: 0.62, blue: 0.09)],
+                                  startPoint: .top, endPoint: .bottom)
+        return ZStack {
+            Circle().fill(gold)
+            Circle().strokeBorder(.white.opacity(0.9), lineWidth: max(2, w * 0.005))
+            Circle()
+                .fill(RadialGradient(colors: [.white.opacity(0.75), .clear],
+                                     center: .topLeading, startRadius: 0, endRadius: w * 0.09))
+            Text(award.emoji).font(.system(size: w * 0.055))
+        }
+        .frame(width: w * 0.115, height: w * 0.115)
+        .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
+    }
+
+    private func trackBar(share: CGFloat, w: CGFloat) -> some View {
+        GeometryReader { bar in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.black.opacity(0.32))
+                Capsule()
+                    .fill(LinearGradient(colors: [Color(red: 0.70, green: 0.98, blue: 0.42),
+                                                  Color(red: 0.32, green: 0.80, blue: 0.16)],
+                                         startPoint: .top, endPoint: .bottom))
+                    .frame(width: share > 0
+                           ? max(bar.size.height, bar.size.width * share)
+                           : 0)
+            }
+            .overlay(Capsule().strokeBorder(.white.opacity(0.6), lineWidth: 1.5))
+        }
+        .frame(height: w * 0.028)
+    }
+
+    @ViewBuilder
+    private func reward(_ award: Achievement, won: Bool, w: CGFloat) -> some View {
+        if won {
+            HStack(spacing: w * 0.010) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: w * 0.036, weight: .black))
+                Text("Done!")
+                    .font(.system(size: w * 0.034, weight: .heavy, design: .rounded))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, w * 0.024)
+            .padding(.vertical, w * 0.014)
+            .background(Capsule().fill(LinearGradient(
+                colors: [Color(red: 0.40, green: 0.86, blue: 0.40),
+                         Color(red: 0.10, green: 0.66, blue: 0.26)],
+                startPoint: .top, endPoint: .bottom)))
+            .overlay(Capsule().strokeBorder(.white, lineWidth: max(1.5, w * 0.004)))
+            .shadow(color: .black.opacity(0.28), radius: w * 0.008, y: w * 0.003)
+        } else if award.opensChest {
+            Image("TrophyChest")
+                .resizable().scaledToFit().frame(width: w * 0.115)
+                .shadow(color: .black.opacity(0.3), radius: w * 0.008, y: w * 0.003)
+        } else {
+            Image(systemName: "chevron.right")
+                .font(.system(size: w * 0.050, weight: .black))
+                .foregroundColor(.white.opacity(0.9))
+                .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+                .frame(width: w * 0.070)
+        }
+    }
+
+}
+
+/// One adventure's ladder: its five rungs, on a page of its own.
+///
+/// The header and the closing banner are painted per island wherever that
+/// art exists — LadderHeadJungle, LadderFootJungle and so on, looked up from
+/// the island's own background name so there is no second table to keep in
+/// step. An island with no painted pair falls back to its scenery with the
+/// same furniture drawn over it, so all ten work today and adding a painted
+/// page later is a pair of images rather than a code change.
 private struct AdventureLadderSheet: View {
     @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss
     let island: Island
 
+    /// "Jungle" out of "BgJungle".
+    private var key: String {
+        guard let bg = island.backgroundImageName, bg.hasPrefix("Bg") else { return "" }
+        return String(bg.dropFirst(2))
+    }
+
+    private func painted(_ prefix: String) -> String? {
+        let name = prefix + key
+        return key.isEmpty || UIImage(named: name) == nil ? nil : name
+    }
+
+    private static let headAspect: CGFloat = 852.0 / 572.0
+    private static let footAspect: CGFloat = 852.0 / 318.0
+    /// Where the tally and the back arrow sit on the painted header, as
+    /// fractions of the header itself.
+    private static let chipAt = CGRect(x: 0.272, y: 0.713, width: 0.456, height: 0.093)
+    private static let backAt = CGRect(x: 0.030, y: 0.045, width: 0.098, height: 0.149)
+
+    /// The five rungs' colours, taken off the painted page: bronze, silver,
+    /// gold, then the Explorer Cup and the Master Crown.
+    private static let rungFace: [[Color]] = [
+        [Color(red: 0.72, green: 0.48, blue: 0.25), Color(red: 0.49, green: 0.22, blue: 0.06)],
+        [Color(red: 0.40, green: 0.70, blue: 0.95), Color(red: 0.01, green: 0.38, blue: 0.76)],
+        [Color(red: 0.98, green: 0.80, blue: 0.30), Color(red: 0.76, green: 0.46, blue: 0.04)],
+        [Color(red: 0.66, green: 0.42, blue: 0.95), Color(red: 0.39, green: 0.09, blue: 0.80)],
+        [Color(red: 0.40, green: 0.82, blue: 0.45), Color(red: 0.02, green: 0.54, blue: 0.19)]
+    ]
+
+    private var tally: String {
+        "\(progress.bestCorrect(inIsland: island.id)) of 100 questions right"
+    }
+
     var body: some View {
-        ZStack {
-            VaultBackdrop()
+        GeometryReader { geo in
+            let w = geo.size.width
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 13) {
-                    Text(island.emoji)
-                        .font(.system(size: 42))
-                        .padding(.top, 8)
+                VStack(spacing: 0) {
+                    header(w)
 
-                    VaultBanner(text: island.name, size: 21, maxWidth: 320)
-
-                    HallLine(text: "\(progress.bestCorrect(inIsland: island.id)) of 100 questions right")
-
-                    VStack(spacing: 10) {
+                    VStack(spacing: w * 0.022) {
                         ForEach(Array(progress.ladder(for: island).enumerated()),
                                 id: \.element.id) { pair in
-                            AwardRow(award: pair.element,
-                                     won: progress.hasWon(pair.element),
-                                     standing: progress.standing(pair.element),
-                                     tint: Vault.card(pair.offset))
+                            AwardCard(award: pair.element,
+                                      face: Self.rungFace[pair.offset % Self.rungFace.count],
+                                      w: w,
+                                      won: progress.hasWon(pair.element),
+                                      standing: progress.standing(pair.element))
                         }
                     }
-                    .padding(.top, 4)
+                    .padding(.horizontal, w * 0.016)
+                    .padding(.vertical, w * 0.022)
+
+                    footer(w)
                 }
-                .padding(18)
+            }
+            .background(backdrop)
+            // Always there, however far down the page you are.
+            .overlay(alignment: .topLeading) {
+                backButton(w)
+                    .padding(.leading, w * 0.030)
+                    .padding(.top, w * 0.020)
             }
         }
-        .overlay(alignment: .topTrailing) {
-            VaultCloseButton { dismiss() }
+    }
+
+    /// The island's own scenery, behind everything. On a painted page it only
+    /// shows between and around the rows.
+    private var backdrop: some View {
+        ZStack {
+            IslandBackground(island: island)
+            Color.black.opacity(0.18)
         }
+        .ignoresSafeArea()
+    }
+
+    // MARK: - Header
+
+    @ViewBuilder
+    private func header(_ w: CGFloat) -> some View {
+        if let art = painted("LadderHead") {
+            let h = w / Self.headAspect
+            ZStack(alignment: .topLeading) {
+                Image(art).resizable().scaledToFit().frame(width: w, height: h)
+                Text(tally)
+                    .font(.system(size: w * 0.040, weight: .heavy, design: .rounded))
+                    .foregroundColor(Color(red: 0.28, green: 0.16, blue: 0.05))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .placed(in: Self.chipAt, w, h)
+                    .accessibilityLabel(tally)
+            }
+            .frame(width: w, height: h)
+        } else {
+            drawnHeader(w)
+        }
+    }
+
+    /// What an island without a painted page gets: its badge, its name and
+    /// the same tally, over its own scenery.
+    private func drawnHeader(_ w: CGFloat) -> some View {
+        VStack(spacing: w * 0.020) {
+            Group {
+                if let badge = painted("Island") {
+                    Image(badge).resizable().scaledToFit()
+                } else {
+                    Text(island.emoji).font(.system(size: w * 0.150))
+                }
+            }
+            .frame(width: w * 0.260, height: w * 0.260)
+            .shadow(color: .black.opacity(0.35), radius: w * 0.014, y: w * 0.005)
+
+            OutlinedText(plain: island.name,
+                         font: .system(size: w * 0.084, weight: .black, design: .rounded),
+                         outline: Color(red: 0.24, green: 0.12, blue: 0.03),
+                         width: max(2, w * 0.006)) {
+                Text(island.name).foregroundStyle(LinearGradient(
+                    colors: [Color(red: 1.00, green: 0.95, blue: 0.62),
+                             Color(red: 1.00, green: 0.78, blue: 0.20),
+                             Color(red: 0.93, green: 0.55, blue: 0.06)],
+                    startPoint: .top, endPoint: .bottom))
+            }
+
+            Text(tally)
+                .font(.system(size: w * 0.040, weight: .heavy, design: .rounded))
+                .foregroundColor(Color(red: 0.28, green: 0.16, blue: 0.05))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding(.horizontal, w * 0.055)
+                .padding(.vertical, w * 0.020)
+                .background(plank(w))
+
+            Text("EXPLORE  ·  LEARN  ·  GROW")
+                .font(.system(size: w * 0.034, weight: .heavy, design: .rounded))
+                .foregroundColor(Color(red: 0.30, green: 0.18, blue: 0.06))
+                .padding(.horizontal, w * 0.055)
+                .padding(.vertical, w * 0.014)
+                .background(plank(w))
+        }
+        .padding(.top, w * 0.130)
+        .padding(.bottom, w * 0.020)
+        .frame(width: w)
+    }
+
+    private func plank(_ w: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: w * 0.030, style: .continuous)
+            .fill(LinearGradient(colors: [Color(red: 0.99, green: 0.95, blue: 0.84),
+                                          Color(red: 0.92, green: 0.85, blue: 0.68)],
+                                 startPoint: .top, endPoint: .bottom))
+            .overlay(
+                RoundedRectangle(cornerRadius: w * 0.030, style: .continuous)
+                    .strokeBorder(Color(red: 0.55, green: 0.38, blue: 0.16),
+                                  lineWidth: max(2, w * 0.005))
+            )
+            .shadow(color: .black.opacity(0.30), radius: w * 0.012, y: w * 0.004)
+    }
+
+    // MARK: - Footer
+
+    @ViewBuilder
+    private func footer(_ w: CGFloat) -> some View {
+        if let art = painted("LadderFoot") {
+            Image(art).resizable().scaledToFit().frame(width: w)
+        } else {
+            Text("Every Question\nMakes You Stronger!")
+                .font(.system(size: w * 0.048, weight: .black, design: .rounded))
+                .foregroundColor(Color(red: 0.30, green: 0.18, blue: 0.06))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, w * 0.060)
+                .padding(.vertical, w * 0.028)
+                .background(plank(w))
+                .padding(.vertical, w * 0.050)
+        }
+    }
+
+    private func backButton(_ w: CGFloat) -> some View {
+        Button {
+            Haptics.play(.light)
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: w * 0.046, weight: .black))
+                .foregroundColor(.white)
+                .frame(width: w * 0.100, height: w * 0.100)
+                .background(
+                    Circle().fill(LinearGradient(
+                        colors: [Color(red: 0.36, green: 0.70, blue: 0.98),
+                                 Color(red: 0.13, green: 0.46, blue: 0.88)],
+                        startPoint: .top, endPoint: .bottom))
+                )
+                .overlay(Circle().strokeBorder(.white, lineWidth: max(2, w * 0.006)))
+                .shadow(color: .black.opacity(0.4), radius: w * 0.010, y: w * 0.004)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Back to the trophy room")
     }
 }
 
-// MARK: - The way out
 
-/// The close button, in the hall and in the ladder sheet alike.
-///
-/// It was 38 points across, which is under the 44 Apple asks for, and it sat
-/// 10 points off the top in the very corner — where a rounded screen curves
-/// the last few points away and a thumb has to be aimed rather than just put
-/// down. It is now a proper target, stood off the corner.
-///
-/// It is dark wood under a gold rim rather than the other way round. Gold on
-/// gold vanished into the hall's own gilding, which is the whole back wall.
 private struct VaultCloseButton: View {
     var label: String = "Close"
     let action: () -> Void
