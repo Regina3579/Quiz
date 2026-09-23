@@ -1216,14 +1216,13 @@ struct AwardCard: View {
 
 }
 
-/// One adventure's ladder: its five rungs, on a page of its own.
+/// One adventure's ladder: its five rungs, over that island's own scenery.
 ///
-/// The header and the closing banner are painted per island wherever that
-/// art exists — LadderHeadJungle, LadderFootJungle and so on, looked up from
-/// the island's own background name so there is no second table to keep in
-/// step. An island with no painted pair falls back to its scenery with the
-/// same furniture drawn over it, so all ten work today and adding a painted
-/// page later is a pair of images rather than a code change.
+/// Every island is built the same way — its drifting background dimmed
+/// right down, its badge and name above, and the five cards in front. The
+/// Jungle page was painted for a while and the rest generated to match it;
+/// seen side by side the generated ones read better, so the painting went
+/// and all ten are drawn.
 private struct AdventureLadderSheet: View {
     @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss
@@ -1235,17 +1234,11 @@ private struct AdventureLadderSheet: View {
         return String(bg.dropFirst(2))
     }
 
-    private func painted(_ prefix: String) -> String? {
-        let name = prefix + key
+    /// The island's round badge, where the catalogue has one.
+    private var badge: String? {
+        let name = "Island" + key
         return key.isEmpty || UIImage(named: name) == nil ? nil : name
     }
-
-    private static let headAspect: CGFloat = 852.0 / 572.0
-    private static let footAspect: CGFloat = 852.0 / 318.0
-    /// Where the tally and the back arrow sit on the painted header, as
-    /// fractions of the header itself.
-    private static let chipAt = CGRect(x: 0.272, y: 0.713, width: 0.456, height: 0.093)
-    private static let backAt = CGRect(x: 0.030, y: 0.045, width: 0.098, height: 0.149)
 
     /// The five rungs' colours, taken off the painted page: bronze, silver,
     /// gold, then the Explorer Cup and the Master Crown.
@@ -1307,39 +1300,30 @@ private struct AdventureLadderSheet: View {
 
     // MARK: - Header
 
-    @ViewBuilder
+    /// The island's badge, its name and its tally, over its own scenery.
     private func header(_ w: CGFloat) -> some View {
-        if let art = painted("LadderHead") {
-            let h = w / Self.headAspect
-            ZStack(alignment: .topLeading) {
-                Image(art).resizable().scaledToFit().frame(width: w, height: h)
-                Text(tally)
-                    .font(.system(size: w * 0.040, weight: .heavy, design: .rounded))
-                    .foregroundColor(Color(red: 0.28, green: 0.16, blue: 0.05))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .placed(in: Self.chipAt, w, h)
-                    .accessibilityLabel(tally)
-            }
-            .frame(width: w, height: h)
-        } else {
-            drawnHeader(w)
-        }
-    }
-
-    /// What an island without a painted page gets: its badge, its name and
-    /// the same tally, over its own scenery.
-    private func drawnHeader(_ w: CGFloat) -> some View {
         VStack(spacing: w * 0.020) {
+            // Clipped round with a gold ring. The badges are not consistent
+            // about transparency — some carry an alpha cut-out and some are
+            // opaque squares — so left as they are, a few islands would show
+            // a square pasted on the scenery and the rest would not.
             Group {
-                if let badge = painted("Island") {
-                    Image(badge).resizable().scaledToFit()
+                if let badge {
+                    Image(badge).resizable().scaledToFill()
                 } else {
                     Text(island.emoji).font(.system(size: w * 0.150))
                 }
             }
             .frame(width: w * 0.260, height: w * 0.260)
-            .shadow(color: .black.opacity(0.35), radius: w * 0.014, y: w * 0.005)
+            .clipShape(Circle())
+            .overlay(
+                Circle().strokeBorder(LinearGradient(
+                    colors: [Color(red: 1.00, green: 0.91, blue: 0.48),
+                             Color(red: 0.93, green: 0.62, blue: 0.09)],
+                    startPoint: .top, endPoint: .bottom),
+                    lineWidth: max(3, w * 0.010))
+            )
+            .shadow(color: .black.opacity(0.40), radius: w * 0.016, y: w * 0.006)
 
             OutlinedText(plain: island.name,
                          font: .system(size: w * 0.084, weight: .black, design: .rounded),
@@ -1388,12 +1372,8 @@ private struct AdventureLadderSheet: View {
 
     // MARK: - Footer
 
-    @ViewBuilder
     private func footer(_ w: CGFloat) -> some View {
-        if let art = painted("LadderFoot") {
-            Image(art).resizable().scaledToFit().frame(width: w)
-        } else {
-            Text("Every Question\nMakes You Stronger!")
+        Text("Every Question\nMakes You Stronger!")
                 .font(.system(size: w * 0.048, weight: .black, design: .rounded))
                 .foregroundColor(Color(red: 0.30, green: 0.18, blue: 0.06))
                 .multilineTextAlignment(.center)
@@ -1401,7 +1381,6 @@ private struct AdventureLadderSheet: View {
                 .padding(.vertical, w * 0.028)
                 .background(plank(w))
                 .padding(.vertical, w * 0.050)
-        }
     }
 
     private func backButton(_ w: CGFloat) -> some View {
