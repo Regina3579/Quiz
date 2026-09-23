@@ -142,7 +142,9 @@ struct ArchShape: InsettableShape {
     }
 }
 
-// MARK: - The room/// The Trophy Room, as painted: one page that scrolls.
+// MARK: - The room
+
+/// The Trophy Room, as painted: one page that scrolls.
 ///
 /// The room is at the top — the child's name over the door, how many awards
 /// are won, the four Grand Cups and the ten adventures. Below it the hall
