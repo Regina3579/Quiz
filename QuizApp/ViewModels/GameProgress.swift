@@ -21,11 +21,13 @@ final class GameProgress: ObservableObject {
     /// TESTING: when true, every sticker counts as already owned, so they can
     /// all be placed for free. Set back to false to restore buying with gems.
     ///
-    /// Off now, and it has to stay off: it short-circuits `owns`, which would
-    /// hand every child the whole book and leave the Pro lock doing nothing at
-    /// all. Turning it on again to look at the shelves also turns the paywall
-    /// off, silently.
-    static let unlockAllStickers = false
+    /// MUST be false before the App Store build. It short-circuits `owns`,
+    /// which hands every child the whole book and leaves the Pro sticker lock
+    /// doing nothing — the shop still draws its PRO badges, but `owns` is
+    /// checked first, so every sticker reads as bought and none of them are.
+    /// It takes the paywall off silently, which is exactly why it is written
+    /// down here rather than remembered.
+    static let unlockAllStickers = true
 
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]
