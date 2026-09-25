@@ -114,13 +114,19 @@ final class GameProgress: ObservableObject {
         stars(islandID: islandID, level: level) >= 1
     }
 
-    /// Whether a level can be played: it must be authored, its island
-    /// unlocked, and the previous level cleared (level 1 is always open).
+    /// Whether a level can be played: it must be authored, and the level
+    /// before it cleared (level 1 is always open).
+    ///
+    /// This is the only progression left in the game. Every adventure is open
+    /// from the start — see `isIslandUnlocked` — so the trail inside one is
+    /// where the climbing happens, and it is worth keeping: the ten levels of
+    /// an island are written as a ladder, level 1 for a seven-year-old and
+    /// level 10 to beat an adult, and handing a child level 9 first teaches
+    /// them only that the game is too hard.
     func isLevelUnlocked(island: Island, level: Int, allIslands: [Island]) -> Bool {
         // Still require the level to actually have questions.
         guard level <= island.authoredLevels else { return false }
         if Self.unlockEverything { return true }
-        guard isIslandUnlocked(island: island, allIslands: allIslands) else { return false }
         if level <= 1 { return true }
         return isCleared(islandID: island.id, level: level - 1)
     }
@@ -131,41 +137,24 @@ final class GameProgress: ObservableObject {
         return island.levels.allSatisfy { isCleared(islandID: island.id, level: $0.number) }
     }
 
-    /// The first island is always open; later islands open once the one
-    /// before them is complete.
+    /// Every adventure is open, always.
     ///
-    /// The last one asks for more. Champion's Summit gathers questions from
-    /// every other adventure, so it waits for every other adventure — not
-    /// just the one immediately before it. In an unbroken run those come to
-    /// the same thing, but they stop being the same the moment an island is
-    /// ever opened another way, and the Summit should mean what it says.
+    /// They used to unlock one after another, Champion's Summit last of all.
+    /// Played on a real phone it read as a wall of padlocks: nine greyed-out
+    /// circles a child cannot touch, and no way to see what is in them. A
+    /// child who wants dinosaurs today should get dinosaurs today, and a
+    /// family sharing the game should not have to grind through the jungle to
+    /// reach the one island they all fancy.
+    ///
+    /// The climbing lives inside an adventure instead, in `isLevelUnlocked`.
+    /// Ten levels is ladder enough; ten islands of waiting was not.
+    ///
+    /// Nothing calls this any more — the map draws every badge in colour and
+    /// every tap goes somewhere. It is kept, with its parameters, as the one
+    /// place a rule would go back if one is ever wanted again, so that the
+    /// decision is written down rather than merely absent.
     func isIslandUnlocked(island: Island, allIslands: [Island]) -> Bool {
-        if Self.unlockEverything { return true }
-        guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return false }
-        if index == 0 { return true }
-        if index == allIslands.count - 1 {
-            return allIslands.dropLast().allSatisfy { isIslandComplete($0) }
-        }
-        return isIslandComplete(allIslands[index - 1])
-    }
-
-    /// Why an adventure will not open yet, said the way a child would hear
-    /// it — a headline and a line of encouragement. Nil when it is open.
-    func lockReason(for island: Island, allIslands: [Island]) -> (headline: String, detail: String)? {
-        guard !isIslandUnlocked(island: island, allIslands: allIslands) else { return nil }
-        guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return nil }
-
-        if index == allIslands.count - 1 {
-            let earlier = allIslands.dropLast()
-            let done = earlier.filter { isIslandComplete($0) }.count
-            return ("Finish all \(earlier.count) adventures first!",
-                    "\(done) of \(earlier.count) done — keep going and the Summit opens.")
-        }
-
-        let before = allIslands[index - 1]
-        let cleared = levelsCleared(inIsland: before.id)
-        return ("Finish \(before.name) first!",
-                "\(cleared) of \(before.authoredLevels) levels done — keep going!")
+        true
     }
 
     // MARK: - Writing

@@ -28,8 +28,6 @@ struct HomeView: View {
     /// uses it from here — the map's other round, the Daily Challenge, has
     /// no clock to be surprised by and goes straight in.
     @State private var briefing: ProMode?
-    /// The adventure a child just tapped that is not open yet.
-    @State private var lockedIsland: Island?
 
     /// How far the trail has been pulled up, and how far the finger has moved
     /// since it went down. The two are kept apart so the map can follow a
@@ -135,17 +133,6 @@ struct HomeView: View {
                 // the parrot is still trying to move the map.
                 .contentShape(Rectangle())
                 .simultaneousGesture(mapDrag(maxScroll: maxScroll(fit: fit)))
-                .overlay {
-                    if let locked = lockedIsland,
-                       let why = progress.lockReason(for: locked, allIslands: islands) {
-                        LockedAdventureCard(island: locked,
-                                            headline: why.headline,
-                                            detail: why.detail) {
-                            withAnimation(.easeOut(duration: 0.2)) { lockedIsland = nil }
-                        }
-                        .transition(.opacity)
-                    }
-                }
             }
             .ignoresSafeArea()
             .navigationDestination(for: Island.self) { island in
@@ -320,21 +307,21 @@ struct HomeView: View {
 
     @ViewBuilder
     private func islandNode(island: Island, index: Int, diameter: CGFloat) -> some View {
-        let unlocked = progress.isIslandUnlocked(island: island, allIslands: islands)
         let earned = progress.totalStars(for: island)
         let maxStars = progress.maxStars(for: island)
         let complete = progress.isIslandComplete(island)
 
+        // Every adventure is open now, so every badge is in full colour and
+        // every tap goes somewhere. `unlocked` stays on IslandBadge for the
+        // day a rule comes back; nothing passes false any more.
         IslandBadge(island: island, number: index + 1,
-                    unlocked: unlocked, complete: unlocked && complete,
-                    earned: unlocked ? earned : 0,
+                    unlocked: true, complete: complete,
+                    earned: earned,
                     maxStars: maxStars, diameter: diameter)
             .contentShape(Rectangle())
             .onTapGesture {
                 Haptics.play(.light)
-                // A locked adventure used to swallow the tap. Saying what is
-                // still to do is the whole point of showing it at all.
-                if unlocked { path.append(island) } else { lockedIsland = island }
+                path.append(island)
             }
             .opacity(appeared ? 1 : 0)
             .scaleEffect(appeared ? 1 : 0.75)
@@ -665,101 +652,6 @@ private struct IslandBadge: View {
                 .shadow(color: .black.opacity(0.25), radius: 3, y: 2)
         }
         .frame(width: diameter * 1.62)
-    }
-}
-
-// MARK: - An adventure that is not open yet
-
-/// What a child gets for tapping a locked adventure: what has to be finished
-/// first, and how far along they already are.
-///
-/// It says what is left rather than what is refused. "6 of 10 levels done —
-/// keep going!" is a nudge; a padlock and silence is a door in the face, and
-/// the tap used to do nothing at all.
-private struct LockedAdventureCard: View {
-    let island: Island
-    let headline: String
-    let detail: String
-    let onClose: () -> Void
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.35)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture { Haptics.play(.light); onClose() }
-
-            VStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(island.palette.gradient)
-                        .frame(width: 74, height: 74)
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 3))
-                    Text(island.emoji).font(.system(size: 34))
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundColor(.white)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(LinearGradient(
-                            colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
-                                     Color(red: 0.97, green: 0.62, blue: 0.09)],
-                            startPoint: .top, endPoint: .bottom)))
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                        .offset(x: 26, y: 24)
-                }
-                .padding(.top, 6)
-                .padding(.bottom, 2)
-
-                Text(island.name)
-                    .font(Theme.display(20))
-                    .foregroundColor(Theme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-
-                Text(headline)
-                    .font(Theme.bold(16))
-                    .foregroundColor(Theme.ink)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(detail)
-                    .font(Theme.medium(13))
-                    .foregroundColor(Theme.inkSoft)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 4)
-
-                Button {
-                    Haptics.play(.light)
-                    onClose()
-                } label: {
-                    Text("Keep playing!")
-                        .font(Theme.bold(17))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Theme.nextButton))
-                        .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .padding(.top, 6)
-            }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 20)
-            .frame(maxWidth: 320)
-            .background(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .fill(LinearGradient(colors: [
-                        Color(red: 1.00, green: 0.99, blue: 0.95),
-                        Color(red: 1.00, green: 0.94, blue: 0.96)
-                    ], startPoint: .top, endPoint: .bottom))
-            )
-            .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(.white, lineWidth: 3))
-            .shadow(color: .black.opacity(0.3), radius: 18, y: 10)
-            .padding(.horizontal, 28)
-        }
     }
 }
 
