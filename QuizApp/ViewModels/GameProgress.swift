@@ -137,24 +137,40 @@ final class GameProgress: ObservableObject {
         return island.levels.allSatisfy { isCleared(islandID: island.id, level: $0.number) }
     }
 
-    /// Every adventure is open, always.
+    /// Every adventure is open except the last one.
     ///
-    /// They used to unlock one after another, Champion's Summit last of all.
-    /// Played on a real phone it read as a wall of padlocks: nine greyed-out
-    /// circles a child cannot touch, and no way to see what is in them. A
-    /// child who wants dinosaurs today should get dinosaurs today, and a
-    /// family sharing the game should not have to grind through the jungle to
-    /// reach the one island they all fancy.
+    /// They used to unlock one after another, and played on a real phone that
+    /// read as a wall of padlocks: nine greyed-out circles a child cannot
+    /// touch and cannot see into. A child who wants dinosaurs today should get
+    /// dinosaurs today, so the first nine are all open from the start.
     ///
-    /// The climbing lives inside an adventure instead, in `isLevelUnlocked`.
-    /// Ten levels is ladder enough; ten islands of waiting was not.
+    /// Champion's Summit is the exception, and it earns it. It draws its
+    /// questions from every other adventure, so it is the one island that is
+    /// genuinely *made of* the others — arriving there first would spoil nine
+    /// islands at once and be unplayably hard besides. It waits for all nine,
+    /// not merely for Ancient Kingdom in front of it.
     ///
-    /// Nothing calls this any more — the map draws every badge in colour and
-    /// every tap goes somewhere. It is kept, with its parameters, as the one
-    /// place a rule would go back if one is ever wanted again, so that the
-    /// decision is written down rather than merely absent.
+    /// The rest of the climbing lives inside an adventure, in
+    /// `isLevelUnlocked`.
     func isIslandUnlocked(island: Island, allIslands: [Island]) -> Bool {
-        true
+        if Self.unlockEverything { return true }
+        guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return true }
+        guard index == allIslands.count - 1 else { return true }
+        return allIslands.dropLast().allSatisfy { isIslandComplete($0) }
+    }
+
+    /// Why Champion's Summit will not open yet, said the way a child would
+    /// hear it — a headline and a line of encouragement. Nil when it is open,
+    /// which is always the case for the other nine.
+    ///
+    /// It says what is left rather than what is refused: "3 of 9 done" is a
+    /// nudge, where a padlock and silence is a door in the face.
+    func lockReason(for island: Island, allIslands: [Island]) -> (headline: String, detail: String)? {
+        guard !isIslandUnlocked(island: island, allIslands: allIslands) else { return nil }
+        let earlier = allIslands.dropLast()
+        let done = earlier.filter { isIslandComplete($0) }.count
+        return ("Finish all \(earlier.count) adventures first!",
+                "\(done) of \(earlier.count) done — play every level of each one, then the Summit opens.")
     }
 
     // MARK: - Writing
