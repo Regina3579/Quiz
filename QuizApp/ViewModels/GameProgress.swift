@@ -16,7 +16,7 @@ final class GameProgress: ObservableObject {
     /// TESTING: when true, every island and every authored level is unlocked
     /// so the whole game can be explored freely. Set back to false to restore
     /// the normal "unlock as you go" progression.
-    static let unlockEverything = true
+    static let unlockEverything = false
 
     /// TESTING: when true, every sticker counts as already owned, so they can
     /// all be placed for free. Set back to false to restore buying with gems.
@@ -27,7 +27,7 @@ final class GameProgress: ObservableObject {
     /// checked first, so every sticker reads as bought and none of them are.
     /// It takes the paywall off silently, which is exactly why it is written
     /// down here rather than remembered.
-    static let unlockAllStickers = true
+    static let unlockAllStickers = false
 
     /// Stars (0…3) keyed by "islandID-levelNumber".
     @Published private(set) var stars: [String: Int] = [:]

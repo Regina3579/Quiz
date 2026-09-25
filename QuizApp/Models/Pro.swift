@@ -52,7 +52,7 @@ enum Pro {
     /// MUST be `.off` before the App Store build. `.alwaysUnlocked` gives the
     /// whole of Pro away to everyone; `.alwaysLocked` makes a real purchase
     /// appear to do nothing.
-    static let testing: Testing = .alwaysUnlocked
+    static let testing: Testing = .off
 
     /// The single source of truth. Everything that gates on Pro reads this
     /// and nothing else, so there is one place to change when the purchase
