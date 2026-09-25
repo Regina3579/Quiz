@@ -33,6 +33,9 @@ struct ResultView: View {
     @State private var gemsShown = 0
     /// Trophy Room awards this level won, snapshotted as it was banked.
     @State private var awardsWon: [Achievement] = []
+    /// The cup party, when the round earned one. Held until the child taps it
+    /// away, so the result underneath waits its turn.
+    @State private var celebration: Celebration?
 
     private var earned: Int { model.starsEarned }
 
@@ -100,6 +103,14 @@ struct ResultView: View {
                     ConfettiView(isActive: celebrate)
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
+                }
+
+                if let celebration {
+                    CelebrationView(celebration: celebration) {
+                        withAnimation(.easeOut(duration: 0.3)) { self.celebration = nil }
+                    }
+                    .transition(.opacity)
+                    .zIndex(10)
                 }
             }
         }
@@ -191,6 +202,20 @@ struct ResultView: View {
             // change it.
             awardsWon = progress.recentlyUnlocked
             recorded = true
+
+            // A finished adventure or a faultless level gets the whole screen
+            // for a moment. It comes in just after the result has drawn, so
+            // the child sees the party land on top of it rather than instead
+            // of it.
+            if let party = Celebration.forLevel(island: model.island,
+                                                level: model.level.number,
+                                                correct: model.score,
+                                                total: model.totalQuestions,
+                                                awards: awardsWon) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    withAnimation(.easeIn(duration: 0.25)) { celebration = party }
+                }
+            }
         }
 
         withAnimation(.easeOut(duration: 0.5)) { showContent = true }
