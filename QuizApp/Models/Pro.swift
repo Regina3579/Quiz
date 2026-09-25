@@ -68,6 +68,31 @@ enum Pro {
         set { UserDefaults.standard.set(newValue, forKey: activeKey) }
     }
 
+    /// Clears Pro granted by the old free "Unlock Pro" button.
+    ///
+    /// Before the plan-and-pay screen existed, that button called `unlock()`,
+    /// which flips the saved flag and charges nothing. Anyone who tapped it on
+    /// one of those builds — every one of us testing, and every device the app
+    /// was ever shown on — has `activeKey` saved as true to this day. With
+    /// `testing` back to `.off` that flag is what `isActive` reads, so those
+    /// devices quietly keep the whole of Pro: the Challenge room opens without
+    /// a paywall and all twenty-five sticker pages turn.
+    ///
+    /// This runs once, the first time a build containing it launches, and
+    /// takes that flag away. It is safe for a real subscriber: `Pro.isActive`
+    /// is switched back on by `ProStore.refreshEntitlements()` on the App
+    /// Store's word, which is the only thing that should ever have set it.
+    ///
+    /// It cannot be removed later. A device that never runs it keeps the free
+    /// Pro forever, and there is no other way to take it back.
+    static func clearLegacyFreeUnlock() {
+        let done = "quizspark.pro.legacyFreeUnlockCleared"
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: done) else { return }
+        defaults.removeObject(forKey: activeKey)
+        defaults.set(true, forKey: done)
+    }
+
     /// Grants Pro.
     ///
     /// THIS IS NOT A PURCHASE. It flips the flag and nothing else — no money

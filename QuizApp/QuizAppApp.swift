@@ -14,6 +14,13 @@ struct QuizAppApp: App {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        // Takes back the Pro that the old free "Unlock Pro" button handed out.
+        // Runs once per device, and must happen before any view reads
+        // `Pro.isActive` — which HomeView does as it draws.
+        Pro.clearLegacyFreeUnlock()
+    }
+
     var body: some Scene {
         WindowGroup {
             HomeView()
