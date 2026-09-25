@@ -131,13 +131,41 @@ final class GameProgress: ObservableObject {
         return island.levels.allSatisfy { isCleared(islandID: island.id, level: $0.number) }
     }
 
-    /// The first island is always open; later islands open once the
-    /// previous island is complete.
+    /// The first island is always open; later islands open once the one
+    /// before them is complete.
+    ///
+    /// The last one asks for more. Champion's Summit gathers questions from
+    /// every other adventure, so it waits for every other adventure — not
+    /// just the one immediately before it. In an unbroken run those come to
+    /// the same thing, but they stop being the same the moment an island is
+    /// ever opened another way, and the Summit should mean what it says.
     func isIslandUnlocked(island: Island, allIslands: [Island]) -> Bool {
         if Self.unlockEverything { return true }
         guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return false }
         if index == 0 { return true }
+        if index == allIslands.count - 1 {
+            return allIslands.dropLast().allSatisfy { isIslandComplete($0) }
+        }
         return isIslandComplete(allIslands[index - 1])
+    }
+
+    /// Why an adventure will not open yet, said the way a child would hear
+    /// it — a headline and a line of encouragement. Nil when it is open.
+    func lockReason(for island: Island, allIslands: [Island]) -> (headline: String, detail: String)? {
+        guard !isIslandUnlocked(island: island, allIslands: allIslands) else { return nil }
+        guard let index = allIslands.firstIndex(where: { $0.id == island.id }) else { return nil }
+
+        if index == allIslands.count - 1 {
+            let earlier = allIslands.dropLast()
+            let done = earlier.filter { isIslandComplete($0) }.count
+            return ("Finish all \(earlier.count) adventures first!",
+                    "\(done) of \(earlier.count) done — keep going and the Summit opens.")
+        }
+
+        let before = allIslands[index - 1]
+        let cleared = levelsCleared(inIsland: before.id)
+        return ("Finish \(before.name) first!",
+                "\(cleared) of \(before.authoredLevels) levels done — keep going!")
     }
 
     // MARK: - Writing
