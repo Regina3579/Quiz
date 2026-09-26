@@ -4,14 +4,14 @@
 //
 //  The two ways to subscribe, and the App Store plumbing behind them.
 //
-//  BEFORE THIS CAN TAKE A PAYMENT, two things have to happen outside this
+//  BEFORE THIS CAN TAKE A PAYMENT, two things have to be true outside this
 //  file. Neither can be done from here.
 //
 //  1. The two subscriptions in `Plan.productID` must exist in App Store
-//     Connect, in one subscription group, with the prices set there. The
-//     identifiers below are placeholders and almost certainly not the ones
-//     the account will use.
-//  2. `Pro.testing` must go back to `.off`. While it is `.alwaysLocked`,
+//     Connect, in one subscription group, with the prices set there, and the
+//     Paid Applications agreement must be active. Until then the App Store
+//     answers with no products at all.
+//  2. `Pro.testing` must be `.off`. While it is `.alwaysLocked`,
 //     `isActive` reads false whatever is bought, so a real purchase would be
 //     recorded and then ignored; while it is `.alwaysUnlocked`, everyone has
 //     the whole of Pro and there is nothing left to sell.
@@ -34,12 +34,17 @@ final class ProStore: ObservableObject {
 
         var id: String { rawValue }
 
-        /// Placeholders. Replace with the real identifiers from App Store
-        /// Connect — nothing can be sold until these match.
+        /// The identifiers of the two subscriptions in App Store Connect, in
+        /// the "QuizSpark Pro" group. They must match there character for
+        /// character — a mismatch does not fail loudly, the App Store simply
+        /// returns no product and the plan cannot be bought.
+        ///
+        /// Product IDs are permanent in App Store Connect: they can never be
+        /// changed, and never reused even after a subscription is deleted.
         var productID: String {
             switch self {
-            case .monthly: return "com.quizspark.pro.monthly"
-            case .yearly:  return "com.quizspark.pro.yearly"
+            case .monthly: return "com.regina.QuizApp.pro.monthly"
+            case .yearly:  return "com.regina.QuizApp.pro.yearly"
             }
         }
 
