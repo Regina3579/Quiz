@@ -427,10 +427,14 @@ struct ProPlansView: View {
     }
 
     /// The two pages the App Store requires a subscription screen to link to.
-    /// Point these at the real pages before submitting.
+    ///
+    /// Terms is Apple's standard licence agreement, which Apple explicitly
+    /// allows an app to use instead of writing its own. Privacy has to be the
+    /// app's own policy — it is published beside the support page on GitHub
+    /// Pages, and the same address is given in App Store Connect.
     private enum Legal {
         static let terms   = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
-        static let privacy = URL(string: "https://www.apple.com/legal/privacy/")
+        static let privacy = URL(string: "https://regina3579.github.io/quizisland-support/privacy.html")
     }
 }
 

@@ -54,6 +54,7 @@
 		AB0000000000000000000046 /* pageflip.wav in Resources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000047 /* pageflip.wav */; };
 		AB0000000000000000000048 /* stickerpop.wav in Resources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000049 /* stickerpop.wav */; };
 		AB000000000000000000006B /* music_map.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = AB000000000000000000006A /* music_map.mp3 */; };
+		AB0000000000000000000082 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000083 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -105,6 +106,7 @@
 		AB0000000000000000000047 /* pageflip.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = pageflip.wav; sourceTree = "<group>"; };
 		AB0000000000000000000049 /* stickerpop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = stickerpop.wav; sourceTree = "<group>"; };
 		AB000000000000000000006A /* music_map.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = music_map.mp3; sourceTree = "<group>"; };
+		AB0000000000000000000083 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				AB0000000000000000000001 /* QuizAppApp.swift */,
+				AB0000000000000000000083 /* PrivacyInfo.xcprivacy */,
 				AB0000000000000000000023 /* Models */,
 				AB0000000000000000000024 /* ViewModels */,
 				AB0000000000000000000025 /* Views */,
@@ -309,6 +312,7 @@
 				AB0000000000000000000046 /* pageflip.wav in Resources */,
 				AB0000000000000000000048 /* stickerpop.wav in Resources */,
 				AB000000000000000000006B /* music_map.mp3 in Resources */,
+				AB0000000000000000000082 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,10 +494,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"QuizApp/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Quiz Island";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -519,10 +525,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"QuizApp/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Quiz Island";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
