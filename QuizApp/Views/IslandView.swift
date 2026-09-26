@@ -15,6 +15,9 @@ struct IslandView: View {
     @EnvironmentObject private var progress: GameProgress
     @Environment(\.dismiss) private var dismiss
 
+    /// The level a child just tapped that is not open yet.
+    @State private var lockedLevel: Int?
+
     private let rowHeight: CGFloat = 128
 
     var body: some View {
@@ -36,6 +39,18 @@ struct IslandView: View {
         // A background never influences the size of what it sits behind, so the
         // scenic artwork can't shift the level trail no matter the screen size.
         .background(IslandBackground(island: island))
+        .overlay {
+            if let level = lockedLevel,
+               let why = progress.levelLockReason(island: island, level: level) {
+                LockedLevelCard(level: level,
+                                island: island,
+                                headline: why.headline,
+                                detail: why.detail) {
+                    withAnimation(.easeOut(duration: 0.2)) { lockedLevel = nil }
+                }
+                .transition(.opacity)
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -137,10 +152,112 @@ struct IslandView: View {
             }
             .buttonStyle(PressableButtonStyle())
             .simultaneousGesture(TapGesture().onEnded { Haptics.play(.light) })
-        } else if authored {
-            LevelBadge(number: number, state: .locked, stars: 0, tint: island.palette.end)
         } else {
-            LevelBadge(number: number, state: .comingSoon, stars: 0, tint: island.palette.end)
+            // A locked stop used to swallow the tap and say nothing, which to
+            // a child is indistinguishable from the game being broken. It now
+            // names the level standing in the way.
+            LevelBadge(number: number,
+                       state: authored ? .locked : .comingSoon,
+                       stars: 0, tint: island.palette.end)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Haptics.play(.light)
+                    withAnimation(.easeOut(duration: 0.2)) { lockedLevel = number }
+                }
+        }
+    }
+}
+
+// MARK: - A level that is not open yet
+
+/// What a child gets for tapping a locked stop on the trail: which level has
+/// to be won first, and a word of encouragement.
+///
+/// Deliberately the same shape as the card the map shows for Champion's
+/// Summit, so a locked thing always looks and behaves the same way wherever
+/// it is met. The level number takes the place of the island badge, because
+/// the number is what the child just tapped.
+private struct LockedLevelCard: View {
+    let level: Int
+    let island: Island
+    let headline: String
+    let detail: String
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { Haptics.play(.light); onClose() }
+
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(island.palette.gradient)
+                        .frame(width: 74, height: 74)
+                        .overlay(Circle().strokeBorder(.white, lineWidth: 3))
+                    Text("\(level)")
+                        .font(Theme.display(32))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 15, weight: .black))
+                        .foregroundColor(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(LinearGradient(
+                            colors: [Color(red: 1.00, green: 0.85, blue: 0.30),
+                                     Color(red: 0.97, green: 0.62, blue: 0.09)],
+                            startPoint: .top, endPoint: .bottom)))
+                        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                        .offset(x: 26, y: 24)
+                }
+                .padding(.top, 6)
+                .padding(.bottom, 2)
+
+                Text(headline)
+                    .font(Theme.display(21))
+                    .foregroundColor(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(detail)
+                    .font(Theme.medium(14))
+                    .foregroundColor(Theme.inkSoft)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
+
+                Button {
+                    Haptics.play(.light)
+                    onClose()
+                } label: {
+                    Text("Okay!")
+                        .font(Theme.bold(17))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Theme.nextButton))
+                        .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .padding(.top, 6)
+            }
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
+            .frame(maxWidth: 320)
+            .background(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(LinearGradient(colors: [
+                        Color(red: 1.00, green: 0.99, blue: 0.95),
+                        Color(red: 1.00, green: 0.94, blue: 0.96)
+                    ], startPoint: .top, endPoint: .bottom))
+            )
+            .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(.white, lineWidth: 3))
+            .shadow(color: .black.opacity(0.3), radius: 18, y: 10)
+            .padding(.horizontal, 28)
         }
     }
 }

@@ -173,6 +173,27 @@ final class GameProgress: ObservableObject {
                 "\(done) of \(earlier.count) done — play every level of each one, then the Summit opens.")
     }
 
+    /// Why a level will not open yet, in words a seven-year-old can read on
+    /// their own. Nil when the level is already open.
+    ///
+    /// It names the exact level that is in the way rather than saying "finish
+    /// the one before" — a child looking at a trail of padlocks should not
+    /// have to work out which stop that means. Short sentences, small words,
+    /// and it ends by telling them they can do it, because being told no is
+    /// the last thing that should happen when you tap something.
+    func levelLockReason(island: Island, level: Int) -> (headline: String, detail: String)? {
+        guard level <= island.authoredLevels else {
+            return ("Coming soon!",
+                    "This part of \(island.name) is still being made. More levels are on the way!")
+        }
+        guard !isLevelUnlocked(island: island, level: level,
+                               allIslands: QuizData.islands) else { return nil }
+
+        let before = level - 1
+        return ("Finish Level \(before) first!",
+                "Level \(level) opens as soon as you win Level \(before). You can do it!")
+    }
+
     // MARK: - Writing
 
     /// Records a level result, keeping the player's best star count.
